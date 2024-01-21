@@ -1,0 +1,169 @@
+<mxfile host="Electron" modified="2024-01-21T00:37:55.923Z" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/22.1.21 Chrome/120.0.6099.109 Electron/28.1.0 Safari/537.36" etag="NRJynhHc_kchbTCUcv-R" version="22.1.21" type="device" pages="3">
+  <diagram name="Context" id="mqAS-xSVoIPqpoYSdwAr">
+    <mxGraphModel dx="1036" dy="702" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="sp9RealpH--W3Z6ICZqD-6" style="rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" parent="1" source="sp9RealpH--W3Z6ICZqD-2" target="sp9RealpH--W3Z6ICZqD-4" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="sp9RealpH--W3Z6ICZqD-2" value="Retail Trader / Investor / Coder" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;" parent="1" vertex="1">
+          <mxGeometry x="80" y="250" width="30" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="sp9RealpH--W3Z6ICZqD-7" value="collects data using" style="rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" parent="1" source="sp9RealpH--W3Z6ICZqD-4" target="sp9RealpH--W3Z6ICZqD-5" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="sp9RealpH--W3Z6ICZqD-9" style="rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" parent="1" source="sp9RealpH--W3Z6ICZqD-4" target="sp9RealpH--W3Z6ICZqD-8" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="sp9RealpH--W3Z6ICZqD-10" value="preserves data using" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" parent="sp9RealpH--W3Z6ICZqD-9" vertex="1" connectable="0">
+          <mxGeometry x="-0.2109" relative="1" as="geometry">
+            <mxPoint x="10" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="sp9RealpH--W3Z6ICZqD-4" value="Kyna&lt;br&gt;(software system)&lt;br&gt;&lt;br&gt;A suite of software apps for collecting stock market information, aggregating them, backtesting against them, and reporting on results of tests or analysis.&lt;br&gt;&lt;br&gt;Available on public GitHub repo." style="html=1;whiteSpace=wrap;fillColor=#dae8fc;strokeColor=#6c8ebf;" parent="1" vertex="1">
+          <mxGeometry x="218" y="205" width="245" height="150" as="geometry" />
+        </mxCell>
+        <mxCell id="sp9RealpH--W3Z6ICZqD-5" value="Data Providers&lt;br&gt;(Web APIs)&lt;br&gt;&lt;br&gt;HTTP APIs providing company data, price action data, option data, or news." style="html=1;whiteSpace=wrap;fillColor=#fff2cc;strokeColor=#d6b656;" parent="1" vertex="1">
+          <mxGeometry x="579" y="9" width="245" height="150" as="geometry" />
+        </mxCell>
+        <mxCell id="sp9RealpH--W3Z6ICZqD-8" value="Kyna Databases&lt;br&gt;&lt;br&gt;A handful of PostgreSQL databases hosted locally for the user." style="html=1;whiteSpace=wrap;fillColor=#d5e8d4;strokeColor=#82b366;" parent="1" vertex="1">
+          <mxGeometry x="579" y="464" width="245" height="150" as="geometry" />
+        </mxCell>
+        <mxCell id="BCbLBxOBGJS5szqpkd2z-2" value="Project Code" style="html=1;whiteSpace=wrap;fillColor=#dae8fc;strokeColor=#6c8ebf;flipV=1;" vertex="1" parent="1">
+          <mxGeometry x="42" y="423" width="110" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="BCbLBxOBGJS5szqpkd2z-3" value="External APIs" style="html=1;whiteSpace=wrap;fillColor=#fff2cc;strokeColor=#d6b656;flipV=1;" vertex="1" parent="1">
+          <mxGeometry x="42" y="490" width="110" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="BCbLBxOBGJS5szqpkd2z-4" value="Databases" style="html=1;whiteSpace=wrap;fillColor=#d5e8d4;strokeColor=#82b366;flipV=1;" vertex="1" parent="1">
+          <mxGeometry x="42" y="562" width="110" height="50" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram id="O4RmJ2laeCB84Qd1TzDS" name="Architecture">
+    <mxGraphModel dx="1036" dy="702" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="rsMs3Y7LeW3e5SGFWNjx-3" value="&lt;i&gt;User Interfaces&lt;/i&gt;&lt;br&gt;(CLIs, Web APIs)" style="html=1;whiteSpace=wrap;fillColor=#dae8fc;strokeColor=#6c8ebf;" parent="1" vertex="1">
+          <mxGeometry x="85" y="194" width="110" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="rsMs3Y7LeW3e5SGFWNjx-5" value="Kyna.ApplicationServices&lt;br&gt;&lt;br&gt;C# libraries providing workflow services." style="html=1;whiteSpace=wrap;fillColor=#dae8fc;strokeColor=#6c8ebf;" parent="1" vertex="1">
+          <mxGeometry x="338" y="164" width="180" height="110" as="geometry" />
+        </mxCell>
+        <mxCell id="rsMs3Y7LeW3e5SGFWNjx-6" value="Kyna.Infrastructure&lt;br&gt;&lt;br&gt;C# libraries providing access to all things outside the code base. File system, databases, remote APIS, etc. are all managed here.&lt;br&gt;&lt;br&gt;The &quot;infrastructure&quot; speaks publicly in terms of the &quot;domain.&quot;" style="html=1;whiteSpace=wrap;fillColor=#dae8fc;strokeColor=#6c8ebf;flipH=0;" parent="1" vertex="1">
+          <mxGeometry x="338" y="350" width="180" height="190" as="geometry" />
+        </mxCell>
+        <mxCell id="rsMs3Y7LeW3e5SGFWNjx-8" value="&lt;i&gt;Domain&lt;/i&gt;&lt;br&gt;&lt;br&gt;C# libraries providing data structures related to the application domain." style="html=1;whiteSpace=wrap;fillColor=#dae8fc;strokeColor=#6c8ebf;flipH=1;" parent="1" vertex="1">
+          <mxGeometry x="338" y="624" width="180" height="130" as="geometry" />
+        </mxCell>
+        <mxCell id="rsMs3Y7LeW3e5SGFWNjx-11" value="Use" style="endArrow=open;endSize=12;dashed=1;html=1;rounded=0;" parent="1" source="rsMs3Y7LeW3e5SGFWNjx-3" target="rsMs3Y7LeW3e5SGFWNjx-5" edge="1">
+          <mxGeometry width="160" relative="1" as="geometry">
+            <mxPoint x="354" y="450" as="sourcePoint" />
+            <mxPoint x="514" y="450" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="rsMs3Y7LeW3e5SGFWNjx-12" value="Use" style="endArrow=open;endSize=12;dashed=1;html=1;rounded=0;" parent="1" source="rsMs3Y7LeW3e5SGFWNjx-5" target="rsMs3Y7LeW3e5SGFWNjx-6" edge="1">
+          <mxGeometry width="160" relative="1" as="geometry">
+            <mxPoint x="364" y="460" as="sourcePoint" />
+            <mxPoint x="524" y="460" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="rsMs3Y7LeW3e5SGFWNjx-13" value="Use" style="endArrow=open;endSize=12;dashed=1;html=1;rounded=0;" parent="1" source="rsMs3Y7LeW3e5SGFWNjx-6" target="rsMs3Y7LeW3e5SGFWNjx-8" edge="1">
+          <mxGeometry width="160" relative="1" as="geometry">
+            <mxPoint x="374" y="470" as="sourcePoint" />
+            <mxPoint x="534" y="470" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="c1KVWFtU_3TZ55uzg7lq-1" value="Kyna.Common&lt;br&gt;&lt;br&gt;Common, shared utilities and tools." style="html=1;whiteSpace=wrap;fillColor=#dae8fc;strokeColor=#6c8ebf;flipH=1;" vertex="1" parent="1">
+          <mxGeometry x="623" y="624" width="180" height="130" as="geometry" />
+        </mxCell>
+        <mxCell id="c1KVWFtU_3TZ55uzg7lq-2" value="Use" style="endArrow=open;endSize=12;dashed=1;html=1;rounded=0;fillColor=#f8cecc;strokeColor=#b85450;" edge="1" parent="1" source="rsMs3Y7LeW3e5SGFWNjx-8" target="c1KVWFtU_3TZ55uzg7lq-1">
+          <mxGeometry width="160" relative="1" as="geometry">
+            <mxPoint x="381" y="552" as="sourcePoint" />
+            <mxPoint x="381" y="648" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="c1KVWFtU_3TZ55uzg7lq-3" value="Data Stores&lt;br&gt;&lt;br&gt;PostgreSQL databases preserving logs, events, and collected data." style="html=1;whiteSpace=wrap;fillColor=#d5e8d4;strokeColor=#82b366;flipH=0;" vertex="1" parent="1">
+          <mxGeometry x="623" y="382" width="180" height="126" as="geometry" />
+        </mxCell>
+        <mxCell id="imuJxL5dujweM91GAhRR-2" value="Use" style="endArrow=open;endSize=12;dashed=1;html=1;rounded=0;" edge="1" parent="1" source="rsMs3Y7LeW3e5SGFWNjx-6" target="c1KVWFtU_3TZ55uzg7lq-3">
+          <mxGeometry width="160" relative="1" as="geometry">
+            <mxPoint x="559" y="229" as="sourcePoint" />
+            <mxPoint x="650" y="229" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="WTEi6DE6wAlAaN-B1JQl-1" value="Data Providers&lt;br&gt;(Web APIs)&lt;br&gt;&lt;br&gt;HTTP APIs providing company data, price action data, option data, or news." style="html=1;whiteSpace=wrap;fillColor=#fff2cc;strokeColor=#d6b656;flipH=0;" vertex="1" parent="1">
+          <mxGeometry x="23" y="397" width="234" height="96" as="geometry" />
+        </mxCell>
+        <mxCell id="WTEi6DE6wAlAaN-B1JQl-2" value="Use" style="endArrow=open;endSize=12;dashed=1;html=1;rounded=0;" edge="1" parent="1" source="rsMs3Y7LeW3e5SGFWNjx-6" target="WTEi6DE6wAlAaN-B1JQl-1">
+          <mxGeometry width="160" relative="1" as="geometry">
+            <mxPoint x="528" y="455" as="sourcePoint" />
+            <mxPoint x="633" y="455" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="id7HIC9XqI_4sCgqBFNK-1" value="Project Code" style="html=1;whiteSpace=wrap;fillColor=#dae8fc;strokeColor=#6c8ebf;flipV=1;" vertex="1" parent="1">
+          <mxGeometry x="85" y="579" width="110" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="id7HIC9XqI_4sCgqBFNK-2" value="External APIs" style="html=1;whiteSpace=wrap;fillColor=#fff2cc;strokeColor=#d6b656;flipV=1;" vertex="1" parent="1">
+          <mxGeometry x="85" y="646" width="110" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="id7HIC9XqI_4sCgqBFNK-3" value="Databases" style="html=1;whiteSpace=wrap;fillColor=#d5e8d4;strokeColor=#82b366;flipV=1;" vertex="1" parent="1">
+          <mxGeometry x="85" y="718" width="110" height="50" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram id="NQzu6Kq7cSKnKWx6Urwr" name="Plans">
+    <mxGraphModel dx="1036" dy="702" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="uJ3rOOwhaZ4Dmx3xxSW7-5" value="" style="rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="uJ3rOOwhaZ4Dmx3xxSW7-2" target="uJ3rOOwhaZ4Dmx3xxSW7-4">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="uJ3rOOwhaZ4Dmx3xxSW7-2" value="Shell out .NET structure." style="whiteSpace=wrap;html=1;flipV=1;flipH=0;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="286" y="282" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="uJ3rOOwhaZ4Dmx3xxSW7-7" value="" style="rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="uJ3rOOwhaZ4Dmx3xxSW7-4" target="uJ3rOOwhaZ4Dmx3xxSW7-6">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="uJ3rOOwhaZ4Dmx3xxSW7-4" value="PostgreSQL Logger." style="whiteSpace=wrap;html=1;flipH=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="369" y="404" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="uJ3rOOwhaZ4Dmx3xxSW7-13" style="edgeStyle=none;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="uJ3rOOwhaZ4Dmx3xxSW7-6" target="uJ3rOOwhaZ4Dmx3xxSW7-12">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="uJ3rOOwhaZ4Dmx3xxSW7-6" value="&quot;Prototype&quot; CLI" style="whiteSpace=wrap;html=1;flipV=1;flipH=0;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="453" y="282" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="uJ3rOOwhaZ4Dmx3xxSW7-9" style="rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="uJ3rOOwhaZ4Dmx3xxSW7-8" target="uJ3rOOwhaZ4Dmx3xxSW7-10">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="uJ3rOOwhaZ4Dmx3xxSW7-8" value="First draft of design docs." style="whiteSpace=wrap;html=1;flipV=1;flipH=0;fillColor=#f5f5f5;fontColor=#333333;strokeColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="118" y="282" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="uJ3rOOwhaZ4Dmx3xxSW7-11" style="edgeStyle=none;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="uJ3rOOwhaZ4Dmx3xxSW7-10" target="uJ3rOOwhaZ4Dmx3xxSW7-2">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="uJ3rOOwhaZ4Dmx3xxSW7-10" value="Create public repo." style="whiteSpace=wrap;html=1;flipH=1;fillColor=#f5f5f5;fontColor=#333333;strokeColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="202" y="404" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="uJ3rOOwhaZ4Dmx3xxSW7-15" value="" style="edgeStyle=none;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="uJ3rOOwhaZ4Dmx3xxSW7-12" target="uJ3rOOwhaZ4Dmx3xxSW7-14">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="uJ3rOOwhaZ4Dmx3xxSW7-12" value="Kyna.Common" style="whiteSpace=wrap;html=1;flipH=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="537" y="404" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="uJ3rOOwhaZ4Dmx3xxSW7-14" value="Review and Plan" style="whiteSpace=wrap;html=1;flipV=1;flipH=0;fillColor=#ffe6cc;strokeColor=#d79b00;" vertex="1" parent="1">
+          <mxGeometry x="621" y="282" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="N_ITnmN72auRfJnYg_OU-1" value="Phase Zero (0)" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;fontSize=32;" vertex="1" parent="1">
+          <mxGeometry x="87" y="208" width="231" height="50" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
