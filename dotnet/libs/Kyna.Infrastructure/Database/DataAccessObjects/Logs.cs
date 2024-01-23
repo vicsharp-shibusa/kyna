@@ -8,7 +8,7 @@ internal sealed record class Log : LogBase
     public string? Scope { get; init; }
 }
 
-internal sealed record class EventLog : LogBase
+internal sealed record class AppEvent : LogBase
 {
     public int EventId { get; init; }
     public string? EventName { get; init; }

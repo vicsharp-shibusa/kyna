@@ -6,13 +6,13 @@ internal interface IDbContext
 {
     string ConnectionString { get; }
 
-    void Execute(string sql, object? parameters = null, IDbTransaction? transaction = null, int? commandTimeout = null);
-
-    Task ExecuteAsync(string sql, object? parameters = null, IDbTransaction? transaction = null, int? commandTimeout = null, CancellationToken cancellationToken = default);
-
     IDbConnection GetOpenConnection();
 
     Task<IDbConnection> GetOpenConnectionAsync(CancellationToken cancellationToken = default);
+
+    void Execute(string sql, object? parameters = null, IDbTransaction? transaction = null, int? commandTimeout = null);
+
+    Task ExecuteAsync(string sql, object? parameters = null, IDbTransaction? transaction = null, int? commandTimeout = null, CancellationToken cancellationToken = default);
 
     IEnumerable<T> Query<T>(string sql, object? parameters = null, int? commandTimeout = null);
 

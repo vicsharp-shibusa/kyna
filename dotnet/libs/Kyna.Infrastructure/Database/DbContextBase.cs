@@ -13,10 +13,7 @@ internal abstract class DbContextBase
         ConnectionString = connectionString;
     }
 
-    public string ConnectionString
-    {
-        get;
-    }
+    public string ConnectionString { get; }
 
     public abstract IDbConnection GetOpenConnection();
 

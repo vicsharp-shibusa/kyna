@@ -11,7 +11,7 @@ INSERT INTO public.logs (timestamp_utc, process_id, context, log_level, message,
 VALUES(@TimestampUtc, @ProcessId, @Context, @LogLevel, @Message, @Exception, @Scope)
 ";
 
-    private const string InsertEventLog = @"
+    private const string InsertAppEvent = @"
 INSERT INTO public.app_events(timestamp_utc, process_id, context, event_id, event_name)
 VALUES(@TimestampUtc, @ProcessId, @Context, @EventId, @EventName)
 ";
@@ -51,7 +51,7 @@ VALUES(@TimestampUtc, @ProcessId, @Context, @EventId, @EventName)
 WHERE message = @Message
 ";
 
-        var actual = _context.Query<Infrastructure.Database.DataAccessObjects.Log>(sql, new { logDao.Message }).FirstOrDefault();
+        var actual = _context.QueryFirstOrDefault<Infrastructure.Database.DataAccessObjects.Log>(sql, new { logDao.Message });
 
         Assert.NotNull(actual);
         Assert.Equal(logDao.Scope, actual.Scope);
@@ -137,17 +137,17 @@ WHERE message = @Message
     }
 
     [Fact]
-    public void InsertAndFetch_EventLog_InternalTransaction()
+    public void InsertAndFetch_AppEvent_InternalTransaction()
     {
-        var eventDao = CreateEventLog();
+        var eventDao = CreateAppEvent();
 
-        _context!.Execute(InsertEventLog, eventDao);
+        _context!.Execute(InsertAppEvent, eventDao);
 
         string sql = @"SELECT id, timestamp_utc AS TimestampUtc, process_id AS ProcessID, context,
 event_id AS EventId, event_name AS EventName FROM public.app_events
 WHERE event_name = @EventName";
 
-        var actual = _context.Query<Infrastructure.Database.DataAccessObjects.EventLog>(sql, new { eventDao.EventName }).FirstOrDefault();
+        var actual = _context.QueryFirstOrDefault<Infrastructure.Database.DataAccessObjects.AppEvent>(sql, new { eventDao.EventName });
 
         Assert.NotNull(actual);
         Assert.Equal(eventDao.EventId, actual.EventId);
@@ -158,17 +158,17 @@ WHERE event_name = @EventName";
     }
 
     [Fact]
-    public async Task InsertAndFetch_EventLog_InternalTransactionAsync()
+    public async Task InsertAndFetch_AppEvent_InternalTransactionAsync()
     {
-        var eventDao = CreateEventLog();
+        var eventDao = CreateAppEvent();
 
-        await _context!.ExecuteAsync(InsertEventLog, eventDao);
+        await _context!.ExecuteAsync(InsertAppEvent, eventDao);
 
         string sql = @"SELECT id, timestamp_utc AS TimestampUtc, process_id AS ProcessID, context,
 event_id AS EventId, event_name AS EventName FROM public.app_events
 WHERE event_name = @EventName";
 
-        var actual = await _context.QueryFirstOrDefaultAsync<Infrastructure.Database.DataAccessObjects.EventLog>(sql, new { eventDao.EventName });
+        var actual = await _context.QueryFirstOrDefaultAsync<Infrastructure.Database.DataAccessObjects.AppEvent>(sql, new { eventDao.EventName });
 
         Assert.NotNull(actual);
         Assert.Equal(eventDao.EventId, actual.EventId);
@@ -179,15 +179,15 @@ WHERE event_name = @EventName";
     }
 
     [Fact]
-    public void InsertAndFetch_EventLog_ExternalTransaction()
+    public void InsertAndFetch_AppEvent_ExternalTransaction()
     {
-        var eventDao1 = CreateEventLog();
-        var eventDao2 = CreateEventLog();
+        var eventDao1 = CreateAppEvent();
+        var eventDao2 = CreateAppEvent();
 
         var t = _context!.GetOpenConnection().BeginTransaction();
 
-        _context.Execute(InsertEventLog, eventDao1, t);
-        _context.Execute(InsertEventLog, eventDao2, t);
+        _context.Execute(InsertAppEvent, eventDao1, t);
+        _context.Execute(InsertAppEvent, eventDao2, t);
 
         t.Commit();
         t.Connection?.Close();
@@ -195,7 +195,7 @@ WHERE event_name = @EventName";
         string sql = @"SELECT id, timestamp_utc AS TimestampUtc, process_id AS ProcessID, context,
 event_id AS EventId, event_name AS EventName FROM public.app_events";
 
-        var actuals = _context.Query<Infrastructure.Database.DataAccessObjects.EventLog>(sql, new { eventDao1.EventName });
+        var actuals = _context.Query<Infrastructure.Database.DataAccessObjects.AppEvent>(sql, new { eventDao1.EventName });
 
         var match1 = actuals.FirstOrDefault(a => a.ProcessId.Equals(eventDao1.ProcessId));
         var match2 = actuals.FirstOrDefault(a => a.ProcessId.Equals(eventDao2.ProcessId));
@@ -205,15 +205,15 @@ event_id AS EventId, event_name AS EventName FROM public.app_events";
     }
 
     [Fact]
-    public async Task InsertAndFetch_EventLog_ExternalTransactionAsync()
+    public async Task InsertAndFetch_AppEvent_ExternalTransactionAsync()
     {
-        var eventDao1 = CreateEventLog();
-        var eventDao2 = CreateEventLog();
+        var eventDao1 = CreateAppEvent();
+        var eventDao2 = CreateAppEvent();
 
         var t = (await _context!.GetOpenConnectionAsync()).BeginTransaction();
 
-        await _context.ExecuteAsync(InsertEventLog, eventDao1, t);
-        await _context.ExecuteAsync(InsertEventLog, eventDao2, t);
+        await _context.ExecuteAsync(InsertAppEvent, eventDao1, t);
+        await _context.ExecuteAsync(InsertAppEvent, eventDao2, t);
 
         t.Commit();
         t.Connection?.Close();
@@ -221,7 +221,7 @@ event_id AS EventId, event_name AS EventName FROM public.app_events";
         string sql = @"SELECT id, timestamp_utc AS TimestampUtc, process_id AS ProcessID, context,
 event_id AS EventId, event_name AS EventName FROM public.app_events";
 
-        var actuals = await _context.QueryAsync<Infrastructure.Database.DataAccessObjects.EventLog>(sql, new { eventDao1.EventName });
+        var actuals = await _context.QueryAsync<Infrastructure.Database.DataAccessObjects.AppEvent>(sql, new { eventDao1.EventName });
 
         var match1 = actuals.FirstOrDefault(a => a.ProcessId.Equals(eventDao1.ProcessId));
         var match2 = actuals.FirstOrDefault(a => a.ProcessId.Equals(eventDao2.ProcessId));
@@ -230,7 +230,7 @@ event_id AS EventId, event_name AS EventName FROM public.app_events";
         Assert.NotNull(match2);
     }
 
-    private static Kyna.Infrastructure.Database.DataAccessObjects.Log CreateLog()
+    private static Infrastructure.Database.DataAccessObjects.Log CreateLog()
     {
         return new Infrastructure.Database.DataAccessObjects.Log()
         {
@@ -243,9 +243,9 @@ event_id AS EventId, event_name AS EventName FROM public.app_events";
         };
     }
 
-    private static Infrastructure.Database.DataAccessObjects.EventLog CreateEventLog()
+    private static Infrastructure.Database.DataAccessObjects.AppEvent CreateAppEvent()
     {
-        return new Infrastructure.Database.DataAccessObjects.EventLog()
+        return new Infrastructure.Database.DataAccessObjects.AppEvent()
         {
             Context = "ctx",
             ProcessId = Guid.NewGuid(),
