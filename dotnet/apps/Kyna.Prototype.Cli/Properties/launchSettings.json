@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "Kyna.Prototype.Cli": {
+      "commandName": "Project",
+      "commandLineArgs": "--verbose"
+    }
+  }
+}

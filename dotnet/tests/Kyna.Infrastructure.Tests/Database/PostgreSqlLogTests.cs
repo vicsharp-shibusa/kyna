@@ -6,17 +6,9 @@ namespace Kyna.Infrastructure.Tests.Database;
 
 public class PostgreSqlLogTests
 {
-    private const string InsertLog = @"
-INSERT INTO public.logs (timestamp_utc, process_id, context, log_level, message, exception, scope)
-VALUES(@TimestampUtc, @ProcessId, @Context, @LogLevel, @Message, @Exception, @Scope)
-";
+    private readonly SqlRepository _postgreSqlRepo = new(DatabaseEngine.PostgreSql);
 
-    private const string InsertAppEvent = @"
-INSERT INTO public.app_events(timestamp_utc, process_id, context, event_id, event_name)
-VALUES(@TimestampUtc, @ProcessId, @Context, @EventId, @EventName)
-";
-
-    private const string DateTimeEquality = "yyyyMMddHHmmssfff";
+    private const string _dateTimeEquality = "yyyyMMddHHmmssfff";
 
     private PostgreSqlContext? _context;
 
@@ -45,20 +37,17 @@ VALUES(@TimestampUtc, @ProcessId, @Context, @EventId, @EventName)
     {
         var logDao = CreateLog();
 
-        _context!.Execute(InsertLog, logDao);
+        _context!.Execute(_postgreSqlRepo.InsertLog, logDao);
 
-        string sql = @"SELECT timestamp_utc AS TimestampUtc, process_id AS ProcessId, context, log_level AS LogLevel, message, exception, scope FROM public.logs
-WHERE message = @Message
-";
+        string sql = $"{_postgreSqlRepo.FetchLogs} WHERE message = @Message";
 
         var actual = _context.QueryFirstOrDefault<Infrastructure.Database.DataAccessObjects.Log>(sql, new { logDao.Message });
 
         Assert.NotNull(actual);
         Assert.Equal(logDao.Scope, actual.Scope);
         Assert.Equal(logDao.Exception, actual.Exception);
-        Assert.Equal(logDao.TimestampUtc.ToString(DateTimeEquality), actual.TimestampUtc.ToString(DateTimeEquality));
+        Assert.Equal(logDao.TimestampUtc.ToString(_dateTimeEquality), actual.TimestampUtc.ToString(_dateTimeEquality));
         Assert.Equal(logDao.LogLevel, actual.LogLevel);
-        Assert.Equal(logDao.Context, actual.Context);
         Assert.Equal(logDao.Message, actual.Message);
         Assert.Equal(logDao.ProcessId, actual.ProcessId);
     }
@@ -68,20 +57,17 @@ WHERE message = @Message
     {
         var logDao = CreateLog();
 
-        await _context!.ExecuteAsync(InsertLog, logDao);
+        await _context!.ExecuteAsync(_postgreSqlRepo.InsertLog, logDao);
 
-        string sql = @"SELECT timestamp_utc AS TimestampUtc, process_id AS ProcessId, context, log_level AS LogLevel, message, exception, scope FROM public.logs
-WHERE message = @Message
-";
+        string sql = $"{_postgreSqlRepo.FetchLogs} WHERE message = @Message";
 
         var actual = await _context.QueryFirstOrDefaultAsync<Infrastructure.Database.DataAccessObjects.Log>(sql, new { logDao.Message });
 
         Assert.NotNull(actual);
         Assert.Equal(logDao.Scope, actual.Scope);
         Assert.Equal(logDao.Exception, actual.Exception);
-        Assert.Equal(logDao.TimestampUtc.ToString(DateTimeEquality), actual.TimestampUtc.ToString(DateTimeEquality));
+        Assert.Equal(logDao.TimestampUtc.ToString(_dateTimeEquality), actual.TimestampUtc.ToString(_dateTimeEquality));
         Assert.Equal(logDao.LogLevel, actual.LogLevel);
-        Assert.Equal(logDao.Context, actual.Context);
         Assert.Equal(logDao.Message, actual.Message);
         Assert.Equal(logDao.ProcessId, actual.ProcessId);
     }
@@ -94,15 +80,13 @@ WHERE message = @Message
 
         var t = _context!.GetOpenConnection().BeginTransaction();
 
-        _context.Execute(InsertLog, logDao1, t);
-        _context.Execute(InsertLog, logDao2, t);
+        _context.Execute(_postgreSqlRepo.InsertLog, logDao1, t);
+        _context.Execute(_postgreSqlRepo.InsertLog, logDao2, t);
 
         t.Commit();
         t.Connection?.Close();
 
-        string sql = @"SELECT timestamp_utc AS TimestampUtc, process_id AS ProcessId, context, log_level AS LogLevel, message, exception, scope FROM public.logs";
-
-        var actuals = _context.Query<Infrastructure.Database.DataAccessObjects.Log>(sql);
+        var actuals = _context.Query<Infrastructure.Database.DataAccessObjects.Log>(_postgreSqlRepo.FetchLogs);
 
         var match1 = actuals.FirstOrDefault(a => a.ProcessId.Equals(logDao1.ProcessId));
         var match2 = actuals.FirstOrDefault(a => a.ProcessId.Equals(logDao2.ProcessId));
@@ -119,15 +103,13 @@ WHERE message = @Message
 
         var t = (await _context!.GetOpenConnectionAsync()).BeginTransaction();
 
-        await _context.ExecuteAsync(InsertLog, logDao1, t);
-        await _context.ExecuteAsync(InsertLog, logDao2, t);
+        await _context.ExecuteAsync(_postgreSqlRepo.InsertLog, logDao1, t);
+        await _context.ExecuteAsync(_postgreSqlRepo.InsertLog, logDao2, t);
 
         t.Commit();
         t.Connection?.Close();
 
-        string sql = @"SELECT timestamp_utc AS TimestampUtc, process_id AS ProcessId, context, log_level AS LogLevel, message, exception, scope FROM public.logs";
-
-        var actuals = await _context.QueryAsync<Infrastructure.Database.DataAccessObjects.Log>(sql);
+        var actuals = await _context.QueryAsync<Infrastructure.Database.DataAccessObjects.Log>(_postgreSqlRepo.FetchLogs);
 
         var match1 = actuals.FirstOrDefault(a => a.ProcessId.Equals(logDao1.ProcessId));
         var match2 = actuals.FirstOrDefault(a => a.ProcessId.Equals(logDao2.ProcessId));
@@ -141,19 +123,16 @@ WHERE message = @Message
     {
         var eventDao = CreateAppEvent();
 
-        _context!.Execute(InsertAppEvent, eventDao);
+        _context!.Execute(_postgreSqlRepo.InsertAppEvent, eventDao);
 
-        string sql = @"SELECT id, timestamp_utc AS TimestampUtc, process_id AS ProcessID, context,
-event_id AS EventId, event_name AS EventName FROM public.app_events
-WHERE event_name = @EventName";
+        string sql = $"{_postgreSqlRepo.FetchAppEvents} WHERE event_name = @EventName";
 
         var actual = _context.QueryFirstOrDefault<Infrastructure.Database.DataAccessObjects.AppEvent>(sql, new { eventDao.EventName });
 
         Assert.NotNull(actual);
         Assert.Equal(eventDao.EventId, actual.EventId);
         Assert.Equal(eventDao.EventName, actual.EventName);
-        Assert.Equal(eventDao.TimestampUtc.ToString(DateTimeEquality), actual.TimestampUtc.ToString(DateTimeEquality));
-        Assert.Equal(eventDao.Context, actual.Context);
+        Assert.Equal(eventDao.TimestampUtc.ToString(_dateTimeEquality), actual.TimestampUtc.ToString(_dateTimeEquality));
         Assert.Equal(eventDao.ProcessId, actual.ProcessId);
     }
 
@@ -162,19 +141,16 @@ WHERE event_name = @EventName";
     {
         var eventDao = CreateAppEvent();
 
-        await _context!.ExecuteAsync(InsertAppEvent, eventDao);
+        await _context!.ExecuteAsync(_postgreSqlRepo.InsertAppEvent, eventDao);
 
-        string sql = @"SELECT id, timestamp_utc AS TimestampUtc, process_id AS ProcessID, context,
-event_id AS EventId, event_name AS EventName FROM public.app_events
-WHERE event_name = @EventName";
+        string sql = $"{_postgreSqlRepo.FetchAppEvents} WHERE event_name = @EventName";
 
         var actual = await _context.QueryFirstOrDefaultAsync<Infrastructure.Database.DataAccessObjects.AppEvent>(sql, new { eventDao.EventName });
 
         Assert.NotNull(actual);
         Assert.Equal(eventDao.EventId, actual.EventId);
         Assert.Equal(eventDao.EventName, actual.EventName);
-        Assert.Equal(eventDao.TimestampUtc.ToString(DateTimeEquality), actual.TimestampUtc.ToString(DateTimeEquality));
-        Assert.Equal(eventDao.Context, actual.Context);
+        Assert.Equal(eventDao.TimestampUtc.ToString(_dateTimeEquality), actual.TimestampUtc.ToString(_dateTimeEquality));
         Assert.Equal(eventDao.ProcessId, actual.ProcessId);
     }
 
@@ -186,16 +162,14 @@ WHERE event_name = @EventName";
 
         var t = _context!.GetOpenConnection().BeginTransaction();
 
-        _context.Execute(InsertAppEvent, eventDao1, t);
-        _context.Execute(InsertAppEvent, eventDao2, t);
+        _context.Execute(_postgreSqlRepo.InsertAppEvent, eventDao1, t);
+        _context.Execute(_postgreSqlRepo.InsertAppEvent, eventDao2, t);
 
         t.Commit();
         t.Connection?.Close();
 
-        string sql = @"SELECT id, timestamp_utc AS TimestampUtc, process_id AS ProcessID, context,
-event_id AS EventId, event_name AS EventName FROM public.app_events";
-
-        var actuals = _context.Query<Infrastructure.Database.DataAccessObjects.AppEvent>(sql, new { eventDao1.EventName });
+        var actuals = _context.Query<Infrastructure.Database.DataAccessObjects.AppEvent>(
+            _postgreSqlRepo.FetchAppEvents, new { eventDao1.EventName });
 
         var match1 = actuals.FirstOrDefault(a => a.ProcessId.Equals(eventDao1.ProcessId));
         var match2 = actuals.FirstOrDefault(a => a.ProcessId.Equals(eventDao2.ProcessId));
@@ -212,16 +186,14 @@ event_id AS EventId, event_name AS EventName FROM public.app_events";
 
         var t = (await _context!.GetOpenConnectionAsync()).BeginTransaction();
 
-        await _context.ExecuteAsync(InsertAppEvent, eventDao1, t);
-        await _context.ExecuteAsync(InsertAppEvent, eventDao2, t);
+        await _context.ExecuteAsync(_postgreSqlRepo.InsertAppEvent, eventDao1, t);
+        await _context.ExecuteAsync(_postgreSqlRepo.InsertAppEvent, eventDao2, t);
 
         t.Commit();
         t.Connection?.Close();
 
-        string sql = @"SELECT id, timestamp_utc AS TimestampUtc, process_id AS ProcessID, context,
-event_id AS EventId, event_name AS EventName FROM public.app_events";
-
-        var actuals = await _context.QueryAsync<Infrastructure.Database.DataAccessObjects.AppEvent>(sql, new { eventDao1.EventName });
+        var actuals = await _context.QueryAsync<Infrastructure.Database.DataAccessObjects.AppEvent>(
+            _postgreSqlRepo.FetchAppEvents, new { eventDao1.EventName });
 
         var match1 = actuals.FirstOrDefault(a => a.ProcessId.Equals(eventDao1.ProcessId));
         var match2 = actuals.FirstOrDefault(a => a.ProcessId.Equals(eventDao2.ProcessId));
@@ -234,7 +206,6 @@ event_id AS EventId, event_name AS EventName FROM public.app_events";
     {
         return new Infrastructure.Database.DataAccessObjects.Log()
         {
-            Context = "ctx",
             Exception = "exception",
             LogLevel = "Debug",
             Message = Guid.NewGuid().ToString("N"),
@@ -247,7 +218,6 @@ event_id AS EventId, event_name AS EventName FROM public.app_events";
     {
         return new Infrastructure.Database.DataAccessObjects.AppEvent()
         {
-            Context = "ctx",
             ProcessId = Guid.NewGuid(),
             EventId = 1010,
             EventName = Guid.NewGuid().ToString("N"),

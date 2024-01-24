@@ -1,4 +1,6 @@
-﻿namespace Kyna.Infrastructure.Database.DataAccessObjects;
+﻿using Kyna.Common.Logging;
+
+namespace Kyna.Infrastructure.Database.DataAccessObjects;
 
 internal sealed record class Log : LogBase
 {
@@ -18,5 +20,4 @@ internal abstract record class LogBase
 {
     public DateTime TimestampUtc { get; init; } = DateTime.UtcNow;
     public Guid? ProcessId { get; init; }
-    public string? Context { get; init; }
 }

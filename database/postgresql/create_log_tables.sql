@@ -5,7 +5,6 @@ CREATE TABLE IF NOT EXISTS public.logs
     id serial NOT NULL,
     timestamp_utc TIMESTAMP WITH TIME ZONE NOT NULL,
     process_id UUID NULL,
-    context TEXT NULL,
     log_level TEXT NULL,
     message TEXT NULL,
     exception TEXT NULL,
@@ -18,7 +17,6 @@ CREATE TABLE IF NOT EXISTS public.app_events
     id serial NOT NULL,
     timestamp_utc TIMESTAMP WITH TIME ZONE NOT NULL,
     process_id UUID NULL,
-    context TEXT NULL,
     event_id INTEGER NOT NULL,
     event_name TEXT NULL,
     PRIMARY KEY (id)

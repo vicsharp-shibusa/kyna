@@ -2,7 +2,8 @@
 using System.Data;
 using System.Runtime.CompilerServices;
 
-[assembly: InternalsVisibleTo("Kyna.Infrastructure.Tests")]
+[assembly: InternalsVisibleTo("Kyna.Infrastructure.Tests"),
+    InternalsVisibleTo("Kyna.ApplicationServices")]
 namespace Kyna.Infrastructure.Database;
 
 internal class PostgreSqlContext(string? connectionString) : DbContextBase(connectionString), IDbContext
