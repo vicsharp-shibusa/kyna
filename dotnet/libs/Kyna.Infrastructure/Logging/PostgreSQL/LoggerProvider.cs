@@ -29,6 +29,7 @@ internal class LoggerProvider : ILoggerProvider
         _appEventQueue = new ConcurrentQueue<Database.DataAccessObjects.AppEvent>();
 
         _runQueues = true;
+
         RunLoggerDequeue();
     }
 

@@ -1,10 +1,10 @@
 # Kyna
 
-[Kyna](https://www.theparentz.com/baby-names/kyna) is an open-source project with the goal of creating a stable framework from which coders/traders/investors can collect historical stock data, backtest trading ideas against that data, and make informed decisions with their money.
+[Kyna](https://www.theparentz.com/baby-names/kyna) is an MIT-licensed, open-source project with the goal of creating a stable framework from which coders/traders/investors can collect historical stock data, backtest trading ideas against that data, and make informed decisions with their money.
 
-What we're doing here is not groundbreaking science, but it is 100% transparent and grounded in a set of tools available to retail investors. Anyone is welcome to a copy of the code repository for their own purposes. Those who want to *contribute* are especially invited - we could use the help and there are many challenging and fun avenues to walk via this project.
+What we're doing here is not groundbreaking science, but it is 100% transparent and grounded in a set of tools available to retail investors. Anyone is welcome to a copy of the code repository for their own purposes. Those who want to *contribute* are invited to do so - we could use the help and there are many challenging opportunities available within the scope of this project.
 
-## Phase 1
+## Phase 1 (Current Phase)
 
 ### Goals
 
@@ -48,6 +48,6 @@ Some potential baselines up/down ratios to start:
 
 ![Kyna Architecture](./docs/images/kyna-architecture.png)
 
-### Phase 0 Plan
+### Current Effort
 
-![Phase 0 Plans](./docs/images//kyna-plans-phase-0.png)
+![Phase 1.1 Plan](./docs/images//kyna-plans-phase-1-1.png)

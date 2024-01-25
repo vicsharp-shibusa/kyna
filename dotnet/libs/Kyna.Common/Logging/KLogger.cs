@@ -65,7 +65,6 @@ public static class KLogger
                 processId), null, FormatMessage);
     }
 
-    // TODO: this might need some love.
     private static string FormatMessage(LogItem logItem, Exception? exc) => logItem.ToString();
 
     private static LogItem CreateLogItem(string? message, LogLevel logLevel,

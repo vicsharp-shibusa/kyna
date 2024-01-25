@@ -1,4 +1,5 @@
 ﻿using Dapper;
+using Kyna.Common.Logging;
 using System.Data;
 using System.Diagnostics;
 
@@ -37,9 +38,10 @@ internal abstract class DbContextBase
             connection.Execute(sql, parameters, transaction, commandTimeout);
             if (isLocalTransaction) { transaction.Commit(); }
         }
-        catch //(Exception exc)
+        catch (Exception exc)
         {
             if (isLocalTransaction) { transaction.Rollback(); }
+            KLogger.LogCritical(exc);
             throw;
         }
         finally
@@ -72,9 +74,10 @@ internal abstract class DbContextBase
             await connection.ExecuteAsync(sql, parameters, transaction, commandTimeout);
             if (isLocalTransaction) { transaction.Commit(); }
         }
-        catch //(Exception exc)
+        catch (Exception exc)
         {
             if (isLocalTransaction) { transaction.Rollback(); }
+            KLogger.LogCritical(exc);
             throw;
         }
         finally
@@ -96,8 +99,9 @@ internal abstract class DbContextBase
         {
             return connection.Query<T>(sql, parameters, commandTimeout: commandTimeout);
         }
-        catch //(Exception exc)
+        catch (Exception exc)
         {
+            KLogger.LogCritical(exc);
             throw;
         }
         finally
@@ -118,8 +122,9 @@ internal abstract class DbContextBase
         {
             return await connection.QueryAsync<T>(sql, parameters, commandTimeout: commandTimeout);
         }
-        catch //(Exception exc)
+        catch (Exception exc)
         {
+            KLogger.LogCritical(exc);
             throw;
         }
         finally
@@ -138,8 +143,9 @@ internal abstract class DbContextBase
         {
             return connection.QueryFirstOrDefault<T>(sql, parameters, commandTimeout: commandTimeout);
         }
-        catch //(Exception exc)
+        catch (Exception exc)
         {
+            KLogger.LogCritical(exc);
             throw;
         }
         finally
@@ -160,8 +166,9 @@ internal abstract class DbContextBase
         {
             return await connection.QueryFirstOrDefaultAsync<T>(sql, parameters, commandTimeout: commandTimeout);
         }
-        catch //(Exception exc)
+        catch (Exception exc)
         {
+            KLogger.LogCritical(exc);
             throw;
         }
         finally

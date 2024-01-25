@@ -8,13 +8,18 @@ internal sealed class Logger(LoggerProvider loggerProvider,
     Func<string, LogLevel, bool>? filter = null) : ILogger
 {
     private LogScope? _scope = null;
+    
     private readonly Func<string, LogLevel, bool>? _filter = filter;
-    private readonly string _categoryName = string.IsNullOrWhiteSpace(categoryName) ? throw new ArgumentNullException(nameof(categoryName)) : categoryName;
+    
+    private readonly string _categoryName = string.IsNullOrWhiteSpace(categoryName)
+        ? throw new ArgumentNullException(nameof(categoryName)) 
+        : categoryName;
+    
     private readonly LoggerProvider _loggerProvider = loggerProvider ?? throw new ArgumentNullException(nameof(loggerProvider));
 
     IDisposable ILogger.BeginScope<TState>(TState state)
     {
-        _scope = new LogScope(state ?? new object());
+        _scope = new LogScope(state);
         return _scope;
     }
 
