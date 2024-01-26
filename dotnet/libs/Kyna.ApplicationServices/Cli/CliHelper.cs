@@ -8,11 +8,6 @@ namespace Kyna.ApplicationServices.Cli;
 
 public static class CliHelper
 {
-    public static class Keys
-    {
-        public const string Logs = "Logs";
-    }
-
     public static CliArg[] GetDefaultArgDescriptions()
     {
         return [

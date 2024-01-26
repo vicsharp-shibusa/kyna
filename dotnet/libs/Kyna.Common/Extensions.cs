@@ -77,7 +77,6 @@ public static class DateOnlyExtensions
     }
 }
 
-
 public static class StreamExtensions
 {
     public static void Write(this Stream stream, string message)

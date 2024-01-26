@@ -1,6 +1,4 @@
-﻿using Kyna.Common.Logging;
-
-namespace Kyna.Infrastructure.Database.DataAccessObjects;
+﻿namespace Kyna.Infrastructure.Database.DataAccessObjects;
 
 internal sealed record class Log : LogBase
 {
