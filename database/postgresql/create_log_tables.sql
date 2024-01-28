@@ -22,8 +22,8 @@ CREATE TABLE IF NOT EXISTS public.app_events
     PRIMARY KEY (id)
 );
 
-CREATE INDEX IF NOT EXISTS logs_timestamp ON public.logs (timestamp_utc);
-CREATE INDEX IF NOT EXISTS logs_process_id ON public.logs (process_id);
+CREATE INDEX IF NOT EXISTS logs_timestamp_idx ON public.logs (timestamp_utc);
+CREATE INDEX IF NOT EXISTS logs_process_id_idx ON public.logs (process_id);
 
-CREATE INDEX IF NOT EXISTS events_timestamp ON public.app_events (timestamp_utc);
-CREATE INDEX IF NOT EXISTS events_process_id ON public.app_events (process_id);
+CREATE INDEX IF NOT EXISTS events_timestamp_idx ON public.app_events (timestamp_utc);
+CREATE INDEX IF NOT EXISTS events_process_id_idx ON public.app_events (process_id);

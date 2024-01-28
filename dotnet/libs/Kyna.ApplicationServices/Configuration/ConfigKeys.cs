@@ -11,5 +11,7 @@ public static class ConfigKeys
     public static class DbKeys
     {
         public const string Logs = "Logs";
+        public const string Imports = "Imports";
     }
 }
+    
