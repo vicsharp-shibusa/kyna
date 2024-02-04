@@ -4,7 +4,9 @@ namespace Kyna.Infrastructure.Database;
 
 internal interface IDbContext
 {
-    string ConnectionString { get; }
+    DbDef DbDef { get; }
+
+    SqlRepository Sql { get; }
 
     IDbConnection GetOpenConnection();
 

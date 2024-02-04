@@ -53,7 +53,10 @@ public class NullableStringJsonConverter : JsonConverter<string?>
     {
         var str = reader.GetString();
 
-        if (string.IsNullOrEmpty(str)) return null;
+        if (string.IsNullOrEmpty(str))
+        {
+            return null;
+        }
 
         return str;
     }
@@ -77,26 +80,26 @@ public class NullableStringJsonConverter : JsonConverter<string?>
 /// </summary>
 public class DateOnlyJsonConverter : JsonConverter<DateOnly>
 {
-    private const string _format = "yyyy-MM-dd";
+    private const string Format = "yyyy-MM-dd";
 
     public override DateOnly Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
     {
-        string dateString = reader.GetString() ?? DateOnly.MinValue.ToString(_format);
+        string dateString = reader.GetString() ?? DateOnly.MinValue.ToString(Format);
 
-        dateString = dateString == "0000-00-00" ? DateOnly.MinValue.ToString(_format) : dateString;
+        dateString = dateString == "0000-00-00" ? DateOnly.MinValue.ToString(Format) : dateString;
 
-        return DateOnly.ParseExact(dateString, _format, CultureInfo.InvariantCulture);
+        return DateOnly.ParseExact(dateString, Format, CultureInfo.InvariantCulture);
     }
 
     public override void Write(Utf8JsonWriter writer, DateOnly value, JsonSerializerOptions options)
     {
-        writer.WriteStringValue(value.ToString(_format, CultureInfo.InvariantCulture));
+        writer.WriteStringValue(value.ToString(Format, CultureInfo.InvariantCulture));
     }
 }
 
 public class NullableDateOnlyJsonConverter : JsonConverter<DateOnly?>
 {
-    private const string _format = "yyyy-MM-dd";
+    private const string Format = "yyyy-MM-dd";
 
     public override DateOnly? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
     {
@@ -115,7 +118,7 @@ public class NullableDateOnlyJsonConverter : JsonConverter<DateOnly?>
             {
                 return null;
             }
-            return DateOnly.ParseExact(dateString, _format, CultureInfo.InvariantCulture);
+            return DateOnly.ParseExact(dateString, Format, CultureInfo.InvariantCulture);
         }
     }
 
@@ -124,7 +127,7 @@ public class NullableDateOnlyJsonConverter : JsonConverter<DateOnly?>
     {
         if (value.HasValue)
         {
-            writer.WriteStringValue(value.Value.ToString(_format, CultureInfo.InvariantCulture));
+            writer.WriteStringValue(value.Value.ToString(Format, CultureInfo.InvariantCulture));
         }
         else
         {
@@ -158,7 +161,7 @@ public class DateTimeJsonConverter : JsonConverter<DateTime>
 
 public class NullableDateTimeJsonConverter : JsonConverter<DateTime?>
 {
-    private const string _format = "yyyy-MM-dd HH:mm:ss";
+    private const string Format = "yyyy-MM-dd HH:mm:ss";
 
     public override DateTime? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
     {
@@ -171,7 +174,7 @@ public class NullableDateTimeJsonConverter : JsonConverter<DateTime?>
         }
         else
         {
-            if (DateTime.TryParseExact(dateString, _format, null, DateTimeStyles.None, out DateTime dateTime))
+            if (DateTime.TryParseExact(dateString, Format, null, DateTimeStyles.None, out DateTime dateTime))
             {
                 return dateTime;
             }
@@ -184,7 +187,7 @@ public class NullableDateTimeJsonConverter : JsonConverter<DateTime?>
     {
         if (value.HasValue)
         {
-            writer.WriteStringValue(value.Value.ToString(_format, CultureInfo.InvariantCulture));
+            writer.WriteStringValue(value.Value.ToString(Format, CultureInfo.InvariantCulture));
         }
         else
         {
@@ -201,7 +204,8 @@ public class LongJsonConverter : JsonConverter<long>
         {
             var val = reader.GetString();
 
-            if (string.IsNullOrWhiteSpace(val)) { return 0L; }
+            if (string.IsNullOrWhiteSpace(val))
+            { return 0L; }
 
             if (long.TryParse(val, out long l))
             {
@@ -230,7 +234,8 @@ public class NullableLongJsonConverter : JsonConverter<long?>
         {
             var val = reader.GetString();
 
-            if (string.IsNullOrWhiteSpace(val)) { return null; }
+            if (string.IsNullOrWhiteSpace(val))
+            { return null; }
 
             if (long.TryParse(val, out long l))
             {
@@ -266,7 +271,8 @@ public class DoubleJsonConverter : JsonConverter<double>
         {
             var val = reader.GetString();
 
-            if (string.IsNullOrWhiteSpace(val)) { return 0D; }
+            if (string.IsNullOrWhiteSpace(val))
+            { return 0D; }
 
             if (double.TryParse(val, out double d))
             {
@@ -295,7 +301,8 @@ public class NullableDoubleJsonConverter : JsonConverter<double?>
         {
             var val = reader.GetString();
 
-            if (string.IsNullOrWhiteSpace(val)) { return null; }
+            if (string.IsNullOrWhiteSpace(val))
+            { return null; }
 
             if (double.TryParse(val, out double d))
             {
@@ -331,7 +338,8 @@ public class DecimalJsonConverter : JsonConverter<decimal>
         {
             var val = reader.GetString();
 
-            if (string.IsNullOrWhiteSpace(val)) { return 0M; }
+            if (string.IsNullOrWhiteSpace(val))
+            { return 0M; }
 
             if (decimal.TryParse(val, out decimal d))
             {
@@ -355,7 +363,9 @@ public class DecimalJsonConverter : JsonConverter<decimal>
 public class NullableDecimalJsonConverter : JsonConverter<decimal?>
 {
     // Sometimes the values delivered by the eodhd API are exponential values (e.g., "1.0E+18").
+#pragma warning disable SYSLIB1045 // Convert to 'GeneratedRegexAttribute'.
     private static readonly Regex _notationRegex = new(@"([\d\.]+)?E\+(\d+)", RegexOptions.IgnoreCase);
+#pragma warning restore SYSLIB1045 // Convert to 'GeneratedRegexAttribute'.
 
     public override decimal? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
     {
@@ -365,13 +375,16 @@ public class NullableDecimalJsonConverter : JsonConverter<decimal?>
         {
             val = reader.GetString();
 
-            if (string.IsNullOrWhiteSpace(val)) { return null; }
+            if (string.IsNullOrWhiteSpace(val))
+            { return null; }
 
             if (_notationRegex.IsMatch(val))
             {
                 var m = _notationRegex.Match(val);
-                if (!decimal.TryParse(m.Groups[1].Value, out decimal b)) { return null; }
-                if (!double.TryParse(m.Groups[2].Value, out double numZeroes)) { return null; }
+                if (!decimal.TryParse(m.Groups[1].Value, out decimal b))
+                { return null; }
+                if (!double.TryParse(m.Groups[2].Value, out double numZeroes))
+                { return null; }
 
                 return b * (decimal)Math.Pow(10, numZeroes);
             }
@@ -418,16 +431,19 @@ public class BooleanJsonConverter : JsonConverter<bool>
         {
             var val = reader.GetString()?.ToLower();
 
-            if (string.IsNullOrWhiteSpace(val)) { return false; }
+            if (string.IsNullOrWhiteSpace(val))
+            { return false; }
 
             if (bool.TryParse(val, out bool b))
             {
                 return b;
             }
 
-            if (val == "t" || val == "true" || val == "y" || val == "yes") { return true; }
+            if (val == "t" || val == "true" || val == "y" || val == "yes")
+            { return true; }
 
-            if (val == "f" || val == "false" || val == "n" || val == "no") { return false; }
+            if (val == "f" || val == "false" || val == "n" || val == "no")
+            { return false; }
         }
         else if (reader.TokenType == JsonTokenType.Number)
         {
@@ -460,16 +476,19 @@ public class NullableBooleanJsonConverter : JsonConverter<bool?>
         {
             var val = reader.GetString()?.ToLower();
 
-            if (string.IsNullOrWhiteSpace(val)) { return null; }
+            if (string.IsNullOrWhiteSpace(val))
+            { return null; }
 
             if (bool.TryParse(val, out bool b))
             {
                 return b;
             }
 
-            if (val == "t" || val == "true" || val == "y" || val == "yes") { return true; }
+            if (val == "t" || val == "true" || val == "y" || val == "yes")
+            { return true; }
 
-            if (val == "f" || val == "false" || val == "n" || val == "no") { return false; }
+            if (val == "f" || val == "false" || val == "n" || val == "no")
+            { return false; }
         }
         else if (reader.TokenType == JsonTokenType.Number)
         {

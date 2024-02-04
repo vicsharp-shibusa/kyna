@@ -2,15 +2,13 @@
 
 internal static class DbContextFactory
 {
-    public static IDbContext Create(DbDef dbDef) => Create(dbDef.Engine, dbDef.ConnectionString);
-
-    public static IDbContext Create(DatabaseEngine engine, string connectionString)
+    public static IDbContext Create(DbDef dbDef)
     {
-        if (engine == DatabaseEngine.PostgreSql)
+        if (dbDef.Engine == DatabaseEngine.PostgreSql)
         {
-            return new PostgreSqlContext(connectionString);
+            return new PostgreSqlContext(dbDef);
         }
 
-        throw new Exception($"The database engine {engine} is not currently supported.");
+        throw new Exception($"The database engine {dbDef.Engine} is not currently supported.");
     }
 }

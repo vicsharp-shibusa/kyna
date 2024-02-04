@@ -20,7 +20,7 @@ internal class LoggerProvider : ILoggerProvider
 
     public LoggerProvider(string connectionString, Func<string, LogLevel, bool>? filter = null)
     {
-        _dbContext = new PostgreSqlContext(connectionString);
+        _dbContext = new PostgreSqlContext(new DbDef("Logs", DatabaseEngine.PostgreSql, connectionString));
         _sqlRepo = new SqlRepository(DatabaseEngine.PostgreSql);
 
         _filter = filter;
@@ -86,8 +86,8 @@ internal class LoggerProvider : ILoggerProvider
     {
         if (!_disposedValue)
         {
-            const int numberOfCycles = 10;
-            const int msSleepTime = 20;
+            const int NumberOfCycles = 10;
+            const int MsSleepTime = 20;
 
             if (disposing)
             {
@@ -95,16 +95,16 @@ internal class LoggerProvider : ILoggerProvider
 
                 int i = 0;
 
-                while (!_logQueue.IsEmpty && i++ < numberOfCycles)
+                while (!_logQueue.IsEmpty && i++ < NumberOfCycles)
                 {
-                    Thread.Sleep(msSleepTime);
+                    Thread.Sleep(MsSleepTime);
                 }
 
                 i = 0;
 
-                while (!_appEventQueue.IsEmpty && i++ < numberOfCycles)
+                while (!_appEventQueue.IsEmpty && i++ < NumberOfCycles)
                 {
-                    Thread.Sleep(msSleepTime);
+                    Thread.Sleep(MsSleepTime);
                 }
 
             }

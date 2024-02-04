@@ -24,14 +24,14 @@ public class UtilityTests
     [Fact]
     public void GetDescriptions_WithDescription_GetsDescriptionValues()
     {
-        List<string> descriptions = new() { "Nothing", "Some of it", "All of it" };
+        List<string> descriptions = ["Nothing", "Some of it", "All of it"];
         Assert.True(descriptions.SequenceEqual(EnumUtilities.GetDescriptions<WithDescription>()));
     }
 
     [Fact]
     public void GetDescriptions_NoDescription_GetsStringValues()
     {
-        List<string> descriptions = new() { "None", "Some", "All" };
+        List<string> descriptions = ["None", "Some", "All"];
         Assert.True(descriptions.SequenceEqual(EnumUtilities.GetDescriptions<NoDescription>()));
     }
 }

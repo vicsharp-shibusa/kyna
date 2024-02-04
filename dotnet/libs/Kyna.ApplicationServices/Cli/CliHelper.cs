@@ -46,7 +46,7 @@ public static class CliHelper
 
     public static string FormatArguments(CliArg[] cliArgs)
     {
-        List<KeyValuePair<string, string>> args = new(cliArgs.Length + 1);
+        List<KeyValuePair<string, string>> args = new(cliArgs.Length);
 
         var requiredArgs = cliArgs.Where(a => a.Required).ToArray();
         var optionalArgs = cliArgs.Except(requiredArgs).ToArray();
@@ -82,7 +82,10 @@ public static class CliHelper
 
         foreach (var kvp in connStringSection.GetChildren())
         {
-            if (kvp.Value is null) continue;
+            if (kvp.Value is null)
+            {
+                continue;
+            }
 
             var engItem = engineSection.GetSection(kvp.Key);
 
@@ -97,6 +100,43 @@ public static class CliHelper
         }
 
         return [.. dbDefs];
+    }
+
+    public static bool ConfirmActionWithUser(string message, string? defaultAnswer = "n")
+    {
+        string[] answerOptions = ["y", "n"];
+
+        StringBuilder sb = new(message.Trim());
+
+        if (answerOptions.Length == 0)
+        {
+            return false;
+        }
+
+        for (int i = 0; i < answerOptions.Length; i++)
+        {
+            if (answerOptions[i].Equals(defaultAnswer, StringComparison.OrdinalIgnoreCase))
+            {
+                answerOptions[i] = answerOptions[i].ToUpper();
+            }
+            else
+            {
+                answerOptions[i] = answerOptions[i].ToLower();
+            }
+        }
+
+        sb.Append($" ({string.Join('/', answerOptions)}) ");
+
+        Console.Write(sb.ToString());
+
+        var answer = Console.ReadLine();
+
+        if (string.IsNullOrWhiteSpace(answer))
+        {
+            answer = defaultAnswer;
+        }
+
+        return answer?.Trim().Equals("y", StringComparison.OrdinalIgnoreCase) ?? false;
     }
 }
 

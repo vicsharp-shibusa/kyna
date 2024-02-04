@@ -5,16 +5,11 @@ using System.Diagnostics;
 
 namespace Kyna.Infrastructure.Database;
 
-internal abstract class DbContextBase
+internal abstract class DbContextBase(DbDef dbDef)
 {
-    public DbContextBase(string? connectionString)
-    {
-        if (string.IsNullOrWhiteSpace(connectionString)) throw new ArgumentNullException(nameof(connectionString));
+    public DbDef DbDef { get; } = dbDef;
 
-        ConnectionString = connectionString;
-    }
-
-    public string ConnectionString { get; }
+    public SqlRepository Sql { get; } = new(dbDef);
 
     public abstract IDbConnection GetOpenConnection();
 

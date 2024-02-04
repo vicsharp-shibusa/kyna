@@ -266,7 +266,7 @@ public class ExtensionTests
     [Fact]
     public void ConvertToText_Hours()
     {
-        TimeSpan ts = new TimeSpan(0, 3, 0, 0);
+        TimeSpan ts = new(0, 3, 0, 0);
         string text = ts.ConvertToText();
         Assert.Contains("hours", text);
     }
@@ -274,7 +274,7 @@ public class ExtensionTests
     [Fact]
     public void ConvertToText_Minutes()
     {
-        TimeSpan ts = new TimeSpan(0, 0, 40, 0);
+        TimeSpan ts = new(0, 0, 40, 0);
         string text = ts.ConvertToText();
         Assert.Contains("minutes", text);
     }
@@ -282,7 +282,7 @@ public class ExtensionTests
     [Fact]
     public void ConvertToText_Seconds()
     {
-        TimeSpan ts = new TimeSpan(0, 0, 0, 13);
+        TimeSpan ts = new(0, 0, 0, 13);
         string text = ts.ConvertToText();
         Assert.Contains("seconds", text);
         Assert.DoesNotContain("millisecond", text);
@@ -291,7 +291,7 @@ public class ExtensionTests
     [Fact]
     public void ConvertToText_Milliseconds()
     {
-        TimeSpan ts = new TimeSpan(0, 0, 0, 0, 675);
+        TimeSpan ts = new(0, 0, 0, 0, 675);
         string text = ts.ConvertToText();
         Assert.Contains("milliseconds", text);
     }

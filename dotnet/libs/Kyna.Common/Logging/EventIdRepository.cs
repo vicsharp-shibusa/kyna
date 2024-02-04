@@ -14,17 +14,21 @@ public static class EventIdRepository
 
     public static EventId GetAppStartedEvent(IAppConfig appConfig)
     {
-        string msg = string.IsNullOrWhiteSpace(appConfig.AppName) ? "Application started"
-            : $"Application {appConfig.AppName} started";
+        if (appConfig != null)
+        {
+            return new EventId((int)Events.AppStarted, appConfig.AppName);
+        }
 
-        return new EventId((int)Events.AppStarted, msg);
+        return default;
     }
 
-    public static EventId GetAppFinishedEvent(IAppConfig appConfig)
+    public static EventId GetAppFinishedEvent(IAppConfig? appConfig)
     {
-        string msg = string.IsNullOrWhiteSpace(appConfig.AppName) ? "Application finished"
-            : $"Application {appConfig.AppName} finished";
+        if (appConfig != null)
+        {
+            return new EventId((int)Events.AppFinished, appConfig.AppName);
+        }
 
-        return new EventId((int)Events.AppFinished, msg);
+        return default;
     }
 }

@@ -6,11 +6,11 @@ using System.Runtime.CompilerServices;
     InternalsVisibleTo("Kyna.ApplicationServices")]
 namespace Kyna.Infrastructure.Database;
 
-internal class PostgreSqlContext(string? connectionString) : DbContextBase(connectionString), IDbContext
+internal class PostgreSqlContext(DbDef dbDef) : DbContextBase(dbDef), IDbContext
 {
     public override IDbConnection GetOpenConnection()
     {
-        var connection = new NpgsqlConnection(ConnectionString);
+        var connection = new NpgsqlConnection(DbDef.ConnectionString);
         connection.Open();
         return connection;
     }
@@ -18,7 +18,7 @@ internal class PostgreSqlContext(string? connectionString) : DbContextBase(conne
     public override async Task<IDbConnection> GetOpenConnectionAsync(CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
-        var connection = new NpgsqlConnection(ConnectionString);
+        var connection = new NpgsqlConnection(DbDef.ConnectionString);
         await connection.OpenAsync(cancellationToken);
         return connection;
     }
