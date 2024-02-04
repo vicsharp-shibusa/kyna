@@ -3,6 +3,7 @@ using Kyna.Infrastructure.Database;
 using Polly;
 using Polly.Contrib.WaitAndRetry;
 using Polly.Retry;
+using System.Collections.Concurrent;
 using System.Net;
 using System.Text.Json;
 
@@ -18,6 +19,8 @@ public abstract class DataImporterBase : IDisposable
     protected readonly HttpClient _httpClient;
     protected readonly JsonSerializerOptions _serializerOptions = JsonOptionsRepository.DefaultSerializerOptions;
 
+    protected readonly ConcurrentBag<(string Uri, string Category, string? SubCategory)> _concurrentBag;
+
     protected DataImporterBase(DbDef dbDef, string baseUri, string? apiKey = null)
     {
         _transactionService = new ApiTransactionService(dbDef);
@@ -26,26 +29,30 @@ public abstract class DataImporterBase : IDisposable
             BaseAddress = new Uri(baseUri),
         };
         _apiKey = apiKey;
+        _concurrentBag = [];
     }
 
     public abstract string Source { get; }
 
-    protected virtual async Task InvokeApiCallAsync(string uri, string category, string? subCategory = null,
-        CancellationToken cancellationToken = default)
-    {
-        _ = await GetStringResponseAsync(uri, category, subCategory, cancellationToken);
-    }
-
     // see also: https://github.com/Polly-Contrib/Polly.Contrib.WaitAndRetry?tab=readme-ov-file#new-jitter-recommendation
-    private readonly IEnumerable<TimeSpan> _delay = Backoff.DecorrelatedJitterBackoffV2(medianFirstRetryDelay: TimeSpan.FromSeconds(1), retryCount: 5);
-
+    private readonly IEnumerable<TimeSpan> _delay = Backoff.DecorrelatedJitterBackoffV2(medianFirstRetryDelay: TimeSpan.FromSeconds(3),
+        retryCount: 10);
+    
     private AsyncRetryPolicy<HttpResponseMessage> RetryPolicy => Policy
         .Handle<HttpRequestException>()
         .OrResult<HttpResponseMessage>(r => r.StatusCode == HttpStatusCode.TooManyRequests ||
                                             r.StatusCode == HttpStatusCode.ServiceUnavailable)
         .WaitAndRetryAsync(_delay);
 
+    protected virtual async Task InvokeApiCallAsync(string uri, string category, string? subCategory = null,
+        bool letItFail = false,
+        CancellationToken cancellationToken = default)
+    {
+        _ = await GetStringResponseAsync(uri, category, subCategory, letItFail, cancellationToken);
+    }
+
     protected virtual async Task<string> GetStringResponseAsync(string uri, string category, string? subCategory = null,
+        bool letItFail = false,
         CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
@@ -60,6 +67,12 @@ public abstract class DataImporterBase : IDisposable
             return await _httpClient.GetAsync(uri, cancellationToken);
         });
 
+        if ((response.StatusCode == HttpStatusCode.TooManyRequests ||
+            response.StatusCode == HttpStatusCode.ServiceUnavailable) && !letItFail)
+        {
+            _concurrentBag.Add((uri, category, subCategory));
+            return "";
+        }
 
         string uriWithoutKey = HideToken(uri);
         await _transactionService.RecordTransactionAsync("GET", uriWithoutKey, Source, category, response,

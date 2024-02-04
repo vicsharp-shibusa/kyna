@@ -140,6 +140,17 @@ public sealed class EodHdImporter : DataImporterBase, IExternalDataImporter
         await InvokeCalendarIposCallAsync(cancellationToken);
         await InvokeCalendarSplitsCallAsync(cancellationToken);
 
+        if (!_concurrentBag.IsEmpty)
+        {
+            _maxParallelization = 0;
+            Communicate?.Invoke(this, new CommunicationEventArgs($"Processing {_concurrentBag.Count} stragglers.", null));
+
+            foreach(var item in _concurrentBag)
+            {
+                await InvokeApiCallAsync(item.Uri, item.Category, item.SubCategory, cancellationToken: cancellationToken);
+            }
+        }
+
         timer.Stop();
         return timer.Elapsed;
     }
@@ -287,11 +298,6 @@ public sealed class EodHdImporter : DataImporterBase, IExternalDataImporter
     {
         cancellationToken.ThrowIfCancellationRequested();
 
-        if (_dryRun)
-        {
-            CommunicateAction(Constants.Actions.ExchangeList);
-        }
-
         var exchangeListAction = FindImportAction(Constants.Actions.ExchangeList);
 
         if (!exchangeListAction.Equals(ImportAction.Default) &&
@@ -301,6 +307,8 @@ public sealed class EodHdImporter : DataImporterBase, IExternalDataImporter
             var uri = BuildExchangeListUri();
             var ep = FindEndPointForUri(uri);
             CheckApiLimit(ep.Cost);
+
+            CommunicateAction(Constants.Actions.ExchangeList);
 
             if (!_dryRun)
             {
@@ -330,7 +338,7 @@ public sealed class EodHdImporter : DataImporterBase, IExternalDataImporter
 
                 if (!_dryRun)
                 {
-                    await InvokeApiCallAsync(uri, Constants.Actions.ExchangeDetails, exchange, cancellationToken);
+                    await InvokeApiCallAsync(uri, Constants.Actions.ExchangeDetails, exchange, cancellationToken: cancellationToken);
                     AddCallToUsage(uri);
                 }
             }
@@ -359,7 +367,7 @@ public sealed class EodHdImporter : DataImporterBase, IExternalDataImporter
                 if (!_dryRun)
                 {
                     string json = await GetStringResponseAsync(uri, Constants.Actions.ExchangeSymbolList,
-                        exchange, cancellationToken);
+                        exchange, cancellationToken: cancellationToken);
 
                     symbols.Add(exchange, JsonSerializer.Deserialize<Symbol[]>(json, JsonOptionsRepository.DefaultSerializerOptions)!);
 
@@ -399,7 +407,7 @@ public sealed class EodHdImporter : DataImporterBase, IExternalDataImporter
 
                     if (!_dryRun)
                     {
-                        await InvokeApiCallAsync(uri, Constants.Actions.EndOfDayPrices, code, cancellationToken);
+                        await InvokeApiCallAsync(uri, Constants.Actions.EndOfDayPrices, code, cancellationToken: cancellationToken);
                         AddCallToUsage(uri);
                     }
                 });
@@ -418,7 +426,7 @@ public sealed class EodHdImporter : DataImporterBase, IExternalDataImporter
 
                     if (!_dryRun)
                     {
-                        await InvokeApiCallAsync(uri, Constants.Actions.EndOfDayPrices, code, cancellationToken);
+                        await InvokeApiCallAsync(uri, Constants.Actions.EndOfDayPrices, code, cancellationToken: cancellationToken);
                         AddCallToUsage(uri);
                     }
                 }
@@ -454,7 +462,7 @@ public sealed class EodHdImporter : DataImporterBase, IExternalDataImporter
 
                     if (!_dryRun)
                     {
-                        await InvokeApiCallAsync(uri, Constants.Actions.Splits, code, cancellationToken);
+                        await InvokeApiCallAsync(uri, Constants.Actions.Splits, code, cancellationToken: cancellationToken);
                         AddCallToUsage(uri);
                     }
                 });
@@ -473,7 +481,7 @@ public sealed class EodHdImporter : DataImporterBase, IExternalDataImporter
 
                     if (!_dryRun)
                     {
-                        await InvokeApiCallAsync(uri, Constants.Actions.Splits, code, cancellationToken);
+                        await InvokeApiCallAsync(uri, Constants.Actions.Splits, code, cancellationToken: cancellationToken);
                         AddCallToUsage(uri);
                     }
                 }
@@ -508,7 +516,7 @@ public sealed class EodHdImporter : DataImporterBase, IExternalDataImporter
 
                     if (!_dryRun)
                     {
-                        await InvokeApiCallAsync(uri, Constants.Actions.Dividends, code, cancellationToken);
+                        await InvokeApiCallAsync(uri, Constants.Actions.Dividends, code, cancellationToken: cancellationToken);
                         AddCallToUsage(uri);
                     }
                 });
@@ -527,7 +535,7 @@ public sealed class EodHdImporter : DataImporterBase, IExternalDataImporter
 
                     if (!_dryRun)
                     {
-                        await InvokeApiCallAsync(uri, Constants.Actions.Dividends, code, cancellationToken);
+                        await InvokeApiCallAsync(uri, Constants.Actions.Dividends, code, cancellationToken: cancellationToken);
                         AddCallToUsage(uri);
                     }
                 }
@@ -621,7 +629,7 @@ public sealed class EodHdImporter : DataImporterBase, IExternalDataImporter
 
                     if (!_dryRun)
                     {
-                        await InvokeApiCallAsync(uri, Constants.Actions.InsiderTransactions, code, cancellationToken);
+                        await InvokeApiCallAsync(uri, Constants.Actions.InsiderTransactions, code, cancellationToken: cancellationToken);
                         AddCallToUsage(uri);
                     }
                 });
@@ -640,7 +648,7 @@ public sealed class EodHdImporter : DataImporterBase, IExternalDataImporter
 
                     if (!_dryRun)
                     {
-                        await InvokeApiCallAsync(uri, Constants.Actions.InsiderTransactions, code, cancellationToken);
+                        await InvokeApiCallAsync(uri, Constants.Actions.InsiderTransactions, code, cancellationToken: cancellationToken);
                         AddCallToUsage(uri);
                     }
                 }
@@ -754,7 +762,7 @@ public sealed class EodHdImporter : DataImporterBase, IExternalDataImporter
 
                     if (!_dryRun)
                     {
-                        await InvokeApiCallAsync(uri, Constants.Actions.Fundamentals, code, cancellationToken);
+                        await InvokeApiCallAsync(uri, Constants.Actions.Fundamentals, code, cancellationToken: cancellationToken);
                         AddCallToUsage(uri);
                     }
                 });
@@ -773,7 +781,7 @@ public sealed class EodHdImporter : DataImporterBase, IExternalDataImporter
 
                     if (!_dryRun)
                     {
-                        await InvokeApiCallAsync(uri, Constants.Actions.Fundamentals, code, cancellationToken);
+                        await InvokeApiCallAsync(uri, Constants.Actions.Fundamentals, code, cancellationToken: cancellationToken);
                         AddCallToUsage(uri);
                     }
                 }
