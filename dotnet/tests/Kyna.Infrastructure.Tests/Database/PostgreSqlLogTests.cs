@@ -8,8 +8,6 @@ public class PostgreSqlLogTests
 {
     private readonly SqlRepository _postgreSqlRepo = new(DatabaseEngine.PostgreSql);
 
-    private const string _dateTimeEquality = "yyyyMMddHHmmssfff";
-
     private PostgreSqlContext? _context;
 
     public PostgreSqlLogTests()
@@ -29,7 +27,7 @@ public class PostgreSqlLogTests
 
         Debug.Assert(configuration != null);
 
-        _context = new PostgreSqlContext(configuration.GetConnectionString("Logs"));
+        _context = new PostgreSqlContext(new DbDef("Logs", DatabaseEngine.PostgreSql, configuration.GetConnectionString("Logs")!));
     }
 
     [Fact]
@@ -44,12 +42,7 @@ public class PostgreSqlLogTests
         var actual = _context.QueryFirstOrDefault<Infrastructure.Database.DataAccessObjects.Log>(sql, new { logDao.Message });
 
         Assert.NotNull(actual);
-        Assert.Equal(logDao.Scope, actual.Scope);
-        Assert.Equal(logDao.Exception, actual.Exception);
-        Assert.Equal(logDao.TimestampUtc.ToString(_dateTimeEquality), actual.TimestampUtc.ToString(_dateTimeEquality));
-        Assert.Equal(logDao.LogLevel, actual.LogLevel);
-        Assert.Equal(logDao.Message, actual.Message);
-        Assert.Equal(logDao.ProcessId, actual.ProcessId);
+        Assert.Equal(logDao, actual);
     }
 
     [Fact]
@@ -64,12 +57,7 @@ public class PostgreSqlLogTests
         var actual = await _context.QueryFirstOrDefaultAsync<Infrastructure.Database.DataAccessObjects.Log>(sql, new { logDao.Message });
 
         Assert.NotNull(actual);
-        Assert.Equal(logDao.Scope, actual.Scope);
-        Assert.Equal(logDao.Exception, actual.Exception);
-        Assert.Equal(logDao.TimestampUtc.ToString(_dateTimeEquality), actual.TimestampUtc.ToString(_dateTimeEquality));
-        Assert.Equal(logDao.LogLevel, actual.LogLevel);
-        Assert.Equal(logDao.Message, actual.Message);
-        Assert.Equal(logDao.ProcessId, actual.ProcessId);
+        Assert.Equal(logDao, actual);
     }
 
     [Fact]
@@ -91,8 +79,8 @@ public class PostgreSqlLogTests
         var match1 = actuals.FirstOrDefault(a => a.ProcessId.Equals(logDao1.ProcessId));
         var match2 = actuals.FirstOrDefault(a => a.ProcessId.Equals(logDao2.ProcessId));
 
-        Assert.NotNull(match1);
-        Assert.NotNull(match2);
+        Assert.Equal(logDao1, match1);
+        Assert.Equal(logDao2, match2);
     }
 
     [Fact]
@@ -114,8 +102,8 @@ public class PostgreSqlLogTests
         var match1 = actuals.FirstOrDefault(a => a.ProcessId.Equals(logDao1.ProcessId));
         var match2 = actuals.FirstOrDefault(a => a.ProcessId.Equals(logDao2.ProcessId));
 
-        Assert.NotNull(match1);
-        Assert.NotNull(match2);
+        Assert.Equal(logDao1, match1);
+        Assert.Equal(logDao2, match2);
     }
 
     [Fact]
@@ -130,10 +118,7 @@ public class PostgreSqlLogTests
         var actual = _context.QueryFirstOrDefault<Infrastructure.Database.DataAccessObjects.AppEvent>(sql, new { eventDao.EventName });
 
         Assert.NotNull(actual);
-        Assert.Equal(eventDao.EventId, actual.EventId);
-        Assert.Equal(eventDao.EventName, actual.EventName);
-        Assert.Equal(eventDao.TimestampUtc.ToString(_dateTimeEquality), actual.TimestampUtc.ToString(_dateTimeEquality));
-        Assert.Equal(eventDao.ProcessId, actual.ProcessId);
+        Assert.Equal(eventDao, actual);
     }
 
     [Fact]
@@ -148,10 +133,7 @@ public class PostgreSqlLogTests
         var actual = await _context.QueryFirstOrDefaultAsync<Infrastructure.Database.DataAccessObjects.AppEvent>(sql, new { eventDao.EventName });
 
         Assert.NotNull(actual);
-        Assert.Equal(eventDao.EventId, actual.EventId);
-        Assert.Equal(eventDao.EventName, actual.EventName);
-        Assert.Equal(eventDao.TimestampUtc.ToString(_dateTimeEquality), actual.TimestampUtc.ToString(_dateTimeEquality));
-        Assert.Equal(eventDao.ProcessId, actual.ProcessId);
+        Assert.Equal(eventDao, actual);
     }
 
     [Fact]
@@ -174,8 +156,8 @@ public class PostgreSqlLogTests
         var match1 = actuals.FirstOrDefault(a => a.ProcessId.Equals(eventDao1.ProcessId));
         var match2 = actuals.FirstOrDefault(a => a.ProcessId.Equals(eventDao2.ProcessId));
 
-        Assert.NotNull(match1);
-        Assert.NotNull(match2);
+        Assert.Equal(eventDao1, match1);
+        Assert.Equal(eventDao2, match2);
     }
 
     [Fact]
@@ -198,8 +180,8 @@ public class PostgreSqlLogTests
         var match1 = actuals.FirstOrDefault(a => a.ProcessId.Equals(eventDao1.ProcessId));
         var match2 = actuals.FirstOrDefault(a => a.ProcessId.Equals(eventDao2.ProcessId));
 
-        Assert.NotNull(match1);
-        Assert.NotNull(match2);
+        Assert.Equal(eventDao1, match1);
+        Assert.Equal(eventDao2, match2);
     }
 
     private static Infrastructure.Database.DataAccessObjects.Log CreateLog()

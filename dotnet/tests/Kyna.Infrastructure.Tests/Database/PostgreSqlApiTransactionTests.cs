@@ -8,8 +8,6 @@ public class PostgreSqlApiTransactionTests
 {
     private readonly SqlRepository _postgreSqlRepo = new(DatabaseEngine.PostgreSql);
 
-    private const string _dateTimeEquality = "yyyyMMddHHmmssfff";
-
     private PostgreSqlContext? _context;
 
     public PostgreSqlApiTransactionTests()
@@ -29,7 +27,7 @@ public class PostgreSqlApiTransactionTests
 
         Debug.Assert(configuration != null);
 
-        _context = new PostgreSqlContext(configuration.GetConnectionString("Imports"));
+        _context = new PostgreSqlContext(new DbDef("Imports", DatabaseEngine.PostgreSql, configuration.GetConnectionString("Imports")!));
     }
 
     [Fact]
@@ -44,19 +42,7 @@ public class PostgreSqlApiTransactionTests
         var actual = _context.QueryFirstOrDefault<Infrastructure.Database.DataAccessObjects.ApiTransaction>(
             sql, new { transactionDao.SubCategory });
 
-        Assert.NotNull(actual);
-        Assert.Equal(transactionDao.TimestampUtc.ToString(_dateTimeEquality),
-            actual.TimestampUtc.ToString(_dateTimeEquality));
-        Assert.Equal(transactionDao.Source, actual.Source);
-        Assert.Equal(transactionDao.Category, actual.Category);
-        Assert.Equal(transactionDao.SubCategory, actual.SubCategory);
-        Assert.Equal(transactionDao.RequestUri, actual.RequestUri);
-        Assert.Equal(transactionDao.RequestMethod, actual.RequestMethod);
-        Assert.Equal(transactionDao.RequestPayload, actual.RequestPayload);
-        Assert.Equal(transactionDao.RequestHeaders, actual.RequestHeaders);
-        Assert.Equal(transactionDao.ResponseHeaders, actual.ResponseHeaders);
-        Assert.Equal(transactionDao.ResponseStatusCode, actual.ResponseStatusCode);
-        Assert.Equal(transactionDao.ResponseBody, actual.ResponseBody);
+        Assert.Equal(transactionDao, actual);
     }
 
     private static Infrastructure.Database.DataAccessObjects.ApiTransaction CreateApiTransaction()
@@ -72,7 +58,8 @@ public class PostgreSqlApiTransactionTests
             RequestUri = "https://test.com/api/AAPL",
             ResponseBody = "{\"stuff\":\"stuff value\"}",
             ResponseHeaders = "[]",
-            ResponseStatusCode = "200"
+            ResponseStatusCode = "200",
+            ProcessId = Guid.NewGuid()
         };
     }
 }

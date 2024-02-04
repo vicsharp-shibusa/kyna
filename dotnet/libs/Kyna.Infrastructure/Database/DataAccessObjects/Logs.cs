@@ -16,6 +16,7 @@ internal sealed record class AppEvent : LogBase
 
 internal abstract record class LogBase
 {
-    public DateTime TimestampUtc { get; init; } = DateTime.UtcNow;
+    public long TicksUtc { get; init; } = DateTime.UtcNow.Ticks;
+    public DateTime TimestampUtc => new(TicksUtc, DateTimeKind.Utc);
     public Guid? ProcessId { get; init; }
 }
