@@ -1,0 +1,19 @@
+{
+  "Import Actions": {
+    "Calendar Earnings": "US",
+    "Calendar Ipos": "US"
+  },
+  "Exchanges": {
+    "US": "NYSE, NYSE ARCA, NASDAQ"
+  },
+  "Symbol Types": {
+    "US": "Common Stock, ETF"
+  },
+  "Date Ranges": {
+    "Calendar Earnings": "2023-01-01,2023-12-31",
+    "Calendar Ipos": "2023-01-01,2023-12-31"
+  },
+  "Options": {
+    "Max Parallelization": "5"
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "Import Actions": {
+    "Exchange Symbol List": "US",
+    "EOD Prices": "US",
+    "Splits": "US",
+    "Dividends": "US"
+  },
+  "Exchanges": {
+    "US": "NYSE, NYSE ARCA, NASDAQ"
+  },
+  "Options": {
+    "Bulk": "true"
+  }
+}

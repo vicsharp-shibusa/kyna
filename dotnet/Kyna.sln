@@ -5,31 +5,32 @@ VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "apps", "apps", "{260FF219-1D50-471E-A386-F63F750FF839}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Kyna.Prototype.Cli", "apps\Kyna.Prototype.Cli\Kyna.Prototype.Cli.csproj", "{38AE0342-B4F9-415D-AA9A-5479B56AF6D4}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Kyna.Prototype.Cli", "apps\Kyna.Prototype.Cli\Kyna.Prototype.Cli.csproj", "{38AE0342-B4F9-415D-AA9A-5479B56AF6D4}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "libs", "libs", "{D2059ABB-1D2D-4A22-87A4-2FA412FC6CAD}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Kyna.ApplicationServices", "libs\Kyna.ApplicationServices\Kyna.ApplicationServices.csproj", "{F7BA6224-8B6E-473C-AB06-CEC74BA83FDA}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Kyna.ApplicationServices", "libs\Kyna.ApplicationServices\Kyna.ApplicationServices.csproj", "{F7BA6224-8B6E-473C-AB06-CEC74BA83FDA}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Kyna.Infrastructure", "libs\Kyna.Infrastructure\Kyna.Infrastructure.csproj", "{9D6C59C4-A913-41AE-AF96-5660FA21AF22}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Kyna.Infrastructure", "libs\Kyna.Infrastructure\Kyna.Infrastructure.csproj", "{9D6C59C4-A913-41AE-AF96-5660FA21AF22}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Kyna.Common", "libs\Kyna.Common\Kyna.Common.csproj", "{69F89E73-8106-4018-9793-5F2DD706E4DC}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Kyna.Common", "libs\Kyna.Common\Kyna.Common.csproj", "{69F89E73-8106-4018-9793-5F2DD706E4DC}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{20FEE790-CF0F-452A-B29E-C01F46F94AF1}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Kyna.ApplicationServices.Tests", "tests\Kyna.ApplicationServices.Tests\Kyna.ApplicationServices.Tests.csproj", "{BA5A2D61-3A61-4CA7-A6D4-3087CD3BE3F5}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Kyna.ApplicationServices.Tests", "tests\Kyna.ApplicationServices.Tests\Kyna.ApplicationServices.Tests.csproj", "{BA5A2D61-3A61-4CA7-A6D4-3087CD3BE3F5}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Kyna.Infrastructure.Tests", "tests\Kyna.Infrastructure.Tests\Kyna.Infrastructure.Tests.csproj", "{44EAD3D9-51C3-44B9-B049-B6F70ED8B6FF}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Kyna.Infrastructure.Tests", "tests\Kyna.Infrastructure.Tests\Kyna.Infrastructure.Tests.csproj", "{44EAD3D9-51C3-44B9-B049-B6F70ED8B6FF}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Kyna.Common.Tests", "tests\Kyna.Common.Tests\Kyna.Common.Tests.csproj", "{7C1D2F33-107E-4A94-AF9A-A42E22057A3B}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Kyna.Common.Tests", "tests\Kyna.Common.Tests\Kyna.Common.Tests.csproj", "{7C1D2F33-107E-4A94-AF9A-A42E22057A3B}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Kyna.EodHistoricalData", "libs\Kyna.EodHistoricalData\Kyna.EodHistoricalData.csproj", "{34068F83-C3B8-4078-BE25-F23CBDD9B8F3}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Kyna.FinancialDataImport.Cli", "apps\Kyna.FinancialDataImport.Cli\Kyna.FinancialDataImport.Cli.csproj", "{66861DEE-ACBE-4B6A-B76A-B03E057BB105}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
 		Release|Any CPU = Release|Any CPU
-	EndGlobalSection
-	GlobalSection(SolutionProperties) = preSolution
-		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{38AE0342-B4F9-415D-AA9A-5479B56AF6D4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
@@ -60,6 +61,17 @@ Global
 		{7C1D2F33-107E-4A94-AF9A-A42E22057A3B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{7C1D2F33-107E-4A94-AF9A-A42E22057A3B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{7C1D2F33-107E-4A94-AF9A-A42E22057A3B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{34068F83-C3B8-4078-BE25-F23CBDD9B8F3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{34068F83-C3B8-4078-BE25-F23CBDD9B8F3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{34068F83-C3B8-4078-BE25-F23CBDD9B8F3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{34068F83-C3B8-4078-BE25-F23CBDD9B8F3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{66861DEE-ACBE-4B6A-B76A-B03E057BB105}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{66861DEE-ACBE-4B6A-B76A-B03E057BB105}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{66861DEE-ACBE-4B6A-B76A-B03E057BB105}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{66861DEE-ACBE-4B6A-B76A-B03E057BB105}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{38AE0342-B4F9-415D-AA9A-5479B56AF6D4} = {260FF219-1D50-471E-A386-F63F750FF839}
@@ -69,5 +81,10 @@ Global
 		{BA5A2D61-3A61-4CA7-A6D4-3087CD3BE3F5} = {20FEE790-CF0F-452A-B29E-C01F46F94AF1}
 		{44EAD3D9-51C3-44B9-B049-B6F70ED8B6FF} = {20FEE790-CF0F-452A-B29E-C01F46F94AF1}
 		{7C1D2F33-107E-4A94-AF9A-A42E22057A3B} = {20FEE790-CF0F-452A-B29E-C01F46F94AF1}
+		{34068F83-C3B8-4078-BE25-F23CBDD9B8F3} = {D2059ABB-1D2D-4A22-87A4-2FA412FC6CAD}
+		{66861DEE-ACBE-4B6A-B76A-B03E057BB105} = {260FF219-1D50-471E-A386-F63F750FF839}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {8C493EF7-27AC-4D91-B302-C3888410942A}
 	EndGlobalSection
 EndGlobal

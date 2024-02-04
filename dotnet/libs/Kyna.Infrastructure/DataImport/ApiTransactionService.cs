@@ -2,19 +2,12 @@
 using System.Net.Http.Headers;
 using System.Text.Json;
 
-namespace Kyna.ApplicationServices.DataImport;
+namespace Kyna.Infrastructure.DataImport;
 
-public class ApiTransactionService
+public class ApiTransactionService(DbDef dbDef)
 {
-    private readonly IDbContext _dbContext;
-    private readonly SqlRepository _sqlRepository;
+    private readonly IDbContext _dbContext = DbContextFactory.Create(dbDef);
     private readonly JsonSerializerOptions _serializerOptions = JsonSerializerOptions.Default;
-    
-    public ApiTransactionService(DbDef dbDef)
-    {
-        _dbContext = DbContextFactory.Create(dbDef);
-        _sqlRepository = new SqlRepository(dbDef);
-    }
 
     public async Task RecordTransactionAsync(
         string method,
@@ -27,9 +20,9 @@ public class ApiTransactionService
         string? subCategory = null,
         DateTime? transactionTime = null)
     {
-        var transDao = new Infrastructure.Database.DataAccessObjects.ApiTransaction()
+        var transDao = new Database.DataAccessObjects.ApiTransaction()
         {
-            TimestampUtc = transactionTime ?? DateTime.UtcNow,
+            TicksUtc = transactionTime?.Ticks ?? DateTime.UtcNow.Ticks,
             Source = source,
             Category = category,
             SubCategory = subCategory,
@@ -42,6 +35,6 @@ public class ApiTransactionService
             ResponseBody = await response.Content.ReadAsStringAsync()
         };
 
-        await _dbContext.ExecuteAsync(_sqlRepository.InsertApiTransaction, transDao);
+        await _dbContext.ExecuteAsync(_dbContext.Sql.InsertApiTransaction, transDao);
     }
 }
