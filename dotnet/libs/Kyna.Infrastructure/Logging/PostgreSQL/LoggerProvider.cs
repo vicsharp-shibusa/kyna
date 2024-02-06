@@ -61,7 +61,7 @@ internal class LoggerProvider : ILoggerProvider
                 {
                     if (logItem is not null)
                     {
-                        _dbContext.Execute(_sqlRepo.InsertLog, logItem);
+                        _dbContext.Execute(_sqlRepo.Logs.Insert, logItem);
                     }
                 }
             }
@@ -75,7 +75,7 @@ internal class LoggerProvider : ILoggerProvider
                 {
                     if (appEvent is not null)
                     {
-                        _dbContext.Execute(_sqlRepo.InsertAppEvent, appEvent);
+                        _dbContext.Execute(_sqlRepo.AppEvents.Insert, appEvent);
                     }
                 }
             }

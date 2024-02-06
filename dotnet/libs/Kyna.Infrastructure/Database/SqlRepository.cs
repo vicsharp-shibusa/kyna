@@ -2,13 +2,32 @@
 
 namespace Kyna.Infrastructure.Database;
 
-internal sealed partial class SqlRepository(DbDef dbDef)
+internal sealed partial class SqlRepository : SqlRepositoryBase
 {
-    private readonly DbDef _dbDef = dbDef;
+    public SqlRepository(DbDef dbDef) : base(dbDef)
+    {
+        ApiTransactions = new(dbDef);
+        Logs = new(dbDef);
+        AppEvents = new(dbDef);
+    }
 
     public SqlRepository(DatabaseEngine engine) : this(new DbDef("", engine, "")) { }
 
-    private string ThrowSqlNotImplemented([CallerMemberName] string memberName = "")
+    public ApiTransactionsInternal ApiTransactions { get; }
+    public LogsInternal Logs { get; }
+    public EventsInternal AppEvents { get; }
+}
+
+internal abstract class SqlRepositoryBase
+{
+    protected readonly DbDef _dbDef;
+
+    public SqlRepositoryBase(DbDef dbDef)
+    {
+        _dbDef = dbDef;
+    }
+
+    protected string ThrowSqlNotImplemented([CallerMemberName] string memberName = "")
     {
         memberName = string.IsNullOrWhiteSpace(memberName) ? "Unknown" : memberName;
 

@@ -11,7 +11,7 @@ public class DatabaseLogService(DbDef dbDef)
         start ??= new DateTime(1900, 1, 1);
         end ??= DateTime.UtcNow.AddDays(1);
 
-        string sql = $"{_dbContext.Sql.DeleteLogs} WHERE timestamp_utc > @Start AND timestamp_utc < @End";
+        string sql = $"{_dbContext.Sql.Logs.Delete} WHERE timestamp_utc > @Start AND timestamp_utc < @End";
 
         return _dbContext.ExecuteAsync(sql, new { start, end });
     }
@@ -21,7 +21,7 @@ public class DatabaseLogService(DbDef dbDef)
         start ??= new DateTime(1900, 1, 1);
         end ??= DateTime.UtcNow.AddDays(1);
 
-        string sql = $"{_dbContext.Sql.DeleteAppEvents} WHERE timestamp_utc > @Start AND timestamp_utc < @End";
+        string sql = $"{_dbContext.Sql.AppEvents.Delete} WHERE timestamp_utc > @Start AND timestamp_utc < @End";
 
         return _dbContext.ExecuteAsync(sql, new { start, end });
     }

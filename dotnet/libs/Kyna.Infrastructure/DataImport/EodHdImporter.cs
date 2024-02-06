@@ -265,7 +265,7 @@ public sealed class EodHdImporter : DataImporterBase, IExternalDataImporter
             {
                 CommunicateAction(Constants.Actions.Purge);
 
-                return _dbContext.ExecuteAsync(_dbContext.Sql.DeleteApiTransactionsForSource, new { Source },
+                return _dbContext.ExecuteAsync(_dbContext.Sql.ApiTransactions.DeleteForSource, new { Source },
                     cancellationToken: cancellationToken);
             }
         }

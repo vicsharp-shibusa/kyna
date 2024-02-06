@@ -35,6 +35,6 @@ public class ApiTransactionService(DbDef dbDef)
             ResponseBody = await response.Content.ReadAsStringAsync()
         };
 
-        await _dbContext.ExecuteAsync(_dbContext.Sql.InsertApiTransaction, transDao);
+        await _dbContext.ExecuteAsync(_dbContext.Sql.ApiTransactions.Insert, transDao);
     }
 }

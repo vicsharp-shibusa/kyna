@@ -1,4 +1,5 @@
 ﻿using Kyna.Infrastructure.Database;
+using Kyna.Infrastructure.Database.DataAccessObjects;
 using Microsoft.Extensions.Configuration;
 using System.Diagnostics;
 
@@ -33,25 +34,73 @@ public class PostgreSqlApiTransactionTests
     [Fact]
     public void InsertAndFetch_ApiTransaction_InternalTransaction()
     {
-        var transactionDao = CreateApiTransaction();
+        var transactionDao = CreateApiTransaction(Guid.NewGuid().ToString());
 
-        _context!.Execute(_postgreSqlRepo.InsertApiTransaction, transactionDao);
+        _context!.Execute(_postgreSqlRepo.ApiTransactions.Insert, transactionDao);
 
-        string sql = $"{_postgreSqlRepo.FetchApiTransaction} WHERE sub_category = @SubCategory";
+        string sql = $"{_postgreSqlRepo.ApiTransactions.Fetch} WHERE sub_category = @SubCategory";
 
-        var actual = _context.QueryFirstOrDefault<Infrastructure.Database.DataAccessObjects.ApiTransaction>(
+        var actual = _context.QueryFirstOrDefault<ApiTransaction>(
             sql, new { transactionDao.SubCategory });
 
         Assert.Equal(transactionDao, actual);
     }
 
-    private static Infrastructure.Database.DataAccessObjects.ApiTransaction CreateApiTransaction()
+    [Fact]
+    public void FindTransactionsForMigration_GroupBy()
     {
-        return new Infrastructure.Database.DataAccessObjects.ApiTransaction()
+        const int Count = 10;
+        ApiTransaction[] apiTransactions = new ApiTransaction[Count];
+
+        for (int i = 0; i < 5; i++)
+        {
+            apiTransactions[i] = CreateApiTransaction("One");
+        }
+        for (int i = 5; i < Count; i++)
+        {
+            apiTransactions[i] = CreateApiTransaction("Two");
+        }
+
+        _context!.Execute(_postgreSqlRepo.ApiTransactions.Insert, apiTransactions);
+
+        string sql = "SELECT MAX(id) FROM api_transactions where sub_category = @Sub";
+
+        int maxOneId = _context.QueryFirstOrDefault<int>(sql, new { Sub = "One" });
+        int maxTwoId = _context.QueryFirstOrDefault<int>(sql, new { Sub = "Two" });
+
+        var itemsToMigrate = _context.Query<ApiTransactionForMigration>(
+            _context.Sql.ApiTransactions.FetchForMigration, new { Source = "Test", Category = "Price Action" });
+
+        Assert.NotEmpty(itemsToMigrate);
+
+        var items = itemsToMigrate.GroupBy(g => g.SubCategory).Select(g => new
+        {
+            SubCategory = g.Key,
+            Item = g.MaxBy(i => i.Id)
+        });
+
+        Assert.NotEmpty(items);
+
+        Assert.NotNull(items.FirstOrDefault()?.Item);
+
+        int? oneId = items.FirstOrDefault(i => i.SubCategory == "One")?.Item?.Id;
+        int? twoId = items.FirstOrDefault(i => i.SubCategory == "Two")?.Item?.Id;
+
+        Assert.NotNull(oneId);
+        Assert.NotNull(twoId);
+
+        Assert.Equal(maxOneId, oneId);
+        Assert.Equal(maxTwoId, twoId);
+    }
+
+    private static ApiTransaction CreateApiTransaction(string? subCategory = "Sub",
+        Guid? processId = null)
+    {
+        return new ApiTransaction()
         {
             Source = "Test",
             Category = "Price Action",
-            SubCategory = Guid.NewGuid().ToString("N")[..8],
+            SubCategory = subCategory ?? "Sub",
             RequestHeaders = "[]",
             RequestMethod = "GET",
             RequestPayload = null,
@@ -59,7 +108,7 @@ public class PostgreSqlApiTransactionTests
             ResponseBody = "{\"stuff\":\"stuff value\"}",
             ResponseHeaders = "[]",
             ResponseStatusCode = "200",
-            ProcessId = Guid.NewGuid()
+            ProcessId = processId ?? Guid.NewGuid()
         };
     }
 }
