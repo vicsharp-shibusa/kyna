@@ -145,7 +145,7 @@ public sealed class EodHdImporter : DataImporterBase, IExternalDataImporter
             _maxParallelization = 0;
             Communicate?.Invoke(this, new CommunicationEventArgs($"Processing {_concurrentBag.Count} stragglers.", null));
 
-            foreach(var item in _concurrentBag)
+            foreach (var item in _concurrentBag)
             {
                 await InvokeApiCallAsync(item.Uri, item.Category, item.SubCategory, cancellationToken: cancellationToken);
             }
@@ -289,9 +289,21 @@ public sealed class EodHdImporter : DataImporterBase, IExternalDataImporter
         var user = JsonSerializer.Deserialize<User>(response, JsonOptionsRepository.DefaultSerializerOptions);
 
         _apiRequestsDate = user.ApiRequestsDate.ToString("yyyy-MM-dd");
-        _dailyLimit = user.DailyRateLimit;
-        Interlocked.Add(ref _usage, user.ApiRequests);
-        Interlocked.Add(ref _available, _dailyLimit - _usage);
+
+        if (DateOnly.TryParse(_apiRequestsDate, out DateOnly date))
+        {
+            _dailyLimit = user.DailyRateLimit;
+            var apiRequests = DateOnly.FromDateTime(DateTime.UtcNow).Equals(date)
+                ? user.ApiRequests : 0;
+
+            Interlocked.Add(ref _usage, apiRequests);
+            Interlocked.Add(ref _available, _dailyLimit - _usage);
+        }
+        else
+        {
+            throw new Exception($"Could not parse {_apiRequestsDate}");
+        }
+
     }
 
     private async Task InvokeExchangeListCallAsync(CancellationToken cancellationToken)
