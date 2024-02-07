@@ -1,9 +1,5 @@
 ﻿namespace Kyna.EodHistoricalData;
 
-/// <summary>
-/// Represents information about the user to whom the API key belongs.
-/// <seealso href="https://eodhistoricaldata.com/financial-apis/user-api/"/>
-/// </summary>
 public struct User
 {
     public string Name;

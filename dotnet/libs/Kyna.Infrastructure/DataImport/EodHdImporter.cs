@@ -17,9 +17,11 @@ public sealed class EodHdImporter : DataImporterBase, IExternalDataImporter
 {
     private readonly IDbContext _dbContext;
 
-    private static volatile int _usage = 0;
-    private static volatile int _available = 0;
-    private static int _dailyLimit = 100_000;
+    private readonly object _locker = new();
+
+    private int _usage = 0;
+    private int _available = 100_000;
+    private int _dailyLimit = 100_000;
     private string _apiRequestsDate = "";
 
     private int? _maxParallelization = null;
@@ -273,14 +275,11 @@ public sealed class EodHdImporter : DataImporterBase, IExternalDataImporter
         return Task.CompletedTask;
     }
 
-    private async Task InvokeUserCallAsync(CancellationToken cancellationToken)
+    private async Task InvokeUserCallAsync(CancellationToken cancellationToken, bool alreadyLocked = false)
     {
         cancellationToken.ThrowIfCancellationRequested();
 
         var uri = BuildUserUri();
-
-        var ep = FindEndPointForUri(uri);
-        CheckApiLimit(ep.Cost);
 
         CommunicateAction(Constants.Actions.User);
 
@@ -296,14 +295,24 @@ public sealed class EodHdImporter : DataImporterBase, IExternalDataImporter
             var apiRequests = DateOnly.FromDateTime(DateTime.UtcNow).Equals(date)
                 ? user.ApiRequests : 0;
 
-            Interlocked.Add(ref _usage, apiRequests);
-            Interlocked.Add(ref _available, _dailyLimit - _usage);
+            if (alreadyLocked)
+            {
+                _usage = apiRequests;
+                _available = _dailyLimit - _usage;
+            }
+            else
+            {
+                lock (_locker)
+                {
+                    _usage = apiRequests;
+                    _available = _dailyLimit - _usage;
+                }
+            }
         }
         else
         {
             throw new Exception($"Could not parse {_apiRequestsDate}");
         }
-
     }
 
     private async Task InvokeExchangeListCallAsync(CancellationToken cancellationToken)
@@ -318,7 +327,7 @@ public sealed class EodHdImporter : DataImporterBase, IExternalDataImporter
         {
             var uri = BuildExchangeListUri();
             var ep = FindEndPointForUri(uri);
-            CheckApiLimit(ep.Cost);
+            CheckApiLimit(cancellationToken, ep.Cost);
 
             CommunicateAction(Constants.Actions.ExchangeList);
 
@@ -346,7 +355,7 @@ public sealed class EodHdImporter : DataImporterBase, IExternalDataImporter
                 var uri = BuildExchangeDetailsUri(exchange);
 
                 var ep = FindEndPointForUri(uri);
-                CheckApiLimit(ep.Cost);
+                CheckApiLimit(cancellationToken, ep.Cost);
 
                 if (!_dryRun)
                 {
@@ -374,7 +383,7 @@ public sealed class EodHdImporter : DataImporterBase, IExternalDataImporter
                 var uri = BuildSymbolListUri(exchange);
 
                 var ep = FindEndPointForUri(uri);
-                CheckApiLimit(ep.Cost);
+                CheckApiLimit(cancellationToken, ep.Cost);
 
                 if (!_dryRun)
                 {
@@ -415,7 +424,7 @@ public sealed class EodHdImporter : DataImporterBase, IExternalDataImporter
 
                     uri = BuildEodUri($"{symbol.Code}.{exchange}");
                     ep = FindEndPointForUri(uri);
-                    CheckApiLimit(ep.Cost);
+                    CheckApiLimit(cancellationToken, ep.Cost);
 
                     if (!_dryRun)
                     {
@@ -434,7 +443,7 @@ public sealed class EodHdImporter : DataImporterBase, IExternalDataImporter
 
                     uri = BuildEodUri($"{symbol.Code}.{exchange}");
                     ep = FindEndPointForUri(uri);
-                    CheckApiLimit(ep.Cost);
+                    CheckApiLimit(cancellationToken, ep.Cost);
 
                     if (!_dryRun)
                     {
@@ -470,7 +479,7 @@ public sealed class EodHdImporter : DataImporterBase, IExternalDataImporter
 
                     uri = BuildSplitsUri($"{symbol.Code}.{exchange}");
                     ep = FindEndPointForUri(uri);
-                    CheckApiLimit(ep.Cost);
+                    CheckApiLimit(cancellationToken, ep.Cost);
 
                     if (!_dryRun)
                     {
@@ -489,7 +498,7 @@ public sealed class EodHdImporter : DataImporterBase, IExternalDataImporter
 
                     uri = BuildSplitsUri($"{symbol.Code}.{exchange}");
                     ep = FindEndPointForUri(uri);
-                    CheckApiLimit(ep.Cost);
+                    CheckApiLimit(cancellationToken, ep.Cost);
 
                     if (!_dryRun)
                     {
@@ -524,7 +533,7 @@ public sealed class EodHdImporter : DataImporterBase, IExternalDataImporter
                     CommunicateAction($"{Constants.Actions.Dividends} for {code}");
                     uri = BuildDividendsUri(code);
                     ep = FindEndPointForUri(uri);
-                    CheckApiLimit(ep.Cost);
+                    CheckApiLimit(cancellationToken, ep.Cost);
 
                     if (!_dryRun)
                     {
@@ -543,7 +552,7 @@ public sealed class EodHdImporter : DataImporterBase, IExternalDataImporter
 
                     uri = BuildDividendsUri(code);
                     ep = FindEndPointForUri(uri);
-                    CheckApiLimit(ep.Cost);
+                    CheckApiLimit(cancellationToken, ep.Cost);
 
                     if (!_dryRun)
                     {
@@ -563,7 +572,7 @@ public sealed class EodHdImporter : DataImporterBase, IExternalDataImporter
 
         var uri = BuildBulkPriceActionUri(exchange);
         var ep = FindEndPointForUri(uri);
-        CheckApiLimit(ep.Cost);
+        CheckApiLimit(cancellationToken, ep.Cost);
 
         AddCallToUsage(uri);
 
@@ -582,7 +591,7 @@ public sealed class EodHdImporter : DataImporterBase, IExternalDataImporter
 
         var uri = BuildBulkSplitsUri(exchange);
         var ep = FindEndPointForUri(uri);
-        CheckApiLimit(ep.Cost);
+        CheckApiLimit(cancellationToken, ep.Cost);
 
         AddCallToUsage(uri);
 
@@ -602,7 +611,7 @@ public sealed class EodHdImporter : DataImporterBase, IExternalDataImporter
 
         var uri = BuildBulkDividendsUri(exchange);
         var ep = FindEndPointForUri(uri);
-        CheckApiLimit(ep.Cost);
+        CheckApiLimit(cancellationToken, ep.Cost);
 
         AddCallToUsage(uri);
 
@@ -637,7 +646,7 @@ public sealed class EodHdImporter : DataImporterBase, IExternalDataImporter
                     CommunicateAction($"{Constants.Actions.InsiderTransactions} for {code}");
                     uri = BuildInsiderTransactionsUri(code);
                     ep = FindEndPointForUri(uri);
-                    CheckApiLimit(ep.Cost);
+                    CheckApiLimit(cancellationToken, ep.Cost);
 
                     if (!_dryRun)
                     {
@@ -656,7 +665,7 @@ public sealed class EodHdImporter : DataImporterBase, IExternalDataImporter
 
                     uri = BuildInsiderTransactionsUri(code);
                     ep = FindEndPointForUri(uri);
-                    CheckApiLimit(ep.Cost);
+                    CheckApiLimit(cancellationToken, ep.Cost);
 
                     if (!_dryRun)
                     {
@@ -684,7 +693,7 @@ public sealed class EodHdImporter : DataImporterBase, IExternalDataImporter
         {
             var uri = BuildCalendarEarningsUri();
             var ep = FindEndPointForUri(uri);
-            CheckApiLimit(ep.Cost);
+            CheckApiLimit(cancellationToken, ep.Cost);
 
             if (!_dryRun)
             {
@@ -710,7 +719,7 @@ public sealed class EodHdImporter : DataImporterBase, IExternalDataImporter
         {
             var uri = BuildCalendarIposUri();
             var ep = FindEndPointForUri(uri);
-            CheckApiLimit(ep.Cost);
+            CheckApiLimit(cancellationToken, ep.Cost);
 
             if (!_dryRun)
             {
@@ -735,7 +744,7 @@ public sealed class EodHdImporter : DataImporterBase, IExternalDataImporter
         {
             var uri = BuildCalendarSplitsUri();
             var ep = FindEndPointForUri(uri);
-            CheckApiLimit(ep.Cost);
+            CheckApiLimit(cancellationToken, ep.Cost);
 
             if (!_dryRun)
             {
@@ -770,7 +779,7 @@ public sealed class EodHdImporter : DataImporterBase, IExternalDataImporter
 
                     uri = BuildFundamentalsUri($"{symbol.Code}.{exchange}");
                     ep = FindEndPointForUri(uri);
-                    CheckApiLimit(ep.Cost);
+                    CheckApiLimit(cancellationToken, ep.Cost);
 
                     if (!_dryRun)
                     {
@@ -789,7 +798,7 @@ public sealed class EodHdImporter : DataImporterBase, IExternalDataImporter
 
                     uri = BuildFundamentalsUri($"{symbol.Code}.{exchange}");
                     ep = FindEndPointForUri(uri);
-                    CheckApiLimit(ep.Cost);
+                    CheckApiLimit(cancellationToken, ep.Cost);
 
                     if (!_dryRun)
                     {
@@ -957,36 +966,47 @@ public sealed class EodHdImporter : DataImporterBase, IExternalDataImporter
     {
         int totalCost = endPoint.Cost.GetValueOrDefault() * symbols.Length;
 
-        if (totalCost > _available)
+        lock (_locker)
         {
-            if ((endPoint.Cost ?? 0) <= 0)
+            if (totalCost > _available)
             {
-                endPoint.Cost = 1;
+                if ((endPoint.Cost ?? 0) <= 0)
+                {
+                    endPoint.Cost = 1;
+                }
+
+                int numToTake = _available / endPoint.Cost.GetValueOrDefault();
+
+                Communicate?.Invoke(this,
+                    new CommunicationEventArgs(
+                        $"Reducing number of symbols for {caller} from {symbols.Length} to {numToTake}.",
+                        nameof(EodHdImporter)));
+
+                return symbols.Take(numToTake).ToArray();
             }
-
-            int numToTake = _available / endPoint.Cost.GetValueOrDefault();
-
-            Communicate?.Invoke(this,
-                new CommunicationEventArgs(
-                    $"Reducing number of symbols for {caller} from {symbols.Length} to {numToTake}.",
-                    nameof(EodHdImporter)));
-
-            return symbols.Take(numToTake).ToArray();
         }
 
         return symbols;
     }
 
-    private static void CheckApiLimit(int? expectedCost = null, [CallerMemberName] string caller = "")
+    private void CheckApiLimit(CancellationToken cancellationToken, int? expectedCost = null, [CallerMemberName] string caller = "")
     {
-        if (expectedCost == null && _available < 1)
+        lock (_locker)
         {
-            throw new ApiLimitReachedException(caller);
-        }
+            // double check
+            if ((expectedCost == null && _available < 1) || (expectedCost != null && _available < expectedCost))
+            {
+                InvokeUserCallAsync(cancellationToken, true).GetAwaiter().GetResult();
+            }
+            if (expectedCost == null && _available < 1)
+            {
+                throw new ApiLimitReachedException(caller);
+            }
 
-        if (expectedCost != null && _available < expectedCost)
-        {
-            throw new ApiLimitReachedException($"Available credits ({_available}) is less than expected cost of {expectedCost} ({caller})");
+            if (expectedCost != null && _available < expectedCost)
+            {
+                throw new ApiLimitReachedException($"Available credits ({_available}) is less than expected cost of {expectedCost} ({caller})");
+            }
         }
     }
 
@@ -1118,12 +1138,15 @@ public sealed class EodHdImporter : DataImporterBase, IExternalDataImporter
         return !action.Equals(ImportAction.Default) && (action.Details!.Length > 0);
     }
 
-    private static void AddCallToUsage(string uri)
+    private void AddCallToUsage(string uri)
     {
         var cost = FindEndPointForUri(uri).Cost.GetValueOrDefault();
 
-        Interlocked.Add(ref _usage, cost);
-        Interlocked.Add(ref _available, cost * -1);
+        lock (_locker)
+        {
+            _usage += cost;
+            _available -= cost;
+        }
     }
 
     private static EndPoint FindEndPointForUri(string? uri) =>
@@ -1151,7 +1174,7 @@ public sealed class EodHdImporter : DataImporterBase, IExternalDataImporter
         new(Constants.Uris.InsiderTransactions, Constants.Actions.InsiderTransactions, 10)
     ];
 
-    private static class Constants
+    internal static class Constants
     {
         public static class Actions
         {

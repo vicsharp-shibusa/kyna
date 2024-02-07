@@ -105,6 +105,10 @@ try
                     Communicate(e.ToString(), true, LogLevel.Error);
                 }
             }
+            catch (ApiLimitReachedException exc)
+            {
+                Communicate("API credit limit reached; halting processing", false, LogLevel.Warning);
+            }
             finally
             {
                 Communicate($"{Environment.NewLine}Import for '{importer.Source}' using file '{config.ConfigFile?.Name}' completed in {duration.ConvertToText()}");
@@ -317,7 +321,8 @@ void ConfigureImporter(DbDef importDef)
             else
             {
                 var eodHdImportConfigFile = JsonSerializer.Deserialize<EodHdImporter.ImportConfigfile>(
-                    File.ReadAllText(config.ConfigFile!.FullName));
+                    File.ReadAllText(config.ConfigFile!.FullName),
+                    JsonOptionsRepository.DefaultSerializerOptions);
 
                 Debug.Assert(eodHdImportConfigFile != null);
 
