@@ -23,7 +23,9 @@ string? appName = Assembly.GetExecutingAssembly().GetName().Name;
 
 Debug.Assert(appName != null);
 
+#pragma warning disable CA1859 // Use concrete types when possible for improved performance
 IExternalDataImporter? importer = null;
+#pragma warning restore CA1859 // Use concrete types when possible for improved performance
 
 Stopwatch timer = Stopwatch.StartNew();
 
@@ -105,7 +107,7 @@ try
                     Communicate(e.ToString(), true, LogLevel.Error);
                 }
             }
-            catch (ApiLimitReachedException exc)
+            catch (ApiLimitReachedException)
             {
                 Communicate("API credit limit reached; halting processing", false, LogLevel.Warning);
             }
@@ -316,7 +318,7 @@ void ConfigureImporter(DbDef importDef)
         case EodHdImporter.SourceName:
             if (config.ShowInfo)
             {
-                importer = new EodHdImporter(importDef, config.ApiKey ?? "");
+                importer = new EodHdImporter(importDef, config.ApiKey ?? "", processId);
             }
             else
             {
@@ -334,6 +336,7 @@ void ConfigureImporter(DbDef importDef)
                             eodHdImportConfigFile.SymbolTypes,
                             eodHdImportConfigFile.Options,
                             eodHdImportConfigFile.DateRanges),
+                        processId,
                         config.DryRun);
             }
             break;

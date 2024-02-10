@@ -12,7 +12,7 @@ namespace Kyna.Infrastructure.DataImport;
 public abstract class DataImporterBase : IDisposable
 {
     protected bool _disposedValue;
-
+    protected Guid? _processId;
     protected readonly string? _apiKey;
 
     protected readonly ApiTransactionService _transactionService;
@@ -21,8 +21,9 @@ public abstract class DataImporterBase : IDisposable
 
     protected readonly ConcurrentBag<(string Uri, string Category, string? SubCategory)> _concurrentBag;
 
-    protected DataImporterBase(DbDef dbDef, string baseUri, string? apiKey = null)
+    protected DataImporterBase(DbDef dbDef, string baseUri, string? apiKey = null, Guid? processId = null)
     {
+        _processId = processId;
         _transactionService = new ApiTransactionService(dbDef);
         _httpClient = new HttpClient()
         {
@@ -37,7 +38,7 @@ public abstract class DataImporterBase : IDisposable
     // see also: https://github.com/Polly-Contrib/Polly.Contrib.WaitAndRetry?tab=readme-ov-file#new-jitter-recommendation
     private readonly IEnumerable<TimeSpan> _delay = Backoff.DecorrelatedJitterBackoffV2(medianFirstRetryDelay: TimeSpan.FromSeconds(3),
         retryCount: 10);
-    
+
     private AsyncRetryPolicy<HttpResponseMessage> RetryPolicy => Policy
         .Handle<HttpRequestException>()
         .OrResult<HttpResponseMessage>(r => r.StatusCode == HttpStatusCode.TooManyRequests ||
@@ -76,7 +77,7 @@ public abstract class DataImporterBase : IDisposable
 
         string uriWithoutKey = HideToken(uri);
         await _transactionService.RecordTransactionAsync("GET", uriWithoutKey, Source, category, response,
-            _httpClient.DefaultRequestHeaders, payload: null, subCategory);
+            _httpClient.DefaultRequestHeaders, payload: null, subCategory, processId: _processId);
 
         return await response.Content.ReadAsStringAsync(cancellationToken);
     }

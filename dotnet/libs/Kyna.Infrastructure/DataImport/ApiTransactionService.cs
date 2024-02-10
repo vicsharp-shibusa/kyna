@@ -18,7 +18,8 @@ public class ApiTransactionService(DbDef dbDef)
         HttpRequestHeaders requestHeaders,
         HttpContent? payload = null,
         string? subCategory = null,
-        DateTime? transactionTime = null)
+        DateTime? transactionTime = null,
+        Guid? processId = null)
     {
         var transDao = new Database.DataAccessObjects.ApiTransaction()
         {
@@ -32,7 +33,8 @@ public class ApiTransactionService(DbDef dbDef)
             RequestUri = uri,
             ResponseStatusCode = ((int)response.StatusCode).ToString(),
             ResponseHeaders = JsonSerializer.Serialize(response.Headers, _serializerOptions),
-            ResponseBody = await response.Content.ReadAsStringAsync()
+            ResponseBody = await response.Content.ReadAsStringAsync(),
+            ProcessId = processId
         };
 
         await _dbContext.ExecuteAsync(_dbContext.Sql.ApiTransactions.Insert, transDao);

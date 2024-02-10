@@ -35,7 +35,7 @@ public sealed class EodHdImporter : DataImporterBase, IExternalDataImporter
     private readonly ReadOnlyDictionary<string, string[]> _options;
     private readonly ReadOnlyDictionary<string, DateOnly[]> _dateRanges;
 
-    public EodHdImporter(DbDef dbDef, string apiKey) : base(dbDef, Constants.Uris.Base, apiKey)
+    public EodHdImporter(DbDef dbDef, string apiKey, Guid? processId = null) : base(dbDef, Constants.Uris.Base, apiKey, processId)
     {
         _dbContext = DbContextFactory.Create(dbDef);
         _importActions = [];
@@ -47,8 +47,8 @@ public sealed class EodHdImporter : DataImporterBase, IExternalDataImporter
         _dateRanges = new ReadOnlyDictionary<string, DateOnly[]>(new Dictionary<string, DateOnly[]>());
     }
 
-    public EodHdImporter(DbDef dbDef, DataImportConfiguration importConfig, bool dryRun = false)
-        : base(dbDef, Constants.Uris.Base, importConfig.ApiKey)
+    public EodHdImporter(DbDef dbDef, DataImportConfiguration importConfig, Guid? processId = null, bool dryRun = false)
+        : base(dbDef, Constants.Uris.Base, importConfig.ApiKey, processId)
     {
         if (!importConfig.Source.Equals(Source, StringComparison.OrdinalIgnoreCase))
         {
