@@ -36,12 +36,6 @@ FROM public.eod_prices",
             _ => ThrowSqlNotImplemented()
         };
 
-        //public string CountPricesWithoutSplits => _dbDef.Engine switch
-        //{
-        //    DatabaseEngine.PostgreSql => @"DELETE FROM public.eod_adjusted_prices",
-        //    _ => ThrowSqlNotImplemented()
-        //};
-
         public string DeleteEodPricesWithAdjustedPrices => _dbDef.Engine switch
         {
             DatabaseEngine.PostgreSql => @"DELETE FROM public.eod_prices

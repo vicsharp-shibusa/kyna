@@ -76,3 +76,90 @@ The second is `GetStringResponseAsync`, which makes use of the `HttpClient` to m
 The final is `InvokeApiCallAsync`, which calls `GetStringResponseAsync`, but throws away the string result.
 
 The reason for both `GetStringResponseAsync` and `InvokeApiCallAsync` is that sometimes you need the results in real-time, like when the results inform some subsequent import action you want to take. For example, in the `EodHdImporter` class, a list of symbols is captured (and filtered) and that list of symbols is used for capturing price (and other) data. Other calls are simply made and passed to the `ApiTransactionService` to be written to the data store without the importer concerning itself with their content.
+
+## Data Migration
+
+Kyna data migration is the process of migrating data from the `imports.api_transactions` table to tables in the `financials` database.
+The process is controlled by the `Kyna.DataMigration.Cli` project and operates similarly to the import process.
+Activities are controlled by a JSON configuration file passed to the CLI executable.
+
+The architecture for migration is simpler than import, as shown here:
+
+![Data Migration Architecture Diagram](./images/kyna-data-migration-architecture.png)
+
+The migration flow, however, is a bit more complicated, as shown here:
+
+![Data Migration Flow Chart](./images/kyna-data-migration-flow.png)
+
+There are three `enum`s to consider and they are defined in the `MigrationConfiguration.cs` file.
+
+The first is `MigrationMode`, which has two possible values:
+
+| Mode    | Meaning                                                                                                                                |
+| ------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| Latest  | When chosen, only the latest `api_transactions` records for the specified source and category are migrated.                            |
+| Rolling | When chosen, all records for the specified source and category are migrated - in ascending order of the `api_transactions.created_utc` |
+
+The second enum is `SourceDeletionMode`. This enum relates to the deletion of `api_transactions` records in the `imports` database.
+
+| Mode            | Meaning                                                                  |
+| --------------- | ------------------------------------------------------------------------ |
+| None            | No `api_transactions` records will be deleted.                           |
+| All             | All records that were migrated will be deleted.                          |
+| AllExceptLatest | All migrated records except the last (by `created_utc`) will be deleted. |
+
+The final relevant enum is `AdjustedPriceModes` which has the `[Flags]` attribute, allowing for multiple selections with the `|` operator.
+This enum controls both the creation and the deletion of records within the `financials.eod_prices` table.
+
+| Flag             | Meaning                                                                               |
+| ---------------- | ------------------------------------------------------------------------------------- |
+| OnlySplits       | Only codes (tickers) with split data are migrated to the `eod_adjusted_prices` table. |
+| All              | Price data with zero splits are also migrated to the `eod_adjusted_prices` table.     |
+| DeleteFromSource | Records in `eod_prices` with corresponding `eod_adjusted_prices` records are deleted. |
+
+These `enum`s are set via the `MigrationConfiguration` file, as demonstrated in these examples.
+
+The following file will:
+
+1. migrate the **latest** price and split data from `imports.api_transactions` to `financials.eod_prices` where the source is `eodhd.com`;
+2. **not** delete any `api_transactions` records;
+3. migrate all `eod_prices` records to `eod_adjusted_prices` (regardless of whether splits exist);
+4.  **delete** all migrated records from `eod_prices`;
+5.  and constrain **parallelization** to no more than 5 threads.
+
+```json
+{
+  "Source": "eodhd.com",
+  "Categories": [
+    "EOD Prices",
+    "Splits"
+  ],
+  "Mode": "Latest",
+  "Source Deletion Mode": "None",
+  "Adjusted Price Mode":  "All, Delete From Source",
+  "MaxParallelization": 5
+}
+```
+
+When building your configuration file, you can use either the `enum` string value or the value from the `Description` attribute.
+
+For example, this enum:
+
+```csharp
+[Flags]
+public enum AdjustedPriceModes
+{
+    None = 0,
+    [Description("Only Splits")]
+    OnlySplits = 1 << 0,
+    All = 1 << 1,
+    [Description("Delete From Source")]
+    DeleteFromSource = 1 << 2
+}
+```
+means that these two lines (in your JSON file) are equivalent:
+
+```json
+"Adjusted Price Mode":  "All, Delete From Source",
+"Adjusted Price Mode":  "All, DeleteFromSource",
+```

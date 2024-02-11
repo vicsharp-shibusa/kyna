@@ -4,7 +4,6 @@ internal partial class SqlRepository
 {
     internal class ApiTransactionsInternal(DbDef dbDef) : SqlRepositoryBase(dbDef)
     {
-
         public string Insert => _dbDef.Engine switch
         {
             DatabaseEngine.PostgreSql => @"
@@ -50,9 +49,9 @@ FROM public.api_transactions WHERE id = @Id",
             _ => ThrowSqlNotImplemented()
         };
 
-        public string DeleteForId => _dbDef.Engine switch
+        public string Delete => _dbDef.Engine switch
         {
-            DatabaseEngine.PostgreSql => @"DELETE FROM public.api_transactions WHERE id = Any(@Source)",
+            DatabaseEngine.PostgreSql => $@"DELETE FROM public.api_transactions",
             _ => ThrowSqlNotImplemented()
         };
 

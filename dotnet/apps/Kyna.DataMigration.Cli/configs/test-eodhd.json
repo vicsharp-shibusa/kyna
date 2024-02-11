@@ -1,0 +1,11 @@
+{
+  "Source": "eodhd.com",
+  "Categories": [
+    "EOD Prices",
+    "Splits"
+  ],
+  "Mode": "Latest",
+  "Source Deletion Mode": "None",
+  "Adjusted Price Mode":  "All, Delete From Source",
+  "MaxParallelization": 5
+}

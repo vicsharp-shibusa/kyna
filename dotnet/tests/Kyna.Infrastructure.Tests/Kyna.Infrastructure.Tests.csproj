@@ -31,6 +31,12 @@
 	  <None Update="appsettings.json">
 	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
 	  </None>
+	  <None Update="EodHd\Mocks\aapl_prices.json">
+	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+	  </None>
+	  <None Update="EodHd\Mocks\aapl_splits.json">
+	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+	  </None>
 	  <None Update="secrets.json">
 	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
 	  </None>

@@ -27,6 +27,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Kyna.EodHistoricalData", "l
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Kyna.FinancialDataImport.Cli", "apps\Kyna.FinancialDataImport.Cli\Kyna.FinancialDataImport.Cli.csproj", "{66861DEE-ACBE-4B6A-B76A-B03E057BB105}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Kyna.DataMigration.Cli", "apps\Kyna.DataMigration.Cli\Kyna.DataMigration.Cli.csproj", "{5ABB687C-0036-4839-A9C9-0E5634E80361}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -69,6 +71,10 @@ Global
 		{66861DEE-ACBE-4B6A-B76A-B03E057BB105}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{66861DEE-ACBE-4B6A-B76A-B03E057BB105}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{66861DEE-ACBE-4B6A-B76A-B03E057BB105}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5ABB687C-0036-4839-A9C9-0E5634E80361}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5ABB687C-0036-4839-A9C9-0E5634E80361}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5ABB687C-0036-4839-A9C9-0E5634E80361}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5ABB687C-0036-4839-A9C9-0E5634E80361}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -83,6 +89,7 @@ Global
 		{7C1D2F33-107E-4A94-AF9A-A42E22057A3B} = {20FEE790-CF0F-452A-B29E-C01F46F94AF1}
 		{34068F83-C3B8-4078-BE25-F23CBDD9B8F3} = {D2059ABB-1D2D-4A22-87A4-2FA412FC6CAD}
 		{66861DEE-ACBE-4B6A-B76A-B03E057BB105} = {260FF219-1D50-471E-A386-F63F750FF839}
+		{5ABB687C-0036-4839-A9C9-0E5634E80361} = {260FF219-1D50-471E-A386-F63F750FF839}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {8C493EF7-27AC-4D91-B302-C3888410942A}
