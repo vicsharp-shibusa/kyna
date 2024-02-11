@@ -1,5 +1,6 @@
 ﻿using Kyna.Infrastructure.Database;
 using Microsoft.Extensions.Configuration;
+using System.Data.Common;
 using System.Diagnostics;
 
 namespace Kyna.Infrastructure.Tests.Database;
@@ -7,6 +8,7 @@ namespace Kyna.Infrastructure.Tests.Database;
 public class PostgreSqlLogTests
 {
     private readonly SqlRepository _postgreSqlRepo = new(DatabaseEngine.PostgreSql);
+    private const string DbName = "Logs";
 
     private PostgreSqlContext? _context;
 
@@ -27,7 +29,7 @@ public class PostgreSqlLogTests
 
         Debug.Assert(configuration != null);
 
-        _context = new PostgreSqlContext(new DbDef("Logs", DatabaseEngine.PostgreSql, configuration.GetConnectionString("Logs")!));
+        _context = new PostgreSqlContext(new DbDef(DbName, DatabaseEngine.PostgreSql, configuration.GetConnectionString(DbName)!));
     }
 
     [Fact]

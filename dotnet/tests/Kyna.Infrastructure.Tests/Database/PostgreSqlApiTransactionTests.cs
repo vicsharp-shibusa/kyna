@@ -7,9 +7,8 @@ namespace Kyna.Infrastructure.Tests.Database;
 
 public class PostgreSqlApiTransactionTests
 {
-    private readonly SqlRepository _postgreSqlRepo = new(DatabaseEngine.PostgreSql);
-
     private PostgreSqlContext? _context;
+    private const string DbName = "Imports";
 
     public PostgreSqlApiTransactionTests()
     {
@@ -28,7 +27,7 @@ public class PostgreSqlApiTransactionTests
 
         Debug.Assert(configuration != null);
 
-        _context = new PostgreSqlContext(new DbDef("Imports", DatabaseEngine.PostgreSql, configuration.GetConnectionString("Imports")!));
+        _context = new PostgreSqlContext(new DbDef(DbName, DatabaseEngine.PostgreSql, configuration.GetConnectionString(DbName)!));
     }
 
     [Fact]
@@ -36,9 +35,9 @@ public class PostgreSqlApiTransactionTests
     {
         var transactionDao = CreateApiTransaction(Guid.NewGuid().ToString());
 
-        _context!.Execute(_postgreSqlRepo.ApiTransactions.Insert, transactionDao);
+        _context!.Execute(_context.Sql.ApiTransactions.Insert, transactionDao);
 
-        string sql = $"{_postgreSqlRepo.ApiTransactions.Fetch} WHERE sub_category = @SubCategory";
+        string sql = $"{_context.Sql.ApiTransactions.Fetch} WHERE sub_category = @SubCategory";
 
         var actual = _context.QueryFirstOrDefault<ApiTransaction>(
             sql, new { transactionDao.SubCategory });
@@ -61,15 +60,18 @@ public class PostgreSqlApiTransactionTests
             apiTransactions[i] = CreateApiTransaction("Two");
         }
 
-        _context!.Execute(_postgreSqlRepo.ApiTransactions.Insert, apiTransactions);
+        _context!.Execute(_context.Sql.ApiTransactions.Insert, apiTransactions);
 
         string sql = "SELECT MAX(id) FROM api_transactions where sub_category = @Sub";
 
         int maxOneId = _context.QueryFirstOrDefault<int>(sql, new { Sub = "One" });
         int maxTwoId = _context.QueryFirstOrDefault<int>(sql, new { Sub = "Two" });
 
+        string[] categories = ["Price Action"];
+
         var itemsToMigrate = _context.Query<ApiTransactionForMigration>(
-            _context.Sql.ApiTransactions.FetchForMigration, new { Source = "Test", Category = "Price Action" });
+                $"{_context.Sql.ApiTransactions.FetchForMigration} WHERE source = @Source AND category {_context.Sql.GetInCollectionSql("Categories")}",
+                new { Source = "Test", categories });
 
         Assert.NotEmpty(itemsToMigrate);
 

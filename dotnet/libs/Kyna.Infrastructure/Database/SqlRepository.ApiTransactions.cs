@@ -37,9 +37,22 @@ FROM public.api_transactions",
             _ => ThrowSqlNotImplemented()
         };
 
+        public string FetchResponseBodyForId => _dbDef.Engine switch
+        {
+            DatabaseEngine.PostgreSql => @"SELECT response_body AS ResponseBody
+FROM public.api_transactions WHERE id = @Id",
+            _ => ThrowSqlNotImplemented()
+        };
+
         public string DeleteForSource => _dbDef.Engine switch
         {
             DatabaseEngine.PostgreSql => @"DELETE FROM public.api_transactions WHERE source = @Source",
+            _ => ThrowSqlNotImplemented()
+        };
+
+        public string DeleteForId => _dbDef.Engine switch
+        {
+            DatabaseEngine.PostgreSql => @"DELETE FROM public.api_transactions WHERE id = Any(@Source)",
             _ => ThrowSqlNotImplemented()
         };
 
@@ -52,8 +65,7 @@ category,
 sub_category AS SubCategory,
 response_status_code AS ResponseStatusCode,
 process_id AS ProcessId
-FROM public.api_transactions
-WHERE source = @Source AND category = @Category",
+FROM public.api_transactions",
             _ => ThrowSqlNotImplemented()
         };
     }

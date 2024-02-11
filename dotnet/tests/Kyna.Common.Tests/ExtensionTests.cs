@@ -149,6 +149,46 @@ public class ExtensionTests
         All
     }
 
+    [Flags]
+    private enum WithDescriptions
+    {
+        [Description("Nothing")]
+        None = 0,
+        [Description("Some of it")]
+        Some = 1 << 0,
+        [Description("All of it")]
+        All = 1 << 1
+    }
+
+    [Fact]
+    public void GetDescription_WithFlags_GetEnumValue()
+    {
+        var sut = "Some of it, All of it".GetEnumValueFromDescription<WithDescriptions>();
+
+        Assert.True(sut.HasFlag(WithDescriptions.Some));
+        Assert.True(sut.HasFlag(WithDescriptions.All));
+    }
+
+    [Fact]
+    public void GetDescription_WithFlags_GetDescriptionValues()
+    {
+        var sut = WithDescriptions.Some | WithDescriptions.All;
+
+        var text = sut.GetEnumDescription();
+
+        Assert.Equal("Some of it, All of it", text);
+    }
+
+    [Fact]
+    public void GetDescription_WithOneFlag_GetDescriptionValues()
+    {
+        var sut = WithDescriptions.Some;
+
+        var text = sut.GetEnumDescription();
+
+        Assert.Equal("Some of it", text);
+    }
+
     [Fact]
     public void GetDescription_WithDescription_GetsDescriptionValue()
     {

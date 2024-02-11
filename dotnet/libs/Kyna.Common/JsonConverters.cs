@@ -511,3 +511,21 @@ public class NullableBooleanJsonConverter : JsonConverter<bool?>
         }
     }
 }
+
+public class EnumDescriptionConverter<T> : JsonConverter<T> where T : struct, Enum
+{
+    public override T Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+    {
+        if (reader.TokenType != JsonTokenType.String)
+        {
+            throw new JsonException($"Expected string for {typeof(T).FullName}.");
+        }
+
+        return reader.GetString()?.GetEnumValueFromDescription<T>() ?? default;
+    }
+
+    public override void Write(Utf8JsonWriter writer, T value, JsonSerializerOptions options)
+    {
+        writer.WriteStringValue(value.GetEnumDescription());
+    }
+}
