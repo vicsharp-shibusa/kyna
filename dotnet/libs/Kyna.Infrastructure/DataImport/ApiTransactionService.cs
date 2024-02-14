@@ -39,4 +39,19 @@ public class ApiTransactionService(DbDef dbDef)
 
         await _dbContext.ExecuteAsync(_dbContext.Sql.ApiTransactions.Insert, transDao);
     }
+
+    public async Task DeleteTransactionsAsync(string source, string category, IEnumerable<string> subCategories)
+    {
+        string sql = $"DELETE FROM api_transactions WHERE source = @Source AND category = @Category AND sub_category {_dbContext.Sql.GetInCollectionSql("SubCategories")}";
+
+        foreach (var c in subCategories.Select(x => x.Trim()).Chunk(500))
+        {
+            await _dbContext.ExecuteAsync(sql, new
+            {
+                source,
+                category,
+                SubCategories = c
+            });
+        }
+    }
 }

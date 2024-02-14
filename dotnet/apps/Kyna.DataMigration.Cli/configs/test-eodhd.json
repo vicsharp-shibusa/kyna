@@ -6,6 +6,6 @@
   ],
   "Mode": "Latest",
   "Source Deletion Mode": "None",
-  "Adjusted Price Mode":  "All, Delete From Source",
-  "MaxParallelization": 5
+  "Price Migration Mode": "Raw, Adjusted",
+  "MaxParallelization": 10
 }

@@ -74,11 +74,11 @@ internal sealed record class AdjustedEodPrice : DaoEntityBase
         :base(eodPrice.Source, eodPrice.Code, eodPrice.ProcessId)
     {
         DateEod = eodPrice.DateEod;
-        Open = eodPrice.Open;
-        High = eodPrice.High;
-        Low = eodPrice.Low;
-        Close = eodPrice.Close;
-        Volume = eodPrice.Volume;
+        Open = eodPrice.Open / (decimal)factor;
+        High = eodPrice.High / (decimal)factor;
+        Low = eodPrice.Low / (decimal)factor;
+        Close = eodPrice.Close / (decimal)factor;
+        Volume = Convert.ToInt64(eodPrice.Volume * factor);
         Factor = factor;
         CreatedTicksUtc = eodPrice.CreatedTicksUtc;
         UpdatedTicksUtc = eodPrice.UpdatedTicksUtc;

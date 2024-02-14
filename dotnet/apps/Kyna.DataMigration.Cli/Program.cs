@@ -14,7 +14,7 @@ using System.Text.Json;
 ILogger<Program>? logger = null;
 IConfiguration? configuration;
 
-MigrationConfiguration? migrationConfigfile;
+EodHdMigrator.MigrationConfiguration? migrationConfigfile = null;
 
 int exitCode = -1;
 
@@ -24,7 +24,7 @@ string? appName = Assembly.GetExecutingAssembly().GetName().Name;
 
 Debug.Assert(appName != null);
 
-ImportsMigrator? migrator = null;
+IImportsMigrator? migrator = null;
 
 Stopwatch timer = Stopwatch.StartNew();
 
@@ -43,9 +43,7 @@ try
     else
     {
         ValidateArgsAndSetDefaults();
-
         Configure();
-
         ShowConfiguration();
 
         Debug.Assert(migrator != null);
@@ -58,7 +56,7 @@ try
 
         try
         {
-            duration = migrator.Migrate();
+            duration = await migrator.MigrateAsync(cts.Token);
         }
         catch (AggregateException ex)
         {
@@ -66,7 +64,11 @@ try
 
             foreach (var e in ex.InnerExceptions)
             {
+#if DEBUG
                 Communicate(e.ToString(), true, LogLevel.Error);
+#else
+                Communicate(e.Message, true, LogLevel.Error);
+#endif
             }
         }
         finally
@@ -143,12 +145,11 @@ void ShowConfiguration()
     if (migrationConfigfile != null)
     {
         Communicate($"Source               : {migrationConfigfile.Source}");
-        Communicate($"Categories           : {string.Join(", ", migrationConfigfile.Categories)}");
+        Communicate($"Categories           : {string.Join(", ", migrationConfigfile.Categories ?? [])}");
         Communicate($"Mode                 : {migrationConfigfile.Mode.GetEnumDescription()}");
         Communicate($"Source Deletion Mode : {migrationConfigfile.SourceDeletionMode.GetEnumDescription()}");
+        Communicate($"Price Migration Mode : {migrationConfigfile.PriceMigrationMode.GetEnumDescription()}");
         Communicate($"Max Parallelization  : {migrationConfigfile.MaxParallelization}");
-        Communicate($"Adjusted Price Mode  : {migrationConfigfile.AdjustedPriceModes.GetEnumDescription()}");
-
     }
 }
 
@@ -156,7 +157,6 @@ void ShowHelp()
 {
     CliArg[] localArgs = [
         new CliArg(["-f", "--file"], ["configuration file"], true, "JSON import configuration file to process."),
-        new CliArg(["-s", "--source"], ["source name"], false, $"Source for import. When excluded, defaults to {EodHdImporter.SourceName}"),
         new CliArg(["--dry-run"], [], false, "Executes a 'dry run' - reports only what the app would do with the specified configuration.")
     ];
 
@@ -198,15 +198,6 @@ void HandleArguments(string[] args)
                     throw new ArgumentException("The specified configuration file does not exist.");
                 }
                 break;
-            case "-s":
-            case "--source":
-                if (a == args.Length - 1)
-                {
-                    throw new ArgumentException($"A source name is required after {args[a]}");
-                }
-                config.Source = args[++a];
-                break;
-
             case "--dry-run":
                 config.DryRun = true;
                 break;
@@ -265,16 +256,33 @@ void Configure()
 void ConfigureMigrator(DbDef importDef, DbDef finDef)
 {
     var options = JsonOptionsRepository.DefaultSerializerOptions;
-    options.Converters.Add(new EnumDescriptionConverter<MigrationMode>());
-    options.Converters.Add(new EnumDescriptionConverter<SourceDeletionMode>());
-    options.Converters.Add(new EnumDescriptionConverter<AdjustedPriceModes>());
 
-    migrationConfigfile = JsonSerializer.Deserialize<MigrationConfiguration>(
-        File.ReadAllText(config.ConfigFile!.FullName), options);
+    if (config.Source == EodHdMigrator.SourceName)
+    {
+        options.Converters.Add(new EnumDescriptionConverter<EodHdMigrator.MigrationSourceMode>());
+        options.Converters.Add(new EnumDescriptionConverter<EodHdMigrator.SourceDeletionMode>());
+        options.Converters.Add(new EnumDescriptionConverter<EodHdMigrator.PriceMigrationMode>());
+
+        migrationConfigfile = JsonSerializer.Deserialize<EodHdMigrator.MigrationConfiguration>(
+            File.ReadAllText(config.ConfigFile!.FullName), options);
+    }
 
     Debug.Assert(migrationConfigfile != null);
 
-    migrator = new ImportsMigrator(importDef, finDef, migrationConfigfile, processId, config.DryRun);
+    switch (config!.Source?.ToLower() ?? "")
+    {
+        case EodHdMigrator.SourceName:
+            var migrationConfigFile = JsonSerializer.Deserialize<EodHdMigrator.MigrationConfiguration>(
+                File.ReadAllText(config.ConfigFile!.FullName),
+                JsonOptionsRepository.DefaultSerializerOptions);
+
+            Debug.Assert(migrationConfigFile != null);
+
+            migrator = new EodHdMigrator(importDef, finDef, migrationConfigfile, processId, config.DryRun);
+            break;
+        default:
+            throw new Exception($"Unknown source: {config.Source}");
+    }
 }
 
 void Migrator_Communicate(object? sender, Kyna.Common.Events.CommunicationEventArgs e)
@@ -285,9 +293,8 @@ void Migrator_Communicate(object? sender, Kyna.Common.Events.CommunicationEventA
 class Config(string appName, string appVersion, string? description, bool dryRun = false)
     : CliConfigBase(appName, appVersion, description)
 {
+    public bool ShowInfo { get; set; }
     public bool DryRun { get; set; } = dryRun;
-
     public FileInfo? ConfigFile { get; set; }
-
     public string? Source { get; set; }
 }

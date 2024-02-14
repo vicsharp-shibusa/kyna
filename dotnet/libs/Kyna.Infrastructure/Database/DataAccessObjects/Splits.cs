@@ -8,7 +8,7 @@ internal sealed record class Split : DaoEntityBase
     public Split(string source, string code, Guid? processId = null) : base(source, code, processId)
     {
     }
-    
+
     public Split(string source, string code,
         DateOnly splitDate, double before, double after,
         long createdTicksUtc, long updatedTicksUtc,
@@ -30,7 +30,7 @@ internal sealed record class Split : DaoEntityBase
         (Before, After) = SplitAdjustedPriceCalculator.ConvertFromText(splitText);
     }
 
-    public DateOnly SplitDate { get; init; }
+    public DateOnly SplitDate { get; internal set; }
     public double Before { get; init; }
     public double After { get; init; }
     public double Factor => Before == 0 ? 1 : (After / Before);
@@ -59,8 +59,11 @@ internal static class SplitAdjustedPriceCalculator
     public static IEnumerable<AdjustedEodPrice> Calculate(
         IEnumerable<EodPrice> prices, IEnumerable<Split> splits)
     {
-        var orderedSplits = splits.OrderBy(s => s.SplitDate).ToArray();
         var orderedPrices = prices.OrderBy(s => s.DateEod).ToArray();
+
+        var orderedSplits = splits.OrderBy(s => s.SplitDate)
+            .Where(s => s.SplitDate >= orderedPrices[0].DateEod &&
+                s.SplitDate <= orderedPrices[orderedPrices.Length - 1].DateEod).ToArray();
 
         if (orderedSplits.Length == 0)
         {
@@ -83,35 +86,41 @@ internal static class SplitAdjustedPriceCalculator
                 prev = factors[i].Factor;
             }
 
+            // This check is required because the dates don't always line up.
+            for (int i = 0; i < factors.Length; i++)
+            {
+                var firstMatch = orderedPrices.FirstOrDefault(p => p.DateEod >= orderedSplits[i].SplitDate);
+                factors[i].Date = firstMatch?.DateEod ?? factors[i].Date;
+            }
+
             int f = 0;
 
             // loop through the prices.
             // Each price is multipled by the closest future factor.
             for (int i = 0; i < orderedPrices.Length; i++)
             {
-                if (f == factors.Length - 1 && orderedPrices[i].DateEod >= factors[f].Date)
-                {
-                    // we're past the final split.
-                    yield return new AdjustedEodPrice(orderedPrices[i]);
-                }
-
-                if (orderedPrices[i].DateEod < factors[f].Date)
-                {
-                    // we're less than the "next" factor.
-                    yield return new AdjustedEodPrice(orderedPrices[i], factors[f].Factor);
-                }
-
                 if (factors[f].Date.Equals(orderedPrices[i].DateEod) && f < factors.Length - 1)
                 {
                     // the stock price on the day of the split will reflect the split,
                     // but it also needs to reflect the next split.
-                    // Prices on or after the final split are reflected in the if branch
-                    // at the top of this for loop.
                     f++;
                     yield return new AdjustedEodPrice(orderedPrices[i], factors[f].Factor);
                 }
+                else if (f == factors.Length - 1 && orderedPrices[i].DateEod >= factors[f].Date)
+                {
+                    // we're past the final split.
+                    yield return new AdjustedEodPrice(orderedPrices[i]);
+                }
+                else if (orderedPrices[i].DateEod < factors[f].Date)
+                {
+                    // we're less than the "next" factor.
+                    yield return new AdjustedEodPrice(orderedPrices[i], factors[f].Factor);
+                }
+                else
+                {
+                    KLogger.LogDebug($"logic error on {orderedPrices[0].Code}");
+                }
             }
-
             // Make sure we didn't skip any entries.
             Debug.Assert(f == factors.Length - 1);
         }

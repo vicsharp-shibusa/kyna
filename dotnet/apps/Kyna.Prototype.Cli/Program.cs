@@ -40,18 +40,10 @@ try
     }
     else
     {
-        //var importConfig = new ExternalDataImportConfiguration("eodhd,",
-        //    new Dictionary<string, string>()
-        //    {
-        //        { "Exchanges", "US.NYSE, US.NASDAQ"}
-        //    });
+        var text = File.ReadAllLines("C:\\Users\\Vic\\migrated_files.txt");
 
-        //var json = JsonSerializer.Serialize(importConfig);
-
-        //var path = Path.Combine(Path.GetPathRoot(@"C:\")!, "temp", "import_config1.json");
-
-        //File.WriteAllText(path, json);
-
+        await apiTransactionService!.DeleteTransactionsAsync(EodHdImporter.SourceName, EodHdImporter.Constants.Actions.EndOfDayPrices,
+            text.Select(t => t.Trim()));
     }
     exitCode = 0;
 }

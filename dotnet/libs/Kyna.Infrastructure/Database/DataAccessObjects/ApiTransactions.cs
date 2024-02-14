@@ -25,4 +25,6 @@ internal sealed record class ApiTransactionForMigration
     public required string SubCategory { get; init; }
     public required string ResponseStatusCode { get; init; }
     public Guid? ProcessId { get; init; }
+    public bool DoMigrate { get; internal set; } = false;
+    public bool DeleteFromSource { get; internal set; } = false;
 }
