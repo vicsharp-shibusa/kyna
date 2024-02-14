@@ -1174,7 +1174,7 @@ public sealed class EodHdImporter : DataImporterBase, IExternalDataImporter
         new(Constants.Uris.InsiderTransactions, Constants.Actions.InsiderTransactions, 10)
     ];
 
-    internal static class Constants
+    public static class Constants
     {
         public static class Actions
         {
