@@ -29,7 +29,7 @@ create_db(){
 }
 
 run_script(){
-    local DB_NAME=$
+    local DB_NAME=$1
     local SCRIPT_LOCATION=$2
     local PG_HOST="localhost"
     local PG_USER="postgres"
