@@ -398,4 +398,6 @@ FodyWeavers.xsd
 *.sln.iml
 
 *.drawio.bkp
+*.drawio.dtmp
+
 secrets.json
