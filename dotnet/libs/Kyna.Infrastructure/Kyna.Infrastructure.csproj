@@ -15,6 +15,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
+	  <ProjectReference Include="..\Kyna.Analysis\Kyna.Analysis.csproj" />
 	  <ProjectReference Include="..\Kyna.EodHistoricalData\Kyna.EodHistoricalData.csproj" />
 	</ItemGroup>
 

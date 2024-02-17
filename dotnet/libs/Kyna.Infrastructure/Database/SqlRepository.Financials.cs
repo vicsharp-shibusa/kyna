@@ -73,6 +73,12 @@ FROM public.eod_adjusted_prices",
             _ => ThrowSqlNotImplemented()
         };
 
+        public string FetchAllAdjustedSymbolsForSource => _dbDef.Engine switch
+        {
+            DatabaseEngine.PostgreSql => @"SELECT distinct code FROM eod_adjusted_prices WHERE source = @Source",
+            _ => ThrowSqlNotImplemented()
+        };
+
         public string Delete => _dbDef.Engine switch
         {
             DatabaseEngine.PostgreSql => @"DELETE FROM public.eod_adjusted_prices",

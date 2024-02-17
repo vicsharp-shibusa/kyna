@@ -16,7 +16,7 @@ internal sealed record class EodPrice : DaoEntityBase
     {
         DateEod = dateEod;
         Open = open;
-        High = high; 
+        High = high;
         Low = low;
         Close = close;
         Volume = volume;
@@ -25,9 +25,8 @@ internal sealed record class EodPrice : DaoEntityBase
     }
 
     public EodPrice(string source, string code, Guid? processId = null)
-        :base(source, code, processId)
+        : base(source, code, processId)
     {
-
     }
 
     public DateOnly DateEod { get; init; }
@@ -36,6 +35,9 @@ internal sealed record class EodPrice : DaoEntityBase
     public decimal Low { get => _low; init => _low = Math.Round(value, MoneyPrecision); }
     public decimal Close { get => _close; init => _close = Math.Round(value, MoneyPrecision); }
     public long Volume { get; init; }
+
+    public Analysis.Technical.Ohlc ToOhlc() =>
+        new Analysis.Technical.Ohlc(Code, DateEod, Open, High, Low, Close, Volume, 1D);
 }
 
 internal sealed record class AdjustedEodPrice : DaoEntityBase
@@ -71,7 +73,7 @@ internal sealed record class AdjustedEodPrice : DaoEntityBase
     }
 
     public AdjustedEodPrice(EodPrice eodPrice, double factor = 1D)
-        :base(eodPrice.Source, eodPrice.Code, eodPrice.ProcessId)
+        : base(eodPrice.Source, eodPrice.Code, eodPrice.ProcessId)
     {
         DateEod = eodPrice.DateEod;
         Open = eodPrice.Open / (decimal)factor;
@@ -91,4 +93,7 @@ internal sealed record class AdjustedEodPrice : DaoEntityBase
     public decimal Close { get => _close; init => _close = Math.Round(value, MoneyPrecision); }
     public long Volume { get; init; }
     public double Factor { get; init; } = 1D;
+
+    public Analysis.Technical.Ohlc ToOhlc() =>
+        new Analysis.Technical.Ohlc(Code, DateEod, Open, High, Low, Close, Volume, Factor);
 }
