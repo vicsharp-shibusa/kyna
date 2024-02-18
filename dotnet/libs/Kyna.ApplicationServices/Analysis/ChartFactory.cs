@@ -4,14 +4,9 @@ using Kyna.Infrastructure.Database.DataAccessObjects;
 
 namespace Kyna.ApplicationServices.Analysis;
 
-public sealed class ChartFactory
+public sealed class ChartFactory(DbDef dbDef)
 {
-    private IDbContext _dbContext;
-
-    public ChartFactory(DbDef dbDef)
-    {
-        _dbContext = DbContextFactory.Create(dbDef);
-    }
+    private readonly IDbContext _dbContext = DbContextFactory.Create(dbDef);
 
     public Chart CreateOhlc(string source, string code,
         DateOnly? start = null, DateOnly? end = null,

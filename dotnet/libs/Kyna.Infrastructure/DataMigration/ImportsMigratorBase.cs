@@ -2,21 +2,14 @@
 
 namespace Kyna.Infrastructure.DataMigration;
 
-public abstract class ImportsMigratorBase
+internal abstract class ImportsMigratorBase(DbDef sourceDef, DbDef targetDef,
+    Guid? processId = null, bool dryRun = false)
 {
-    protected Guid? _processId;
-    protected readonly bool _dryRun;
+    protected Guid? _processId = processId;
+    protected readonly bool _dryRun = dryRun;
 
-    private protected readonly IDbContext _sourceContext;
-    private protected readonly IDbContext _targetContext;
-
-    protected ImportsMigratorBase(DbDef sourceDef, DbDef targetDef, Guid? processId = null, bool dryRun = false)
-    {
-        _processId = processId;
-        _sourceContext = DbContextFactory.Create(sourceDef);
-        _targetContext = DbContextFactory.Create(targetDef);
-        _dryRun = dryRun;
-    }
+    private protected readonly IDbContext _sourceContext = DbContextFactory.Create(sourceDef);
+    private protected readonly IDbContext _targetContext = DbContextFactory.Create(targetDef);
 
     public abstract string Source { get; }
 }

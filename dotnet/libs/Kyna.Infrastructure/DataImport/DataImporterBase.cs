@@ -9,7 +9,7 @@ using System.Text.Json;
 
 namespace Kyna.Infrastructure.DataImport;
 
-public abstract class DataImporterBase : IDisposable
+internal abstract class DataImporterBase : IDisposable
 {
     protected bool _disposedValue;
     protected Guid? _processId;

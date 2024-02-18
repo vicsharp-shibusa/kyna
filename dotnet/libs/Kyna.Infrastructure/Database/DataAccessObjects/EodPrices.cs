@@ -37,7 +37,7 @@ internal sealed record class EodPrice : DaoEntityBase
     public long Volume { get; init; }
 
     public Analysis.Technical.Ohlc ToOhlc() =>
-        new Analysis.Technical.Ohlc(Code, DateEod, Open, High, Low, Close, Volume, 1D);
+        new(Code, DateEod, Open, High, Low, Close, Volume, 1D);
 }
 
 internal sealed record class AdjustedEodPrice : DaoEntityBase
@@ -95,5 +95,5 @@ internal sealed record class AdjustedEodPrice : DaoEntityBase
     public double Factor { get; init; } = 1D;
 
     public Analysis.Technical.Ohlc ToOhlc() =>
-        new Analysis.Technical.Ohlc(Code, DateEod, Open, High, Low, Close, Volume, Factor);
+        new(Code, DateEod, Open, High, Low, Close, Volume, Factor);
 }

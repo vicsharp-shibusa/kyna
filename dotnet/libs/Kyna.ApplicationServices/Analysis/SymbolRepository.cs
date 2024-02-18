@@ -2,14 +2,9 @@
 
 namespace Kyna.ApplicationServices.Analysis;
 
-public class SymbolRepository
+public sealed class SymbolRepository(DbDef finDef)
 {
-    private readonly IDbContext _dbContext;
-
-    public SymbolRepository(DbDef finDef)
-    {
-        _dbContext = DbContextFactory.Create(finDef);
-    }
+    private readonly IDbContext _dbContext = DbContextFactory.Create(finDef);
 
     public Task<IEnumerable<string>> GetAllAdjustedSymbolsForSourceAsync(string source)
     {

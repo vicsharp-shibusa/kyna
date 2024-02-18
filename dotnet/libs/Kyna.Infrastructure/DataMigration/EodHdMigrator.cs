@@ -11,7 +11,9 @@ using System.Text.Json.Serialization;
 
 namespace Kyna.Infrastructure.DataMigration;
 
-public sealed class EodHdMigrator : ImportsMigratorBase, IImportsMigrator
+internal sealed class EodHdMigrator(DbDef sourceDef, DbDef targetDef,
+EodHdMigrator.MigrationConfiguration configuration, Guid? processId = null,
+    bool dryRun = false) : ImportsMigratorBase(sourceDef, targetDef, processId, dryRun), IImportsMigrator
 {
     public override string Source => SourceName;
 
@@ -19,14 +21,7 @@ public sealed class EodHdMigrator : ImportsMigratorBase, IImportsMigrator
 
     public const string SourceName = "eodhd.com";
 
-    private readonly MigrationConfiguration _configuration;
-
-    public EodHdMigrator(DbDef sourceDef, DbDef targetDef,
-        MigrationConfiguration configuration, Guid? processId = null,
-        bool dryRun = false) : base(sourceDef, targetDef, processId, dryRun)
-    {
-        _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
-    }
+    private readonly MigrationConfiguration _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
 
     public async Task<TimeSpan> MigrateAsync(CancellationToken cancellationToken = default)
     {

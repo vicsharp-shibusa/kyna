@@ -7,7 +7,7 @@ using System.Runtime.CompilerServices;
     InternalsVisibleTo("Kyna.ApplicationServices")]
 namespace Kyna.Infrastructure.Database;
 
-internal class PostgreSqlContext(DbDef dbDef) : DbContextBase(dbDef), IDbContext
+internal sealed class PostgreSqlContext(DbDef dbDef) : DbContextBase(dbDef), IDbContext
 {
     public override IDbConnection GetOpenConnection()
     {

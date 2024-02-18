@@ -4,13 +4,13 @@ public record class Chart
 {
     public Chart(IEnumerable<Ohlc> ohlcs)
     {
-        PriceActions = ohlcs.OrderBy(o => o.Date).ToArray();
+        PriceActions = [.. ohlcs.OrderBy(o => o.Date)];
     }
 
     public Ohlc[] PriceActions { get; }
     public int Length => PriceActions.Length;
     public DateOnly Start => PriceActions[0].Date;
-    public DateOnly End => PriceActions[PriceActions.Length - 1].Date;
+    public DateOnly End => PriceActions[^1].Date;
 }
 
 public record class CandlestickChart : Chart

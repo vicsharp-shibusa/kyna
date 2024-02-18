@@ -63,7 +63,7 @@ internal static class SplitAdjustedPriceCalculator
 
         var orderedSplits = splits.OrderBy(s => s.SplitDate)
             .Where(s => s.SplitDate >= orderedPrices[0].DateEod &&
-                s.SplitDate <= orderedPrices[orderedPrices.Length - 1].DateEod).ToArray();
+                s.SplitDate <= orderedPrices[^1].DateEod).ToArray();
 
         if (orderedSplits.Length == 0)
         {

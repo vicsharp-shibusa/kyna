@@ -1,20 +1,16 @@
 ﻿using Kyna.ApplicationServices.Cli;
 using Kyna.ApplicationServices.Configuration;
+using Kyna.ApplicationServices.DataManagement;
 using Kyna.Common;
 using Kyna.Common.Logging;
-using Kyna.Infrastructure.Database;
-using Kyna.Infrastructure.DataImport;
 using Kyna.Infrastructure.DataMigration;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using System.Diagnostics;
 using System.Reflection;
-using System.Text.Json;
 
 ILogger<Program>? logger = null;
 IConfiguration? configuration;
-
-EodHdMigrator.MigrationConfiguration? migrationConfigfile = null;
 
 int exitCode = -1;
 
@@ -44,7 +40,6 @@ try
     {
         ValidateArgsAndSetDefaults();
         Configure();
-        ShowConfiguration();
 
         Debug.Assert(migrator != null);
 
@@ -140,19 +135,6 @@ void Communicate(string? message, bool force = false, LogLevel logLevel = LogLev
     }
 }
 
-void ShowConfiguration()
-{
-    if (migrationConfigfile != null)
-    {
-        Communicate($"Source               : {migrationConfigfile.Source}");
-        Communicate($"Categories           : {string.Join(", ", migrationConfigfile.Categories ?? [])}");
-        Communicate($"Mode                 : {migrationConfigfile.Mode.GetEnumDescription()}");
-        Communicate($"Source Deletion Mode : {migrationConfigfile.SourceDeletionMode.GetEnumDescription()}");
-        Communicate($"Price Migration Mode : {migrationConfigfile.PriceMigrationMode.GetEnumDescription()}");
-        Communicate($"Max Parallelization  : {migrationConfigfile.MaxParallelization}");
-    }
-}
-
 void ShowHelp()
 {
     CliArg[] localArgs = [
@@ -214,9 +196,14 @@ void ValidateArgsAndSetDefaults()
         throw new Exception("Logic error; configuration was not created.");
     }
 
+    if (config.ConfigFile == null)
+    {
+        throw new ArgumentException($"A configuration file is required; use -c <file name>.");
+    }
+
     if (string.IsNullOrWhiteSpace(config.Source))
     {
-        config.Source = EodHdImporter.SourceName;
+        config.Source = MigratorFactory.DefaultSource;
     }
 
     if (config.DryRun)
@@ -243,7 +230,8 @@ void Configure()
     logger = Kyna.ApplicationServices.Logging.LoggerFactory.Create<Program>(logDef);
     KLogger.SetLogger(logger);
 
-    ConfigureMigrator(importDef, finDef);
+    migrator = MigratorFactory.Create(config.Source ?? MigratorFactory.DefaultSource,
+        importDef, finDef, config.ConfigFile!, processId, config.DryRun);
 
     if (migrator == null)
     {
@@ -251,38 +239,6 @@ void Configure()
     }
 
     migrator!.Communicate += Migrator_Communicate;
-}
-
-void ConfigureMigrator(DbDef importDef, DbDef finDef)
-{
-    var options = JsonOptionsRepository.DefaultSerializerOptions;
-
-    if (config.Source == EodHdMigrator.SourceName)
-    {
-        options.Converters.Add(new EnumDescriptionConverter<EodHdMigrator.MigrationSourceMode>());
-        options.Converters.Add(new EnumDescriptionConverter<EodHdMigrator.SourceDeletionMode>());
-        options.Converters.Add(new EnumDescriptionConverter<EodHdMigrator.PriceMigrationMode>());
-
-        migrationConfigfile = JsonSerializer.Deserialize<EodHdMigrator.MigrationConfiguration>(
-            File.ReadAllText(config.ConfigFile!.FullName), options);
-    }
-
-    Debug.Assert(migrationConfigfile != null);
-
-    switch (config!.Source?.ToLower() ?? "")
-    {
-        case EodHdMigrator.SourceName:
-            var migrationConfigFile = JsonSerializer.Deserialize<EodHdMigrator.MigrationConfiguration>(
-                File.ReadAllText(config.ConfigFile!.FullName),
-                JsonOptionsRepository.DefaultSerializerOptions);
-
-            Debug.Assert(migrationConfigFile != null);
-
-            migrator = new EodHdMigrator(importDef, finDef, migrationConfigfile, processId, config.DryRun);
-            break;
-        default:
-            throw new Exception($"Unknown source: {config.Source}");
-    }
 }
 
 void Migrator_Communicate(object? sender, Kyna.Common.Events.CommunicationEventArgs e)

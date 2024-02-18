@@ -13,7 +13,7 @@ using System.Text.Json.Serialization;
 
 namespace Kyna.Infrastructure.DataImport;
 
-public sealed class EodHdImporter : DataImporterBase, IExternalDataImporter
+internal sealed class EodHdImporter : DataImporterBase, IExternalDataImporter
 {
     private readonly IDbContext _dbContext;
 
@@ -889,7 +889,7 @@ public sealed class EodHdImporter : DataImporterBase, IExternalDataImporter
         return (from, to);
     }
 
-    private ReadOnlyDictionary<string, DateOnly[]> ConfigureDateRanges(IDictionary<string, string[]> dateRanges)
+    private static ReadOnlyDictionary<string, DateOnly[]> ConfigureDateRanges(IDictionary<string, string[]> dateRanges)
     {
         var ranges = new Dictionary<string, DateOnly[]>(6);
 

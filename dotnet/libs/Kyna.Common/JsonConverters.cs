@@ -47,7 +47,7 @@ public static class JsonOptionsRepository
     }
 }
 
-public class NullableStringJsonConverter : JsonConverter<string?>
+public sealed class NullableStringJsonConverter : JsonConverter<string?>
 {
     public override string? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
     {
@@ -78,7 +78,7 @@ public class NullableStringJsonConverter : JsonConverter<string?>
 /// DateOnly Json Converter.
 /// <seealso href="https://stackoverflow.com/questions/71021064/serialize-json-from-object-to-string-dateonly"/>
 /// </summary>
-public class DateOnlyJsonConverter : JsonConverter<DateOnly>
+public sealed class DateOnlyJsonConverter : JsonConverter<DateOnly>
 {
     private const string Format = "yyyy-MM-dd";
 
@@ -97,7 +97,7 @@ public class DateOnlyJsonConverter : JsonConverter<DateOnly>
     }
 }
 
-public class NullableDateOnlyJsonConverter : JsonConverter<DateOnly?>
+public sealed class NullableDateOnlyJsonConverter : JsonConverter<DateOnly?>
 {
     private const string Format = "yyyy-MM-dd";
 
@@ -136,7 +136,7 @@ public class NullableDateOnlyJsonConverter : JsonConverter<DateOnly?>
     }
 }
 
-public class DateTimeJsonConverter : JsonConverter<DateTime>
+public sealed class DateTimeJsonConverter : JsonConverter<DateTime>
 {
     public override DateTime Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
     {
@@ -159,7 +159,7 @@ public class DateTimeJsonConverter : JsonConverter<DateTime>
     }
 }
 
-public class NullableDateTimeJsonConverter : JsonConverter<DateTime?>
+public sealed class NullableDateTimeJsonConverter : JsonConverter<DateTime?>
 {
     private const string Format = "yyyy-MM-dd HH:mm:ss";
 
@@ -196,7 +196,7 @@ public class NullableDateTimeJsonConverter : JsonConverter<DateTime?>
     }
 }
 
-public class LongJsonConverter : JsonConverter<long>
+public sealed class LongJsonConverter : JsonConverter<long>
 {
     public override long Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
     {
@@ -226,7 +226,7 @@ public class LongJsonConverter : JsonConverter<long>
     }
 }
 
-public class NullableLongJsonConverter : JsonConverter<long?>
+public sealed class NullableLongJsonConverter : JsonConverter<long?>
 {
     public override long? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
     {
@@ -263,7 +263,7 @@ public class NullableLongJsonConverter : JsonConverter<long?>
     }
 }
 
-public class DoubleJsonConverter : JsonConverter<double>
+public sealed class DoubleJsonConverter : JsonConverter<double>
 {
     public override double Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
     {
@@ -293,7 +293,7 @@ public class DoubleJsonConverter : JsonConverter<double>
     }
 }
 
-public class NullableDoubleJsonConverter : JsonConverter<double?>
+public sealed class NullableDoubleJsonConverter : JsonConverter<double?>
 {
     public override double? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
     {
@@ -330,7 +330,7 @@ public class NullableDoubleJsonConverter : JsonConverter<double?>
     }
 }
 
-public class DecimalJsonConverter : JsonConverter<decimal>
+public sealed class DecimalJsonConverter : JsonConverter<decimal>
 {
     public override decimal Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
     {
@@ -360,7 +360,7 @@ public class DecimalJsonConverter : JsonConverter<decimal>
     }
 }
 
-public class NullableDecimalJsonConverter : JsonConverter<decimal?>
+public sealed class NullableDecimalJsonConverter : JsonConverter<decimal?>
 {
     // Sometimes the values delivered by the eodhd API are exponential values (e.g., "1.0E+18").
 #pragma warning disable SYSLIB1045 // Convert to 'GeneratedRegexAttribute'.
@@ -415,7 +415,7 @@ public class NullableDecimalJsonConverter : JsonConverter<decimal?>
     }
 }
 
-public class BooleanJsonConverter : JsonConverter<bool>
+public sealed class BooleanJsonConverter : JsonConverter<bool>
 {
     public override bool Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
     {
@@ -460,7 +460,7 @@ public class BooleanJsonConverter : JsonConverter<bool>
     }
 }
 
-public class NullableBooleanJsonConverter : JsonConverter<bool?>
+public sealed class NullableBooleanJsonConverter : JsonConverter<bool?>
 {
     public override bool? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
     {
@@ -512,7 +512,7 @@ public class NullableBooleanJsonConverter : JsonConverter<bool?>
     }
 }
 
-public class EnumDescriptionConverter<T> : JsonConverter<T> where T : struct, Enum
+public sealed class EnumDescriptionConverter<T> : JsonConverter<T> where T : struct, Enum
 {
     public override T Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
     {

@@ -2,7 +2,7 @@
 
 namespace Kyna.ApplicationServices.Logging;
 
-public class DatabaseLogService(DbDef dbDef)
+public sealed class DatabaseLogService(DbDef dbDef)
 {
     private readonly IDbContext _dbContext = DbContextFactory.Create(dbDef);
 

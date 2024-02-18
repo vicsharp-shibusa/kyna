@@ -1,14 +1,13 @@
 ﻿using Kyna.ApplicationServices.Cli;
 using Kyna.ApplicationServices.Configuration;
+using Kyna.ApplicationServices.DataManagement;
 using Kyna.Common;
 using Kyna.Common.Logging;
-using Kyna.Infrastructure.Database;
 using Kyna.Infrastructure.DataImport;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using System.Diagnostics;
 using System.Reflection;
-using System.Text.Json;
 
 ILogger<Program>? logger = null;
 IConfiguration? configuration;
@@ -23,9 +22,7 @@ string? appName = Assembly.GetExecutingAssembly().GetName().Name;
 
 Debug.Assert(appName != null);
 
-#pragma warning disable CA1859 // Use concrete types when possible for improved performance
 IExternalDataImporter? importer = null;
-#pragma warning restore CA1859 // Use concrete types when possible for improved performance
 
 Stopwatch timer = Stopwatch.StartNew();
 
@@ -186,7 +183,7 @@ void ShowHelp()
 {
     CliArg[] localArgs = [
         new CliArg(["-f", "--file"], ["configuration file"], true, "JSON import configuration file to process."),
-        new CliArg(["-s", "--source"], ["source name"], false, $"Source for import. When excluded, defaults to {EodHdImporter.SourceName}"),
+        new CliArg(["-s", "--source"], ["source name"], false, $"Source for import. When excluded, defaults to {ImporterFactory.DefaultSource}"),
         new CliArg(["--dry-run"], [], false, "Executes a 'dry run' - reports only what the app would do with the specified configuration."),
         new CliArg(["--info"], [], false, "Show source-specific information."),
         new CliArg(["-y"], [], false, "Accept danger automatically.")
@@ -268,7 +265,7 @@ void ValidateArgsAndSetDefaults()
 
     if (string.IsNullOrWhiteSpace(config.Source))
     {
-        config.Source = EodHdImporter.SourceName;
+        config.Source = ImporterFactory.DefaultSource;
     }
 
     if (config.ShowInfo)
@@ -301,7 +298,8 @@ void Configure()
 
     config.ApiKey = configuration.GetSection($"ApiKeys:{config.Source}").Value;
 
-    ConfigureImporter(importDef);
+    importer = ImporterFactory.Create(config!.Source?.ToLower() ?? "", importDef, config.ConfigFile,
+        config.ApiKey, processId, config.DryRun);
 
     if (importer == null)
     {
@@ -309,40 +307,6 @@ void Configure()
     }
 
     importer!.Communicate += Importer_Communicate;
-}
-
-void ConfigureImporter(DbDef importDef)
-{
-    switch (config!.Source?.ToLower() ?? "")
-    {
-        case EodHdImporter.SourceName:
-            if (config.ShowInfo)
-            {
-                importer = new EodHdImporter(importDef, config.ApiKey ?? "", processId);
-            }
-            else
-            {
-                var eodHdImportConfigFile = JsonSerializer.Deserialize<EodHdImporter.ImportConfigfile>(
-                    File.ReadAllText(config.ConfigFile!.FullName),
-                    JsonOptionsRepository.DefaultSerializerOptions);
-
-                Debug.Assert(eodHdImportConfigFile != null);
-
-                importer = new EodHdImporter(importDef,
-                        new EodHdImporter.DataImportConfiguration(EodHdImporter.SourceName,
-                            config.ApiKey,
-                            eodHdImportConfigFile.ImportActions,
-                            eodHdImportConfigFile.Exchanges,
-                            eodHdImportConfigFile.SymbolTypes,
-                            eodHdImportConfigFile.Options,
-                            eodHdImportConfigFile.DateRanges),
-                        processId,
-                        config.DryRun);
-            }
-            break;
-        default:
-            throw new Exception($"Unknown source: {config.Source}");
-    }
 }
 
 void Importer_Communicate(object? sender, Kyna.Common.Events.CommunicationEventArgs e)

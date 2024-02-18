@@ -4,7 +4,7 @@ using System.Runtime.CompilerServices;
 [assembly: InternalsVisibleTo("Kyna.Infrastructure")]
 namespace Kyna.Common.Logging;
 
-public class LogItem
+public sealed class LogItem
 {
     internal LogItem()
     {

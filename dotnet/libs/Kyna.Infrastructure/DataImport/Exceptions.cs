@@ -1,6 +1,6 @@
 ﻿namespace Kyna.Infrastructure.DataImport;
 
-public class ApiLimitReachedException : Exception
+public sealed class ApiLimitReachedException : Exception
 {
     public ApiLimitReachedException()
     {

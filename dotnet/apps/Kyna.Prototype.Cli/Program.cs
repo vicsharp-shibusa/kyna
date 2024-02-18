@@ -28,7 +28,6 @@ Debug.Assert(appName != null);
 string defaultScope = appName ?? nameof(Program);
 
 DatabaseLogService? dbLogService = null;
-ApiTransactionService? apiTransactionService = null;
 
 Stopwatch timer = Stopwatch.StartNew();
 
@@ -219,7 +218,6 @@ void Configure()
     KLogger.SetLogger(logger);
 
     dbLogService = new(logDef);
-    apiTransactionService = new(importDef);
     chartFactory = new(finDef);
     symbolRepository = new(finDef);
 }

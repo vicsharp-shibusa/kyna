@@ -4,7 +4,7 @@ using System.Text.Json;
 
 namespace Kyna.Infrastructure.DataImport;
 
-public class ApiTransactionService(DbDef dbDef)
+internal sealed class ApiTransactionService(DbDef dbDef)
 {
     private readonly IDbContext _dbContext = DbContextFactory.Create(dbDef);
     private readonly JsonSerializerOptions _serializerOptions = JsonSerializerOptions.Default;
