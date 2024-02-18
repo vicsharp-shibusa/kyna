@@ -41,9 +41,9 @@ run_script(){
     printf "_______________________________________\n"
 }
 
-FINANCIALS_DB=("financials_test" "financials")
+FINANCIALS_DBS=("financials_test" "financials")
 
-for db_name in "${FINANCIALS_DB[@]}"; do
+for db_name in "${FINANCIALS_DBS[@]}"; do
     create_db $db_name
     run_script $db_name "../database/postgresql/create_prices_tables.sql"
     run_script $db_name "../database/postgresql/create_fundamental_tables.sql"
