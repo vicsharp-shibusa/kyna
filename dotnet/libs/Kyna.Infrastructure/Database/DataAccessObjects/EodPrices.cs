@@ -12,8 +12,10 @@ internal sealed record class EodPrice : DaoEntityBase
         decimal open, decimal high, decimal low, decimal close,
         long volume,
         long createdTicksUtc, long updatedTicksUtc,
-        Guid? processId = null) : base(source, code, processId)
+        Guid? processId = null) : base(processId)
     {
+        Source = source;
+        Code = code;
         DateEod = dateEod;
         Open = open;
         High = high;
@@ -25,10 +27,14 @@ internal sealed record class EodPrice : DaoEntityBase
     }
 
     public EodPrice(string source, string code, Guid? processId = null)
-        : base(source, code, processId)
+        : base(processId)
     {
+        Source = source;
+        Code = code;
     }
 
+    public string Source { get; init; }
+    public string Code { get; init; }
     public DateOnly DateEod { get; init; }
     public decimal Open { get => _open; init => _open = Math.Round(value, MoneyPrecision); }
     public decimal High { get => _high; init => _high = Math.Round(value, MoneyPrecision); }
@@ -53,8 +59,10 @@ internal sealed record class AdjustedEodPrice : DaoEntityBase
         long volume,
         double factor,
         long createdTicksUtc, long updatedTicksUtc,
-        Guid? processId = null) : base(source, code, processId)
+        Guid? processId = null) : base(processId)
     {
+        Source = source;
+        Code = code;
         DateEod = dateEod;
         Open = open;
         High = high;
@@ -67,14 +75,17 @@ internal sealed record class AdjustedEodPrice : DaoEntityBase
     }
 
     public AdjustedEodPrice(string source, string code, Guid? processId = null)
-        : base(source, code, processId)
+        : base(processId)
     {
-
+        Source= source;
+        Code = code;
     }
 
     public AdjustedEodPrice(EodPrice eodPrice, double factor = 1D)
-        : base(eodPrice.Source, eodPrice.Code, eodPrice.ProcessId)
+        : base(eodPrice.ProcessId)
     {
+        Source = eodPrice.Source;
+        Code = eodPrice.Code;
         DateEod = eodPrice.DateEod;
         Open = eodPrice.Open / (decimal)factor;
         High = eodPrice.High / (decimal)factor;
@@ -86,6 +97,8 @@ internal sealed record class AdjustedEodPrice : DaoEntityBase
         UpdatedTicksUtc = eodPrice.UpdatedTicksUtc;
     }
 
+    public string Source { get; init; }
+    public string Code { get; init; }
     public DateOnly DateEod { get; init; }
     public decimal Open { get => _open; init => _open = Math.Round(value, MoneyPrecision); }
     public decimal High { get => _high; init => _high = Math.Round(value, MoneyPrecision); }

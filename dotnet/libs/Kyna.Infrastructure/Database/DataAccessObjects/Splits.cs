@@ -5,16 +5,20 @@ namespace Kyna.Infrastructure.Database.DataAccessObjects;
 
 internal sealed record class Split : DaoEntityBase
 {
-    public Split(string source, string code, Guid? processId = null) : base(source, code, processId)
+    public Split(string source, string code, Guid? processId = null) : base(processId)
     {
+        Source = source;
+        Code = code;
     }
 
     public Split(string source, string code,
         DateOnly splitDate, double before, double after,
         long createdTicksUtc, long updatedTicksUtc,
         Guid? processId = null)
-        : base(source, code, processId)
+        : base(processId)
     {
+        Source = source;
+        Code = code;
         SplitDate = splitDate;
         Before = before;
         After = after;
@@ -24,12 +28,16 @@ internal sealed record class Split : DaoEntityBase
 
     public Split(string source, string code, DateOnly splitDate,
         string splitText, Guid? processId = null)
-        : base(source, code, processId)
+        : base(processId)
     {
+        Source = source;
+        Code = code;
         SplitDate = splitDate;
         (Before, After) = SplitAdjustedPriceCalculator.ConvertFromText(splitText);
     }
 
+    public string Source { get; init; }
+    public string Code { get; init; }
     public DateOnly SplitDate { get; internal set; }
     public double Before { get; init; }
     public double After { get; init; }
