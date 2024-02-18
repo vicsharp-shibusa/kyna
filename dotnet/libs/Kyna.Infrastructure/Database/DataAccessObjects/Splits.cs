@@ -95,11 +95,28 @@ internal static class SplitAdjustedPriceCalculator
             }
 
             // This check is required because the dates don't always line up.
+            // Move the factor date to the next valid eod price date.
+            // A scenario was found in which there were large gaps in the prices and multiple
+            // splits between those gaps. This is the reason for this 'j' variable; if the first match
+            // is already present in our factors array, we simply replace that existing value with the new
+            // split value.
+            int j = 0;
             for (int i = 0; i < factors.Length; i++)
             {
                 var firstMatch = orderedPrices.FirstOrDefault(p => p.DateEod >= orderedSplits[i].SplitDate);
-                factors[i].Date = firstMatch?.DateEod ?? factors[i].Date;
+                if (firstMatch != null)
+                {
+                    if (i > 0 && factors[i - 1].Date.Equals(firstMatch.DateEod))
+                    {
+                        j--;
+                    }
+                    factors[j].Date = firstMatch?.DateEod ?? factors[i].Date;
+                    j++;
+                }
             }
+
+            // Resize this array because it's possible that some values were remove along the way (see comment above).
+            factors = factors[..j];
 
             int f = 0;
 
