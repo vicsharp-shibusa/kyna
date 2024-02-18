@@ -46,11 +46,16 @@ try
     }
     else
     {
-        if (!Directory.Exists("output"))
+        string homeDirectory = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+
+        var outputPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "kyna-output");
+
+        if (!Directory.Exists(outputPath))
         {
-            Directory.CreateDirectory("output");
+            Directory.CreateDirectory(outputPath);
         }
-        var stream = File.Create(Path.Combine("output", "candle_patterns.csv"));
+
+        var stream = File.Create(Path.Combine(outputPath, "candle_patterns.csv"));
         string source = "eodhd.com";
         var symbols = await symbolRepository.GetAllAdjustedSymbolsForSourceAsync("eodhd.com");
 
@@ -69,7 +74,7 @@ try
             new("IsSpinningTop", c => c.IsSpinningTop),
         ];
 
-        Dictionary<string, Collection<(string Symbol, DateOnly Date)>> dict = new(10_000);
+        Dictionary<string, Collection<(string Symbol, Candlestick Candle)>> dict = new(10_000);
 
         string[] desiredSymbols = [ "AAPL.US", "MSFT.US", "TSLA.US", "NFLX.US",
             "AMZN.US", "NVDA.US", "GOOGL.US", "META.US", "UNH.US", "JPM.US",
@@ -81,9 +86,9 @@ try
         foreach (var symbol in symbols.Where(s => desiredSymbols.Contains(s)))
         {
             Console.WriteLine(symbol);
-            var chart = chartFactory.CreateCandlestick(source, symbol, new DateOnly(2000, 1, 1), new DateOnly(2022, 12, 31));
+            var chart = chartFactory.CreateCandlestick(source, symbol); //, new DateOnly(2000, 1, 1), new DateOnly(2022, 12, 31));
 
-            using var chartFile = File.Create(Path.Combine("output", $"{symbol}.txt"));
+            using var chartFile = File.Create(Path.Combine(outputPath, $"{symbol}.txt"));
             foreach (var item in chart.Candlesticks)
             {
                 chartFile.WriteLine(item.ToString());
@@ -97,30 +102,31 @@ try
 
                 foreach (var match in matches)
                 {
-                    if (!dict.TryGetValue(pattern.Key, out Collection<(string Symbol, DateOnly Date)>? value))
+                    if (!dict.TryGetValue(pattern.Key, out Collection<(string Symbol, Candlestick Candle)>? value))
                     {
                         value = ([]);
                         dict.Add(pattern.Key, value);
                     }
 
-                    value.Add((match.Symbol, match.Date));
+                    value.Add((match.Symbol, match));
                 }
             }
         }
 
+        stream.WriteLine($"Pattern,{Candlestick.GetCsvHeader()}");
         foreach (var pattern in patterns)
         {
             Console.WriteLine(pattern.Key);
-            if (!dict.TryGetValue(pattern.Key, out Collection<(string Symbol, DateOnly Date)>? value) || value.Count == 0)
+            if (!dict.TryGetValue(pattern.Key, out Collection<(string Symbol, Candlestick Candle)>? value) || value.Count == 0)
             {
                 stream.WriteLine(pattern.Key);
             }
             else
             {
                 DateOnly firstDate = new(2020, 1, 1);
-                foreach (var (Symbol, Date) in value) //.Where(d => d.Date >= firstDate))
+                foreach (var (Symbol, Candle) in value) //.Where(d => d.Date >= firstDate))
                 {
-                    stream.WriteLine($"{pattern.Key},{Symbol},{Date}");
+                    stream.WriteLine($"{pattern.Key},{Candle.ToCsv()}");
                 }
             }
         }
