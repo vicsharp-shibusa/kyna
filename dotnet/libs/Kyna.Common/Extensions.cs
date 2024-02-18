@@ -135,49 +135,52 @@ public static class EnumExtensions
             throw new ArgumentException($"{nameof(T)} must be of type Enum.");
         }
 
-        var flagCount = Enum.GetValues(type).Cast<Enum>()
-            .Where(e => Convert.ToInt32(e) > 0)
-            .Count(enumerationValue.HasFlag);
+        bool hasFlagsAttribute = Attribute.IsDefined(type, typeof(FlagsAttribute));
 
-        if (flagCount < 2)
+        var memberInfo = type.GetMember(enumerationValue.ToString());
+
+        if (hasFlagsAttribute)
         {
-            var memberInfo = type.GetMember(enumerationValue.ToString());
-            if (memberInfo.Length > 0)
+            List<string> results = new List<string>(10);
+            foreach (T enumVal in Enum.GetValues(type).Cast<T>().Where(i => Convert.ToInt32(i) > 0))
             {
-                var attrs = memberInfo[0].GetCustomAttributes(typeof(DescriptionAttribute), false);
-
-                if (attrs.Length > 0)
+                if (enumerationValue.HasFlag(enumVal))
                 {
-                    return ((DescriptionAttribute)attrs[0]).Description;
-                }
-            }
-            return enumerationValue.ToString();
-        }
-
-        List<string> results = new(Enum.GetValues(type).Cast<Enum>().Count());
-
-        foreach (T enumVal in Enum.GetValues(type).Cast<T>().Where(i => Convert.ToInt32(i) > 0))
-        {
-            if (enumerationValue.HasFlag(enumVal))
-            {
-                var memberInfo = type.GetMember(enumVal.ToString());
-                if (memberInfo.Length > 0)
-                {
-                    var attrs = memberInfo[0].GetCustomAttributes(typeof(DescriptionAttribute), false);
-
-                    if (attrs.Length > 0)
+                    var info = type.GetMember(enumVal.ToString());
+                    if (info.Length > 0)
                     {
-                        results.Add(((DescriptionAttribute)attrs[0]).Description);
-                    }
-                    else
-                    {
-                        results.Add(enumVal.ToString());
+                        var attrs = info[0].GetCustomAttributes(typeof(DescriptionAttribute), false);
+
+                        if (attrs.Length > 0)
+                        {
+                            results.Add(((DescriptionAttribute)attrs[0]).Description);
+                        }
+                        else
+                        {
+                            results.Add(enumVal.ToString());
+                        }
                     }
                 }
             }
+
+            return string.Join(", ", results);
         }
 
-        return string.Join(", ", results);
+        if (memberInfo.Length > 0)
+        {
+            var attrs = memberInfo[0].GetCustomAttributes(typeof(DescriptionAttribute), false);
+
+            if (attrs.Length > 0)
+            {
+                return ((DescriptionAttribute)attrs[0]).Description;
+            }
+            else
+            {
+                return enumerationValue.ToString();
+            }
+        }
+
+        return default(T).ToString();
     }
 
     public static T GetEnumValueFromDescription<T>(this string text) where T : struct, Enum
