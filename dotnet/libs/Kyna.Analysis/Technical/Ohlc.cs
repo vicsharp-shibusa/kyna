@@ -36,4 +36,16 @@ public record class Ohlc : PriceRange
     public bool IsUp => Close > Open;
     public bool IsDown => Open > Close;
     public bool IsFlat => Open == Close;
+
+    public decimal GetPricePoint(PricePoint pricePoint)
+    {
+        return pricePoint switch
+        {
+            PricePoint.Open => Open,
+            PricePoint.Close => Close,
+            PricePoint.Low => Low,
+            PricePoint.High => High,
+            _ => MidPoint
+        };
+    }
 }

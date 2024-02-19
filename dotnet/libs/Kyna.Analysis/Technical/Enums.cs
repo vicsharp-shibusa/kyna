@@ -6,3 +6,12 @@ public enum CandlestickColor
     Light,
     Dark
 }
+
+public enum PricePoint
+{
+    MidPoint = 0,
+    Open,
+    High,
+    Low,
+    Close
+}
