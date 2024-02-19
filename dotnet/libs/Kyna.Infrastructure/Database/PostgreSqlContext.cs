@@ -22,6 +22,8 @@ internal sealed class PostgreSqlContext(DbDef dbDef) : DbContextBase(dbDef), IDb
     {
         cancellationToken.ThrowIfCancellationRequested();
         var connection = new NpgsqlConnection(DbDef.ConnectionString);
+        SqlMapper.AddTypeHandler(new SqlDateOnlyTypeHandler());
+        SqlMapper.AddTypeHandler(new SqlTimeOnlyTypeHandler());
         await connection.OpenAsync(cancellationToken);
         return connection;
     }
