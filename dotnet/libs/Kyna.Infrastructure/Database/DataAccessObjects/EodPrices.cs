@@ -52,7 +52,7 @@ internal sealed record class AdjustedEodPrice : DaoEntityBase
     private decimal _high;
     private decimal _low;
     private decimal _close;
-
+    
     public AdjustedEodPrice(string source, string code,
         DateOnly dateEod,
         decimal open, decimal high, decimal low, decimal close,
@@ -74,7 +74,7 @@ internal sealed record class AdjustedEodPrice : DaoEntityBase
         UpdatedTicksUtc = updatedTicksUtc;
     }
 
-    public AdjustedEodPrice(string source, string code, Guid? processId = null)
+    internal AdjustedEodPrice(string source, string code, Guid? processId = null)
         : base(processId)
     {
         Source= source;

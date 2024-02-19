@@ -41,28 +41,6 @@ run_script(){
     printf "_______________________________________\n"
 }
 
-LOG_DBS=("logs_test" "logs")
-
-for db_name in "${LOG_DBS[@]}"; do
-    create_db $db_name
-    run_script $db_name "../database/postgresql/create_log_tables.sql"
-done
-
-IMPORT_DBS=("imports_test" "imports")
-
-for db_name in "${IMPORT_DBS[@]}"; do
-    create_db $db_name
-    run_script $db_name "../database/postgresql/create_import_tables.sql"
-done
-
-FINANCIALS_DBS=("financials_test" "financials")
-
-for db_name in "${FINANCIALS_DBS[@]}"; do
-    create_db $db_name
-    run_script $db_name "../database/postgresql/create_prices_tables.sql"
-    run_script $db_name "../database/postgresql/create_fundamental_tables.sql"
-done
-
 BACKTESTS_DBS=("backtests_test" "backtests")
 
 for db_name in "${BACKTESTS_DBS[@]}"; do

@@ -13,6 +13,7 @@ internal sealed partial class SqlRepository(DbDef dbDef) : SqlRepositoryBase(dbD
     public EodPricesInternal EodPrices { get; } = new(dbDef);
     public AdjustedEodPricesInternal AdjustedEodPrices { get; } = new(dbDef);
     public SplitsInternal Splits { get; } = new(dbDef);
+    public BacktestsInternal Backtests { get; } = new(dbDef);
 
     public string GetInCollectionSql(string parameterName)
     {
