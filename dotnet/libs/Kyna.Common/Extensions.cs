@@ -141,7 +141,7 @@ public static class EnumExtensions
 
         if (hasFlagsAttribute)
         {
-            List<string> results = new List<string>(10);
+            List<string> results = new(10);
             foreach (T enumVal in Enum.GetValues(type).Cast<T>().Where(i => Convert.ToInt32(i) > 0))
             {
                 if (enumerationValue.HasFlag(enumVal))
