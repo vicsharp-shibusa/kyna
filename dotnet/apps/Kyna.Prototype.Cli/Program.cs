@@ -15,8 +15,7 @@ using Kyna.Analysis.Technical;
 ILogger<Program>? logger = null;
 IConfiguration? configuration;
 
-ChartFactory chartFactory;
-SymbolRepository symbolRepository;
+FinancialsRepository financialsRepository;
 
 int exitCode = -1;
 
@@ -56,7 +55,7 @@ try
 
         var stream = File.Create(Path.Combine(outputPath, "candle_patterns.csv"));
         string source = "eodhd.com";
-        var symbols = await symbolRepository.GetAllAdjustedSymbolsForSourceAsync("eodhd.com");
+        var symbols = await financialsRepository.GetAllAdjustedSymbolsForSourceAsync(source);
 
         List<Pattern> patterns = [
             new("IsDoji", c => c.IsDoji),
@@ -85,7 +84,14 @@ try
         foreach (var symbol in symbols.Where(s => desiredSymbols.Contains(s)))
         {
             Console.WriteLine(symbol);
-            var chart = chartFactory.CreateCandlestick(source, symbol); //, new DateOnly(2000, 1, 1), new DateOnly(2022, 12, 31));
+
+            var ohlc = await financialsRepository.GetOhlcForSourceAndCodeAsync(source, symbol);
+
+            var chart = new Chart()
+                .WithPriceActions(ohlc)
+                .WithCandles()
+                .WithMovingAverage(21, MovingAverageType.Simple)
+                .Build();
 
             using var chartFile = File.Create(Path.Combine(outputPath, $"{symbol}.txt"));
             foreach (var item in chart.Candlesticks)
@@ -218,8 +224,7 @@ void Configure()
     KLogger.SetLogger(logger);
 
     dbLogService = new(logDef);
-    chartFactory = new(finDef);
-    symbolRepository = new(finDef);
+    financialsRepository = new(finDef);
 }
 
 class Config(string appName, string appVersion, string? description = null) : CliConfigBase(appName, appVersion, description)
