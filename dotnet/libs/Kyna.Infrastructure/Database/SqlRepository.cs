@@ -6,7 +6,6 @@ namespace Kyna.Infrastructure.Database;
 internal sealed partial class SqlRepository(DbDef dbDef) : SqlRepositoryBase(dbDef)
 {
     public SqlRepository(DatabaseEngine engine) : this(new DbDef("", engine, "")) { }
-
     public ApiTransactionsInternal ApiTransactions { get; } = new(dbDef);
     public LogsInternal Logs { get; } = new(dbDef);
     public EventsInternal AppEvents { get; } = new(dbDef);
@@ -14,6 +13,7 @@ internal sealed partial class SqlRepository(DbDef dbDef) : SqlRepositoryBase(dbD
     public AdjustedEodPricesInternal AdjustedEodPrices { get; } = new(dbDef);
     public SplitsInternal Splits { get; } = new(dbDef);
     public BacktestsInternal Backtests { get; } = new(dbDef);
+    public FundamentalsInternal Fundamentals { get; } = new(dbDef);
 
     public string GetInCollectionSql(string parameterName)
     {

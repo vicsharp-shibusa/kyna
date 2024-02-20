@@ -87,6 +87,39 @@ source = @Source AND code = @Code AND date_eod = @DateEod";
         Assert.Equal(splitDao, actual);
     }
 
+    [Fact]
+    public void InsertAndFetch_Entities()
+    {
+        var entity = CreateEntity();
+
+        _context!.Execute(_context.Sql.Fundamentals.DeleteEntityForSourceAndCode,
+            new { entity.Source, entity.Code});
+
+        _context.Execute(_context.Sql.Fundamentals.UpsertEntity, entity);
+
+        var entities = _context.Query<Entity>(_context.Sql.Fundamentals.FetchEntity);
+
+        Assert.NotNull(entities);
+        Assert.NotEmpty(entities);
+        Assert.Contains(entity, entities);
+    }
+
+    private static Entity CreateEntity()
+    {
+        return new Entity("Test", "TEST.US", "Common Stock", "Test Company", "NYSE", "USD", "USA")
+        {
+
+            GicGroup = "GR1",
+            GicIndustry = "Test Industry",
+            GicSector = "Test Sector",
+            GicSubIndustry = "Test SubIndustry",
+            Industry = "Test Industry",
+            Phone = "(555) 555-1232",
+            WebUrl = "https//test-company.io",
+            Sector = "Test Sectory",
+        };
+    }
+
     private static EodPrice CreateEodPricesDao(Guid? processId = null)
     {
         var (Open, High, Low, Close, Volume) = StockPriceGenerator.GenerateRandomStockPrice(50M, 200M);
