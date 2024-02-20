@@ -1,6 +1,6 @@
 ﻿using System.Text.Json.Serialization;
 
-namespace Kyna.EodHistoricalData;
+namespace Kyna.EodHistoricalData.Models;
 
 public struct PriceAction
 {

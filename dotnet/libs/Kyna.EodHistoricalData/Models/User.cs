@@ -1,4 +1,4 @@
-﻿namespace Kyna.EodHistoricalData;
+﻿namespace Kyna.EodHistoricalData.Models;
 
 public struct User
 {

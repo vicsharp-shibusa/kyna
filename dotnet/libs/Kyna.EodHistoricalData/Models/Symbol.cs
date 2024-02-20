@@ -1,4 +1,4 @@
-﻿namespace Kyna.EodHistoricalData;
+﻿namespace Kyna.EodHistoricalData.Models;
 
 public struct Symbol
 {
@@ -8,7 +8,7 @@ public struct Symbol
     public string? Exchange;
     public string? Currency;
     public string? Type;
-        
+
     public static Symbol Empty => new();
 
     public override readonly string ToString()
