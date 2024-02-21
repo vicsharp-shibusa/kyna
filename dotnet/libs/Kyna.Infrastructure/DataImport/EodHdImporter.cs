@@ -1,7 +1,7 @@
 ﻿using Kyna.Common;
 using Kyna.Common.Events;
 using Kyna.Common.Logging;
-using Kyna.EodHistoricalData;
+using Kyna.EodHistoricalData.Models;
 using Kyna.Infrastructure.Database;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
@@ -682,11 +682,6 @@ internal sealed class EodHdImporter : DataImporterBase, IExternalDataImporter
     {
         cancellationToken.ThrowIfCancellationRequested();
 
-        if (_dryRun)
-        {
-            CommunicateAction($"{Constants.Actions.CalendarEarnings}");
-        }
-
         var calendarEarningsAction = FindImportAction(Constants.Actions.CalendarEarnings);
 
         if (!calendarEarningsAction.Equals(ImportAction.Default) && calendarEarningsAction.Details!.Length == 0)
@@ -695,9 +690,10 @@ internal sealed class EodHdImporter : DataImporterBase, IExternalDataImporter
             var ep = FindEndPointForUri(uri);
             CheckApiLimit(cancellationToken, ep.Cost);
 
+            CommunicateAction($"{Constants.Actions.CalendarEarnings}");
+
             if (!_dryRun)
             {
-                CommunicateAction($"{Constants.Actions.CalendarEarnings}");
                 await InvokeApiCallAsync(uri, Constants.Actions.CalendarEarnings, cancellationToken: cancellationToken);
                 AddCallToUsage(uri);
             }
@@ -708,11 +704,6 @@ internal sealed class EodHdImporter : DataImporterBase, IExternalDataImporter
     {
         cancellationToken.ThrowIfCancellationRequested();
 
-        if (_dryRun)
-        {
-            CommunicateAction($"{Constants.Actions.CalendarIpos}");
-        }
-
         var calendarIposAction = FindImportAction(Constants.Actions.CalendarIpos);
 
         if (!calendarIposAction.Equals(ImportAction.Default) && calendarIposAction.Details!.Length == 0)
@@ -721,9 +712,10 @@ internal sealed class EodHdImporter : DataImporterBase, IExternalDataImporter
             var ep = FindEndPointForUri(uri);
             CheckApiLimit(cancellationToken, ep.Cost);
 
+            CommunicateAction($"{Constants.Actions.CalendarIpos}");
+
             if (!_dryRun)
             {
-                CommunicateAction($"{Constants.Actions.CalendarIpos}");
                 await InvokeApiCallAsync(uri, Constants.Actions.CalendarIpos, cancellationToken: cancellationToken);
                 AddCallToUsage(uri);
             }
@@ -734,10 +726,6 @@ internal sealed class EodHdImporter : DataImporterBase, IExternalDataImporter
     {
         cancellationToken.ThrowIfCancellationRequested();
 
-        if (_dryRun)
-        {
-            CommunicateAction($"{Constants.Actions.CalendarSplits}");
-        }
         var calendarSplitsAction = FindImportAction(Constants.Actions.CalendarSplits);
 
         if (!calendarSplitsAction.Equals(ImportAction.Default) && calendarSplitsAction.Details!.Length == 0)
@@ -746,9 +734,10 @@ internal sealed class EodHdImporter : DataImporterBase, IExternalDataImporter
             var ep = FindEndPointForUri(uri);
             CheckApiLimit(cancellationToken, ep.Cost);
 
+            CommunicateAction($"{Constants.Actions.CalendarSplits}");
+
             if (!_dryRun)
             {
-                CommunicateAction($"{Constants.Actions.CalendarSplits}");
                 await InvokeApiCallAsync(uri, Constants.Actions.CalendarSplits, cancellationToken: cancellationToken);
                 AddCallToUsage(uri);
             }

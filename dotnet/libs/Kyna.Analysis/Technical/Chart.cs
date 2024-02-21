@@ -1,6 +1,6 @@
 ﻿namespace Kyna.Analysis.Technical;
 
-public sealed class Chart
+public class Chart
 {
     private readonly List<MovingAverage> _movingaverages = new(3);
     private readonly HashSet<MovingAverageKey> _movingAverageKeys = new(3);

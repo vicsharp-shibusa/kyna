@@ -185,7 +185,7 @@ void ShowHelp()
         new CliArg(["-f", "--file"], ["configuration file"], true, "JSON import configuration file to process."),
         new CliArg(["-s", "--source"], ["source name"], false, $"Source for import. When excluded, defaults to {ImporterFactory.DefaultSource}"),
         new CliArg(["--dry-run"], [], false, "Executes a 'dry run' - reports only what the app would do with the specified configuration."),
-        new CliArg(["--info"], [], false, "Show source-specific information."),
+        new CliArg(["--info", "--show-info"], [], false, "Show source-specific information."),
         new CliArg(["-y"], [], false, "Accept danger automatically.")
     ];
 
@@ -240,6 +240,7 @@ void HandleArguments(string[] args)
                 config.DryRun = true;
                 break;
             case "--info":
+            case "--show-info":
                 config.ShowInfo = true;
                 break;
             case "-y":
@@ -298,8 +299,8 @@ void Configure()
 
     config.ApiKey = configuration.GetSection($"ApiKeys:{config.Source}").Value;
 
-    importer = ImporterFactory.Create(config!.Source?.ToLower() ?? "", importDef, config.ConfigFile,
-        config.ApiKey, processId, config.DryRun);
+    importer = ImporterFactory.Create(config!.Source?.ToLower() ?? "", importDef,
+        config.ConfigFile, config.ApiKey, processId, config.DryRun);
 
     if (importer == null)
     {

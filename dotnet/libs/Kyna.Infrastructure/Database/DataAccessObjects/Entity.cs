@@ -6,31 +6,21 @@ internal sealed record class Entity : DaoEntityBase
     {
         Source = "";
         Code = "";
-        Type = "";
-        Name = "";
-        Exchange = "";
-        Currency = "";
-        Country = "";
     }
 
-    public Entity(string source, string code, string type, string name, string exchange, string currency, string country)
+    public Entity(string source, string code)
     {
         Source = source;
         Code = code;
-        Type = type;
-        Name = name;
-        Exchange = exchange;
-        Currency = currency;
-        Country = country;
     }
 
     public string Source { get; init; }
     public string Code { get; init; }
-    public string Type { get; init; }
-    public string Name { get; init; }
-    public string Exchange { get; init; }
-    public string Country { get; init; }
-    public string Currency { get; init; }
+    public string? Type { get; init; }
+    public string? Name { get; init; }
+    public string? Exchange { get; init; }
+    public string? Country { get; init; }
+    public string? Currency { get; init; }
     public bool Delisted { get; init; }
     public bool Ignored { get; init; }
     public bool HasSplits { get; init; }

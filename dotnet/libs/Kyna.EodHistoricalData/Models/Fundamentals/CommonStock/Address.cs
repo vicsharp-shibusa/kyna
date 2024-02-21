@@ -13,5 +13,4 @@ public struct Address
     public string? Country;
     [JsonPropertyName("Zip")]
     public string? PostalCode;
-    public bool IsValid => !string.IsNullOrWhiteSpace(Street) && !string.IsNullOrWhiteSpace(PostalCode);
 }
