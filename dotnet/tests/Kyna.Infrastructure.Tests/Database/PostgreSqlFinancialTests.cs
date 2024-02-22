@@ -88,6 +88,23 @@ source = @Source AND code = @Code AND date_eod = @DateEod";
     }
 
     [Fact]
+    public void InsertAndFetch_BasicEntity()
+    {
+        var entity = new Entity("BTest", "BTEST.US");
+
+        _context!.Execute(_context.Sql.Fundamentals.DeleteEntityForSourceAndCode,
+            new { entity.Source, entity.Code });
+
+        _context.Execute(_context.Sql.Fundamentals.InsertBasicEntity, entity);
+
+        var entities = _context.Query<Entity>(_context.Sql.Fundamentals.FetchEntity);
+
+        Assert.NotNull(entities);
+        Assert.NotEmpty(entities);
+        Assert.Contains(entity, entities);
+    }
+
+    [Fact]
     public void InsertAndFetch_Entities()
     {
         var entity = CreateEntity();
@@ -106,9 +123,13 @@ source = @Source AND code = @Code AND date_eod = @DateEod";
 
     private static Entity CreateEntity()
     {
-        return new Entity("Test", "TEST.US", "Common Stock", "Test Company", "NYSE", "USD", "USA")
+        return new Entity("Test", "TEST.US")
         {
-
+            Type = "Common Stock",
+            Name  = "Test Company",
+            Exchange = "NYSE",
+            Country = "USA",
+            Currency = "USD",
             GicGroup = "GR1",
             GicIndustry = "Test Industry",
             GicSector = "Test Sector",
@@ -166,7 +187,6 @@ source = @Source AND code = @Code AND date_eod = @DateEod";
         };
     }
 }
-
 
 internal static class StockPriceGenerator
 {

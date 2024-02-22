@@ -1,5 +1,7 @@
 ﻿using Kyna.Common;
 using Kyna.Common.Events;
+using Kyna.Common.Logging;
+using Kyna.EodHistoricalData.Models;
 using Kyna.Infrastructure.Database;
 using Kyna.Infrastructure.Database.DataAccessObjects;
 using Kyna.Infrastructure.DataImport;
@@ -12,8 +14,8 @@ using System.Text.Json.Serialization;
 namespace Kyna.Infrastructure.DataMigration;
 
 internal sealed class EodHdMigrator(DbDef sourceDef, DbDef targetDef,
-EodHdMigrator.MigrationConfiguration configuration, Guid? processId = null,
-    bool dryRun = false) : ImportsMigratorBase(sourceDef, targetDef, processId, dryRun), IImportsMigrator
+    EodHdMigrator.MigrationConfiguration configuration, Guid? processId = null, bool dryRun = false)
+    : ImportsMigratorBase(sourceDef, targetDef, processId, dryRun), IImportsMigrator
 {
     public override string Source => SourceName;
 
@@ -52,8 +54,7 @@ EodHdMigrator.MigrationConfiguration configuration, Guid? processId = null,
                 }
 
                 if (_configuration.SourceDeletionMode == SourceDeletionMode.All ||
-                    (_configuration.SourceDeletionMode == SourceDeletionMode.AllExceptLatest &&
-                        !item.Equals(last)))
+                    (_configuration.SourceDeletionMode == SourceDeletionMode.AllExceptLatest && !item.Equals(last)))
                 {
                     item.DeleteFromSource = true;
                 }
@@ -62,14 +63,15 @@ EodHdMigrator.MigrationConfiguration configuration, Guid? processId = null,
             }
         }
 
-        foreach (var t in new[] {
-                EodHdImporter.Constants.Actions.Splits,
-                EodHdImporter.Constants.Actions.EndOfDayPrices,
-            })
+        foreach (var actionType in new[] {
+            EodHdImporter.Constants.Actions.Fundamentals,
+            EodHdImporter.Constants.Actions.Splits,
+            EodHdImporter.Constants.Actions.EndOfDayPrices
+        })
         {
             if (_configuration.MaxParallelization > 1)
             {
-                await Parallel.ForEachAsync(actions.Where(a => a.Category.Equals(t) && a.DoMigrate),
+                await Parallel.ForEachAsync(actions.Where(a => a.Category.Equals(actionType) && a.DoMigrate),
                     new ParallelOptions()
                     {
                         MaxDegreeOfParallelism = _configuration.MaxParallelization,
@@ -90,7 +92,7 @@ EodHdMigrator.MigrationConfiguration configuration, Guid? processId = null,
             }
             else
             {
-                foreach (var item in actions.Where(a => a.Category.Equals(t) && a.DoMigrate))
+                foreach (var item in actions.Where(a => a.Category.Equals(actionType) && a.DoMigrate))
                 {
                     string msg =
                         $"Migrate {item.Id,12}\t{item.Category,15}\t{item.SubCategory,10}\tDelete from source: {item.DeleteFromSource}";
@@ -106,20 +108,41 @@ EodHdMigrator.MigrationConfiguration configuration, Guid? processId = null,
 
             if (_configuration.SourceDeletionMode != SourceDeletionMode.None)
             {
-                foreach (var item in actions.Where(a => a.Category.Equals(t) && a.DeleteFromSource))
+                foreach (var item in actions.Where(a => a.Category.Equals(actionType) && a.DeleteFromSource))
                 {
                     string msg =
                         $"Delete {item.Id,12}\t{item.Category,15}\t{item.SubCategory,10}";
 
                     Communicate?.Invoke(this, new CommunicationEventArgs(msg, nameof(EodHdMigrator)));
-                }
 
-                if (!_dryRun)
-                {
-
+                    if (!_dryRun)
+                    {
+                        string sql = $"{_sourceContext.Sql.ApiTransactions.Delete} WHERE id = @Id";
+                        await _sourceContext.ExecuteAsync(sql, new { item.Id }, cancellationToken: cancellationToken);
+                    }
                 }
             }
         }
+
+        Communicate?.Invoke(this, new CommunicationEventArgs(timer.Elapsed.ConvertToText(), null));
+        Communicate?.Invoke(this, new CommunicationEventArgs("Hydrating missing entities", nameof(EodHdMigrator)));
+        await _targetContext.ExecuteAsync(_targetContext.Sql.Fundamentals.HydrateMissingEntities, commandTimeout: 0, 
+            cancellationToken: cancellationToken);
+
+        Communicate?.Invoke(this, new CommunicationEventArgs(timer.Elapsed.ConvertToText(), null));
+        Communicate?.Invoke(this, new CommunicationEventArgs("Setting split indicator for entities", nameof(EodHdMigrator)));
+        await _targetContext.ExecuteAsync(_targetContext.Sql.Fundamentals.SetSplitIndicatorForEntities, commandTimeout: 0, 
+            cancellationToken: cancellationToken);
+
+        Communicate?.Invoke(this, new CommunicationEventArgs(timer.Elapsed.ConvertToText(), null));
+        Communicate?.Invoke(this, new CommunicationEventArgs("Setting price action indicator for entities", nameof(EodHdMigrator)));
+        await _targetContext.ExecuteAsync(_targetContext.Sql.Fundamentals.SetPriceActionIndicatorForEntities, commandTimeout: 0, 
+            cancellationToken: cancellationToken);
+
+        Communicate?.Invoke(this, new CommunicationEventArgs(timer.Elapsed.ConvertToText(), null));
+        Communicate?.Invoke(this, new CommunicationEventArgs("Setting last price actions for entities", nameof(EodHdMigrator)));
+        await _targetContext.ExecuteAsync(_targetContext.Sql.Fundamentals.SetLastPriceActionForEntities, commandTimeout: 0, 
+            cancellationToken: cancellationToken);
 
         timer.Stop();
         return timer.Elapsed;
@@ -127,10 +150,18 @@ EodHdMigrator.MigrationConfiguration configuration, Guid? processId = null,
 
     public Task<string> GetInfoAsync()
     {
-        throw new NotImplementedException();
+        StringBuilder result = new();
+
+        result.AppendLine($"Mode                 : {_configuration.Mode.GetEnumDescription()}");
+        result.AppendLine($"Source               : {_configuration.Source}");
+        result.AppendLine($"Price Migration Mode : {_configuration.PriceMigrationMode.GetEnumDescription()}");
+        result.AppendLine($"Source Deletion Mode : {_configuration.SourceDeletionMode.GetEnumDescription()}");
+        result.AppendLine($"Max Parallelization  : {_configuration.MaxParallelization}");
+
+        return Task.FromResult(result.ToString());
     }
 
-    private Task MigrateItemAsync(ApiTransactionForMigration item, CancellationToken cancellationToken)
+    private async Task MigrateItemAsync(ApiTransactionForMigration item, CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
 
@@ -138,20 +169,33 @@ EodHdMigrator.MigrationConfiguration configuration, Guid? processId = null,
             _sourceContext.Sql.ApiTransactions.FetchResponseBodyForId,
             new { item.Id });
 
-        if (!string.IsNullOrWhiteSpace(responseBody))
+        if (!string.IsNullOrWhiteSpace(responseBody) &&
+            responseBody != "[]" && responseBody != "{}")
         {
             if (item.Category.Equals(EodHdImporter.Constants.Actions.EndOfDayPrices))
             {
-                return MigrateEodPricesAsync(item, responseBody);
+                await MigrateEodPricesAsync(item, responseBody);
             }
 
             if (item.Category.Equals(EodHdImporter.Constants.Actions.Splits))
             {
-                return MigrateSplitsAsync(item, responseBody);
+                await MigrateSplitsAsync(item, responseBody);
+            }
+
+            if (item.Category.Equals(EodHdImporter.Constants.Actions.Fundamentals))
+            {
+                if (!(responseBody == "{}" || responseBody == "[]"))
+                {
+                    if (!await TryMigrateFundamentalsForCommonStock(item, responseBody))
+                    {
+                        if (!await TryMigrateFundamentalsForEtf(item, responseBody))
+                        {
+                            KLogger.LogError($"Unable to process {item.Category} for {item.SubCategory}");
+                        }
+                    }
+                }
             }
         }
-
-        return Task.CompletedTask;
     }
     private IEnumerable<ApiTransactionForMigration> GetTransactionsToMigrate()
     {
@@ -176,7 +220,7 @@ EodHdMigrator.MigrationConfiguration configuration, Guid? processId = null,
     {
         if (_configuration.PriceMigrationMode != PriceMigrationMode.None)
         {
-            var eodPriceActions = JsonSerializer.Deserialize<EodHistoricalData.PriceAction[]>(
+            var eodPriceActions = JsonSerializer.Deserialize<PriceAction[]>(
                 responseBody, JsonOptionsRepository.DefaultSerializerOptions);
 
             if ((eodPriceActions?.Length ?? 0) > 0)
@@ -197,7 +241,7 @@ EodHdMigrator.MigrationConfiguration configuration, Guid? processId = null,
                 if (_configuration.PriceMigrationMode.HasFlag(PriceMigrationMode.Adjusted))
                 {
                     string splitSql = $"{_targetContext.Sql.Splits.Fetch} WHERE source = @Source AND code = @Code";
-                    var splits = _targetContext.Query<Split>(splitSql, new
+                    var splits = _targetContext.Query<Database.DataAccessObjects.Split>(splitSql, new
                     {
                         item.Source,
                         Code = item.SubCategory
@@ -216,24 +260,101 @@ EodHdMigrator.MigrationConfiguration configuration, Guid? processId = null,
 
     private Task MigrateSplitsAsync(ApiTransactionForMigration item, string responseBody)
     {
-        var splits = JsonSerializer.Deserialize<EodHistoricalData.Split[]>(
+        var splits = JsonSerializer.Deserialize<EodHistoricalData.Models.Split[]>(
             responseBody, JsonOptionsRepository.DefaultSerializerOptions);
 
         if ((splits?.Length ?? 0) > 0)
         {
-            return _targetContext.ExecuteAsync(_sourceContext.Sql.Splits.Upsert,
-                splits!.Select(s => new Split(item.Source, item.SubCategory,
+            return _targetContext.ExecuteAsync(_targetContext.Sql.Splits.Upsert,
+                splits!.Select(s => new Database.DataAccessObjects.Split(item.Source, item.SubCategory,
                 s.Date, s.SplitText, _processId)));
         }
 
         return Task.CompletedTask;
     }
 
+    private async Task<bool> TryMigrateFundamentalsForCommonStock(ApiTransactionForMigration item, string responseBody)
+    {
+        try
+        {
+            var fundamentals = JsonSerializer
+                .Deserialize<EodHistoricalData.Models.Fundamentals.CommonStock.FundamentalsCollection>(
+                responseBody, JsonOptionsRepository.DefaultSerializerOptions);
+
+            if (!string.IsNullOrWhiteSpace(fundamentals.General.Code))
+            {
+                await _targetContext.ExecuteAsync(_targetContext.Sql.Fundamentals.UpsertEntity,
+                    new Entity()
+                    {
+                        Source = item.Source,
+                        Code = item.SubCategory,
+                        Country = fundamentals.General.CountryName ?? "USA",
+                        Currency = fundamentals.General.CurrencyCode ?? "USD",
+                        Delisted = fundamentals.General.IsDelisted.GetValueOrDefault(),
+                        Exchange = fundamentals.General.Exchange ?? "Unknown",
+                        GicGroup = fundamentals.General.GicGroup,
+                        GicSector = fundamentals.General.GicSector,
+                        GicIndustry = fundamentals.General.GicIndustry,
+                        GicSubIndustry = fundamentals.General.GicSubIndustry,
+                        Industry = fundamentals.General.Industry,
+                        Name = fundamentals.General.Name ?? item.SubCategory,
+                        Phone = fundamentals.General.Phone,
+                        WebUrl = fundamentals.General.WebUrl,
+                        Type = fundamentals.General.Type ?? "Common Stock",
+                        Sector = fundamentals.General.Sector,
+                        ProcessId = _processId
+                    });
+
+                return true;
+            }
+
+            return false;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    private async Task<bool> TryMigrateFundamentalsForEtf(ApiTransactionForMigration item, string responseBody)
+    {
+        try
+        {
+            var fundamentals = JsonSerializer
+                .Deserialize<EodHistoricalData.Models.Fundamentals.Etf.FundamentalsCollection>(
+                responseBody, JsonOptionsRepository.DefaultSerializerOptions);
+
+            if (!string.IsNullOrWhiteSpace(fundamentals.General.Code))
+            {
+                await _targetContext.ExecuteAsync(_targetContext.Sql.Fundamentals.UpsertEntity,
+                    new Entity()
+                    {
+                        Source = item.Source,
+                        Code = item.SubCategory,
+                        Country = fundamentals.General.CountryName ?? "USA",
+                        Currency = fundamentals.General.CurrencyCode ?? "USD",
+                        Delisted = false,
+                        Exchange = fundamentals.General.Exchange ?? "Unknown",
+                        Name = fundamentals.General.Name ?? item.SubCategory,
+                        Type = fundamentals.General.Type ?? "ETF",
+                        ProcessId = _processId
+                    });
+
+                return true;
+            }
+
+            return false;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
     public class MigrationConfiguration(MigrationSourceMode mode, string source)
     {
         public string Source { get; init; } = source;
         public string[] Categories { get; init; } = [];
-
         public MigrationSourceMode Mode { get; init; } = mode;
 
         [JsonPropertyName("Source Deletion Mode")]

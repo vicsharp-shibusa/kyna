@@ -3,8 +3,7 @@
     "Exchange List": "true",
     "Exchange Symbol List": "US",
     "EOD Prices": "US",
-    "Splits": "US",
-    "Dividends": "US"
+    "Splits": "US"
   },
   "Exchanges": {
     "US": "NYSE, NYSE ARCA, NASDAQ"
@@ -13,7 +12,6 @@
     "US": "Common Stock, ETF"
   },
   "Options": {
-    "Bulk": "false",
-    "Max Parallelization": "5"
+    "Max Parallelization": "10"
   }
 }

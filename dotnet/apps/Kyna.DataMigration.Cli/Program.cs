@@ -43,34 +43,41 @@ try
 
         Debug.Assert(migrator != null);
 
-        KLogger.LogEvent(EventIdRepository.GetAppStartedEvent(config!), processId);
-
-        CancellationTokenSource cts = new();
-
-        TimeSpan duration = TimeSpan.Zero;
-
-        try
+        if (config.ShowInfo)
         {
-            duration = await migrator.MigrateAsync(cts.Token);
+            Console.WriteLine(await migrator.GetInfoAsync());
         }
-        catch (AggregateException ex)
+        else
         {
-            cts.Cancel(true);
+            KLogger.LogEvent(EventIdRepository.GetAppStartedEvent(config!), processId);
 
-            foreach (var e in ex.InnerExceptions)
+            CancellationTokenSource cts = new();
+
+            TimeSpan duration = TimeSpan.Zero;
+
+            try
             {
+                duration = await migrator.MigrateAsync(cts.Token);
+            }
+            catch (AggregateException ex)
+            {
+                cts.Cancel(true);
+
+                foreach (var e in ex.InnerExceptions)
+                {
 #if DEBUG
-                Communicate(e.ToString(), true, LogLevel.Error);
+                    Communicate(e.ToString(), true, LogLevel.Error);
 #else
                 Communicate(e.Message, true, LogLevel.Error);
 #endif
+                }
             }
-        }
-        finally
-        {
-            Communicate($"{Environment.NewLine}Migration using file '{config.ConfigFile?.Name}' completed in {duration.ConvertToText()}");
+            finally
+            {
+                Communicate($"{Environment.NewLine}Migration using file '{config.ConfigFile?.Name}' completed in {duration.ConvertToText()}");
 
-            cts.Dispose();
+                cts.Dispose();
+            }
         }
     }
 
@@ -139,7 +146,8 @@ void ShowHelp()
 {
     CliArg[] localArgs = [
         new CliArg(["-f", "--file"], ["configuration file"], true, "JSON import configuration file to process."),
-        new CliArg(["--dry-run"], [], false, "Executes a 'dry run' - reports only what the app would do with the specified configuration.")
+        new CliArg(["--dry-run"], [], false, "Executes a 'dry run' - reports only what the app would do with the specified configuration."),
+        new CliArg(["--info","--show-info"], [], false, "Displays summary info from the provided configuration file.")
     ];
 
     CliArg[] args = CliHelper.GetDefaultArgDescriptions().Union(localArgs).ToArray();
@@ -183,6 +191,10 @@ void HandleArguments(string[] args)
             case "--dry-run":
                 config.DryRun = true;
                 break;
+            case "--info":
+            case "--show-info":
+                config.ShowInfo = true;
+                break;
             default:
                 throw new Exception($"Unknown argument: {args[a]}");
         }
@@ -198,7 +210,7 @@ void ValidateArgsAndSetDefaults()
 
     if (config.ConfigFile == null)
     {
-        throw new ArgumentException($"A configuration file is required; use -c <file name>.");
+        throw new ArgumentException($"A configuration file is required; use -f <file name>.");
     }
 
     if (string.IsNullOrWhiteSpace(config.Source))

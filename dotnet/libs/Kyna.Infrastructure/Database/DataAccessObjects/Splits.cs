@@ -42,6 +42,15 @@ internal sealed record class Split : DaoEntityBase
     public double Before { get; init; }
     public double After { get; init; }
     public double Factor => Before == 0 ? 1 : (After / Before);
+
+    public Analysis.Split ToDomainSplit() => new()
+    {
+        Source = Source,
+        Code = Code,
+        SplitDate = SplitDate,
+        Before = Before,
+        After = After
+    };
 }
 
 internal static class SplitAdjustedPriceCalculator
