@@ -15,3 +15,18 @@ public enum PricePoint
     Low,
     Close
 }
+
+public enum TrendSentiment
+{
+    Unknown = 0,
+    Bullish,
+    Bearish,
+    Neutral
+}
+
+public enum ExtremeType
+{
+    None = 0,
+    High = 1,
+    Low = 2
+}

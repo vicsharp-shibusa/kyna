@@ -1,16 +1,16 @@
-﻿using Kyna.ApplicationServices.Cli;
+﻿using Kyna.Analysis.Technical;
+using Kyna.Analysis.Technical.Trends;
+using Kyna.ApplicationServices.Analysis;
+using Kyna.ApplicationServices.Cli;
 using Kyna.ApplicationServices.Configuration;
-using Kyna.Infrastructure.DataImport;
 using Kyna.ApplicationServices.Logging;
 using Kyna.Common;
 using Kyna.Common.Logging;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Reflection;
-using Kyna.ApplicationServices.Analysis;
-using System.Collections.ObjectModel;
-using Kyna.Analysis.Technical;
 
 ILogger<Program>? logger = null;
 IConfiguration? configuration;
@@ -55,7 +55,7 @@ try
 
         var stream = File.Create(Path.Combine(outputPath, "candle_patterns.csv"));
         string source = "eodhd.com";
-        var symbols = await financialsRepository.GetAllAdjustedSymbolsForSourceAsync(source);
+        //var symbols = await financialsRepository.GetAllAdjustedSymbolsForSourceAsync(source);
 
         List<Pattern> patterns = [
             new("IsDoji", c => c.IsDoji),
@@ -81,59 +81,58 @@ try
             "EBAY.US"
         ];
 
-        foreach (var symbol in symbols.Where(s => desiredSymbols.Contains(s)))
+        foreach (var symbol in desiredSymbols)
         {
             Console.WriteLine(symbol);
 
-            var ohlc = await financialsRepository.GetOhlcForSourceAndCodeAsync(source, symbol);
+            var ohlc = (await financialsRepository.GetOhlcForSourceAndCodeAsync(source, symbol)).ToArray();
 
-            var chart = new Chart()
+            var maTrend = new MovingAverageTrend(new MovingAverageKey(21), ohlc);
+            var exTrend = new ExtremeTrend(ohlc);
+            var wTrend1 = new WeightedTrend(maTrend, .6D);
+            var wTrend2 = new WeightedTrend(exTrend, .4D);
+
+            var blendedTrend = new CombinedTrend(wTrend1, wTrend2);
+
+            var chart1 = new Chart()
                 .WithPriceActions(ohlc)
                 .WithCandles()
-                .WithMovingAverage(21, MovingAverageType.Simple)
+                .WithTrend(maTrend)
                 .Build();
 
-            using var chartFile = File.Create(Path.Combine(outputPath, $"{symbol}.txt"));
-            foreach (var item in chart.Candlesticks)
-            {
-                chartFile.WriteLine(item.ToString());
-            }
-            chartFile.Flush();
-            chartFile.Close();
+            var chart2 = new Chart()
+                .WithPriceActions(ohlc)
+                .WithCandles()
+                .WithTrend(exTrend)
+                .Build();
 
-            foreach (var pattern in patterns)
-            {
-                var matches = chart.Candlesticks.Where(pattern.Func).ToArray();
+            var chart3 = new Chart()
+                .WithPriceActions(ohlc)
+                .WithCandles()
+                .WithTrend(blendedTrend)
+                .Build();
 
-                foreach (var match in matches)
-                {
-                    if (!dict.TryGetValue(pattern.Key, out Collection<(string Symbol, Candlestick Candle)>? value))
-                    {
-                        value = ([]);
-                        dict.Add(pattern.Key, value);
-                    }
+            using var trendFile = File.Create(Path.Combine(outputPath, $"{symbol}_trend.csv"));
 
-                    value.Add((match.Symbol, match));
-                }
+            trendFile.WriteLine("Symbol,Date,Close,MA Trend,MA Value,Ex Trend,Ex Value,Blend Trend,Blend Value");
+            for (int i = 0; i < chart1.PriceActions.Length; i++)
+            {
+                string[] trendItems = [
+                    chart1.PriceActions[i].Symbol,
+                    chart1.PriceActions[i].Date.ToString("yyyy-MM-dd"),
+                    chart1.PriceActions[i].Close.ToString("#,##0.00"),
+                    chart1.TrendValues[i].Sentiment.GetEnumDescription(),
+                    chart1.TrendValues[i].Value.ToString(),
+                    chart2.TrendValues[i].Sentiment.GetEnumDescription(),
+                    chart2.TrendValues[i].Value.ToString(),
+                    chart3.TrendValues[i].Sentiment.GetEnumDescription(),
+                    chart3.TrendValues[i].Value.ToString(),
+                ];
+                trendFile.WriteLine(string.Join(',', trendItems));
             }
-        }
 
-        stream.WriteLine($"Pattern,{Candlestick.GetCsvHeader()}");
-        foreach (var pattern in patterns)
-        {
-            Console.WriteLine(pattern.Key);
-            if (!dict.TryGetValue(pattern.Key, out Collection<(string Symbol, Candlestick Candle)>? value) || value.Count == 0)
-            {
-                stream.WriteLine(pattern.Key);
-            }
-            else
-            {
-                DateOnly firstDate = new(2020, 1, 1);
-                foreach (var (Symbol, Candle) in value) //.Where(d => d.Date >= firstDate))
-                {
-                    stream.WriteLine($"{pattern.Key},{Candle.ToCsv()}");
-                }
-            }
+            trendFile.Flush();
+            trendFile.Close();
         }
 
         stream.Flush();

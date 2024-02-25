@@ -1,4 +1,6 @@
-﻿namespace Kyna.Analysis.Technical;
+﻿using Kyna.Analysis.Technical.Trends;
+
+namespace Kyna.Analysis.Technical;
 
 public class Chart
 {
@@ -10,7 +12,12 @@ public class Chart
     {
         PriceActions = [];
         Candlesticks = [];
+        Trend = null;
     }
+
+    private ITrend? Trend { get; set; }
+    public TrendValue[] TrendValues => Trend?.TrendValues ??
+        Enumerable.Repeat(new TrendValue(TrendSentiment.Unknown, 0D), PriceActions.Length).ToArray();
 
     public Ohlc[] PriceActions { get; private set; }
     public Candlestick[] Candlesticks { get; private set; }
@@ -18,7 +25,6 @@ public class Chart
     public DateOnly Start => PriceActions[0].Date;
     public DateOnly End => PriceActions[^1].Date;
     public MovingAverage[] MovingAverages => [.. _movingaverages];
-
     public Chart WithMovingAverage(MovingAverageKey key)
     {
         _movingAverageKeys.Add(key);
@@ -59,18 +65,31 @@ public class Chart
         return this;
     }
 
+    public Chart WithTrend(ITrend trend)
+    {
+        Trend = trend;
+        return this;
+    }
+
     public Chart Build()
     {
+        if (PriceActions.Length < 1)
+        {
+            throw new Exception($"Cannot construct a chart with {PriceActions.Length} price actions.");
+        }
+
         if (_includeCandles)
         {
             Candlesticks = PriceActions.Select(p => new Candlestick(p)).ToArray();
         }
-
+        
         _movingaverages.Clear();
         foreach (var key in _movingAverageKeys)
         {
             _movingaverages.Add(new MovingAverage(key, PriceActions));
         }
+
+        Trend?.Calculate();
 
         return this;
     }
