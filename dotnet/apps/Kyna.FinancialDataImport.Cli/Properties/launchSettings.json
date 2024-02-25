@@ -1,8 +1,0 @@
-{
-  "profiles": {
-    "Kyna.FinancialDataImport.Cli": {
-      "commandName": "Project",
-      "commandLineArgs": "-v -f configs/full-eodhd.json -s test"
-    }
-  }
-}

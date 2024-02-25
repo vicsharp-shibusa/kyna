@@ -1,8 +1,0 @@
-{
-  "profiles": {
-    "Kyna.DataMigration.Cli": {
-      "commandName": "Project",
-      "commandLineArgs": "-v -f configs/test-eodhd.json"
-    }
-  }
-}

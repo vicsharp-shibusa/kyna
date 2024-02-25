@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "Kyna.Migrator.Cli": {
+      "commandName": "Project",
+      "commandLineArgs": "--help"
+    }
+  }
+}

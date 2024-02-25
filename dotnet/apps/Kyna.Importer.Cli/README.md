@@ -1,4 +1,4 @@
-# Kyna Financial Data Import
+# Kyna Importer
 
 The financial data import utility is a command line interface used to import data from an external API and preserve the results in the `api_transactions` table in the `imports` database.
 
