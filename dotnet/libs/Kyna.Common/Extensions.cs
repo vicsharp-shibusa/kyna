@@ -87,6 +87,36 @@ public static class DateOnlyExtensions
 
         return date;
     }
+
+    public static int CountWeekdays(this DateOnly dateOnly, DateOnly finishDate, bool includeFirstDay = false)
+    {
+        int days = 0;
+        int factor = finishDate >= dateOnly ? 1 : -1;
+
+        if (includeFirstDay && IsWeekday(dateOnly))
+        {
+            days += (1 * factor);
+        }
+        var d = dateOnly.AddDays(factor);
+        while ((factor == 1 && d <= finishDate) || (factor == -1 && d >= finishDate))
+        {
+            if (IsWeekday(d))
+            {
+                days += (1 * factor);
+            }
+            d = d.AddDays(factor);
+        }
+        return days;
+    }
+
+    private static bool IsWeekday(DateOnly dateOnly)
+    {
+        if (dateOnly.DayOfWeek is DayOfWeek.Sunday or DayOfWeek.Saturday)
+        {
+            return false;
+        }
+        return true;
+    }
 }
 
 public static class StreamExtensions

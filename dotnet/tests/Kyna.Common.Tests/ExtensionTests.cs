@@ -6,6 +6,105 @@ namespace Kyna.Common.Tests;
 public class ExtensionTests
 {
     [Fact]
+    public void CountWeekdays_Positive_NoWeekdays()
+    {
+        var saturday = new DateOnly(2024, 2, 24);
+        var sunday = saturday.AddDays(1);
+        Assert.Equal(DayOfWeek.Saturday, saturday.DayOfWeek);
+
+        var countInclusive = saturday.CountWeekdays(sunday, true);
+        var countExclusive = saturday.CountWeekdays(sunday, false);
+
+        Assert.Equal(0, countInclusive);
+        Assert.Equal(0, countExclusive);
+    }
+
+    [Fact]
+    public void CountWeekdays_Negative_NoWeekdays()
+    {
+        var sunday = new DateOnly(2024, 2, 25);
+        var saturday = sunday.AddDays(-1);
+        Assert.Equal(DayOfWeek.Sunday, sunday.DayOfWeek);
+
+        var countInclusive = sunday.CountWeekdays(saturday, true);
+        var countExclusive = sunday.CountWeekdays(saturday, false);
+
+        Assert.Equal(0, countInclusive);
+        Assert.Equal(0, countExclusive);
+    }
+
+    [Fact]
+    public void CountWeekdays_Positive_Inclusive()
+    {
+        var monday = new DateOnly(2024, 2, 26);
+        var friday = new DateOnly(2024, 3, 1);
+        Assert.Equal(DayOfWeek.Monday, monday.DayOfWeek);
+
+        var count = monday.CountWeekdays(friday, true);
+
+        Assert.Equal(5, count);
+    }
+
+    [Fact]
+    public void CountWeekdays_Positive_Exclusive()
+    {
+        var monday = new DateOnly(2024, 2, 26);
+        var friday = new DateOnly(2024, 3, 1);
+        Assert.Equal(DayOfWeek.Monday, monday.DayOfWeek);
+
+        var count = monday.CountWeekdays(friday, false);
+
+        Assert.Equal(4, count);
+    }
+
+    [Fact]
+    public void CountWeekdays_Negative_Inclusive()
+    {
+        var friday = new DateOnly(2024, 3, 1);
+        var monday = new DateOnly(2024, 2, 26);
+        Assert.Equal(DayOfWeek.Friday, friday.DayOfWeek);
+
+        var count = friday.CountWeekdays(monday, true);
+
+        Assert.Equal(-5, count);
+    }
+
+    [Fact]
+    public void CountWeekdays_Negative_Exclusive()
+    {
+        var friday = new DateOnly(2024, 3, 1);
+        var monday = new DateOnly(2024, 2, 26);
+        Assert.Equal(DayOfWeek.Friday, friday.DayOfWeek);
+
+        var count = friday.CountWeekdays(monday, false);
+
+        Assert.Equal(-4, count);
+    }
+
+    [Fact]
+    public void CountWeekdays_SameDay_Inclusive()
+    {
+        var monday = new DateOnly(2024, 2, 26);
+        Assert.Equal(DayOfWeek.Monday, monday.DayOfWeek);
+
+        var count = monday.CountWeekdays(monday, true);
+
+        Assert.Equal(1, count);
+    }
+
+    [Fact]
+    public void CountWeekdays_SameDay_Exclusive()
+    {
+        var monday = new DateOnly(2024, 2, 26);
+        Assert.Equal(DayOfWeek.Monday, monday.DayOfWeek);
+
+        var count = monday.CountWeekdays(monday, false);
+
+        Assert.Equal(0, count);
+    }
+
+
+    [Fact]
     public void StartOfDay()
     {
         DateTime now = DateTime.Now;
