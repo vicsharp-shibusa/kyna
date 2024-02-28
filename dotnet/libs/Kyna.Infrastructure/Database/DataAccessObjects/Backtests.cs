@@ -2,11 +2,17 @@
 
 internal sealed record class Backtest : DaoEntityBase
 {
+    /*
+ *  (System.Guid id, System.String name, System.String type, System.String source, System.String description,
+ *  System.String entrypricepoint, System.Double targetuppercentage, System.String targetuppricepoint,
+ *  System.Double targetdownpercentage, System.String targetdownpricepoint, 
+ *  System.Guid processid, System.Int64 createdticksutc, System.Int64 updatedticksutc) is required for Kyna.Infrastructure.Database.DataAccessObjects.Backtest materialization
+ */
     public Backtest(Guid id, string name, string type, string source, string description,
         string entryPricePoint,
         double targetUpPercentage, string targetUpPricePoint,
         double targetDownPercentage, string targetDownPricePoint,
-        long createdTicksUtc, long updatedTicksUtc) : base((Guid?)null)
+        long createdTicksUtc, long updatedTicksUtc, Guid? processId = null) : base(processId)
     {
         Id = id;
         Name = name;
@@ -36,17 +42,18 @@ internal sealed record class Backtest : DaoEntityBase
 
 internal sealed record class BacktestResult : DaoEntityBase
 {
-    public BacktestResult(Guid id, Guid backtestId, string code,
+    public BacktestResult(Guid id, Guid backtestId, string code, string? industry, string? sector,
         DateOnly entryDate, string entryPricePoint, decimal entryPrice,
-        DateOnly resultUpDate, string resultUpPricePoint, decimal resultUpPrice,
-        DateOnly resultDownDate, string resultDownPricePoint, decimal resultDownPrice,
-        string resultDirection, int resultDurationTradingDays, int resultDurationCalendarDays,
-        long createdTicksUtc, long updatedTicksUtc,
-        Guid? processId = null) : base(processId)
+        DateOnly? resultUpDate, string? resultUpPricePoint, decimal? resultUpPrice,
+        DateOnly? resultDownDate, string? resultDownPricePoint, decimal? resultDownPrice,
+        string? resultDirection, int? resultDurationTradingDays, int? resultDurationCalendarDays,
+        long createdTicksUtc, long updatedTicksUtc) : base((Guid?)null)
     {
         Id = id;
         BacktestId = backtestId;
         Code = code;
+        Industry = industry;
+        Sector = sector;
         EntryDate = entryDate;
         EntryPricePoint = entryPricePoint;
         EntryPrice = entryPrice;
@@ -61,22 +68,23 @@ internal sealed record class BacktestResult : DaoEntityBase
         ResultDurationCalendarDays = resultDurationCalendarDays;
         CreatedTicksUtc = createdTicksUtc;
         UpdatedTicksUtc = updatedTicksUtc;
-        ProcessId = processId;
     }
 
     public Guid Id { get; init; }
     public Guid BacktestId { get; init; }
     public string Code { get; init; }
+    public string? Industry { get; init; }
+    public string? Sector { get; init; }
     public DateOnly EntryDate { get; init; }
     public string EntryPricePoint { get; init; }
     public decimal EntryPrice { get; init; }
-    public DateOnly ResultUpDate { get; init; }
-    public string ResultUpPricePoint { get; init; }
-    public decimal ResultUpPrice { get; init; }
-    public DateOnly ResultDownDate { get; init; }
-    public string ResultDownPricePoint { get; init; }
-    public decimal ResultDownPrice { get; init; }
-    public string ResultDirection { get; init; }
-    public int ResultDurationTradingDays { get; init; }
-    public int ResultDurationCalendarDays { get; init; }
+    public DateOnly? ResultUpDate { get; init; }
+    public string? ResultUpPricePoint { get; init; }
+    public decimal? ResultUpPrice { get; init; }
+    public DateOnly? ResultDownDate { get; init; }
+    public string? ResultDownPricePoint { get; init; }
+    public decimal? ResultDownPrice { get; init; }
+    public string? ResultDirection { get; init; }
+    public int? ResultDurationTradingDays { get; init; }
+    public int? ResultDurationCalendarDays { get; init; }
 }

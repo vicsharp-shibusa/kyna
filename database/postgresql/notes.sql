@@ -31,3 +31,7 @@ SELECT *
 FROM Prices
 WHERE rn = 1;
 
+select distinct result_direction, count(*), min(result_duration_calendar_days), 
+max(result_duration_calendar_days),
+avg(result_duration_calendar_days) from backtest_results
+group by result_direction

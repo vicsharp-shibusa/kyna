@@ -60,19 +60,19 @@ public class PostgreSqlBacktestTests
         Assert.Equal(backtestResult, actual);
     }
 
-    private static Backtest CreateBacktest()
+    private Backtest CreateBacktest()
     {
         return new Backtest(Guid.NewGuid(), "Test", "Test", "eodhd.com", "Integration Test",
             PricePoint.Close.GetEnumDescription(),
             0.1D, PricePoint.High.GetEnumDescription(),
             0.1D, PricePoint.Low.GetEnumDescription(),
-            DateTime.UtcNow.Ticks, DateTime.UtcNow.Ticks);
+            DateTime.UtcNow.Ticks, DateTime.UtcNow.Ticks, _processId);
 
     }
 
-    private BacktestResult CreateBacktestResult(Backtest backtest)
+    private static BacktestResult CreateBacktestResult(Backtest backtest)
     {
-        return new BacktestResult(Guid.NewGuid(), backtest.Id, "Test.US",
+        return new BacktestResult(Guid.NewGuid(), backtest.Id, "Test.US", null, null,
             DateOnly.FromDateTime(DateTime.UtcNow.AddDays(-5)),
             PricePoint.Close.GetEnumDescription(),
             10M, DateOnly.FromDateTime(DateTime.UtcNow),
@@ -80,6 +80,6 @@ public class PostgreSqlBacktestTests
             DateOnly.FromDateTime(DateTime.UtcNow.AddDays(-1)),
             backtest.TargetDownPricePoint,
             9M, "Down", 4, 4,
-            DateTime.UtcNow.Ticks, DateTime.UtcNow.Ticks, _processId);
+            DateTime.UtcNow.Ticks, DateTime.UtcNow.Ticks);
     }
 }
