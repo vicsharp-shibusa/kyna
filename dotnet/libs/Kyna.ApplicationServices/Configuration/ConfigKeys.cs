@@ -13,6 +13,7 @@ public static class ConfigKeys
         public const string Logs = "Logs";
         public const string Imports = "Imports";
         public const string Financials = "Financials";
+        public const string Backtests = "Backtests";
     }
 }
     

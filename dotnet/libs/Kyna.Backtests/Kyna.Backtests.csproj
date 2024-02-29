@@ -8,7 +8,7 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-	  <ProjectReference Include="..\Kyna.Common\Kyna.Common.csproj" />
+		<ProjectReference Include="..\Kyna.Analysis\Kyna.Analysis.csproj" />
 	</ItemGroup>
 
 </Project>

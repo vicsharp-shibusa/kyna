@@ -112,6 +112,19 @@ updated_ticks_utc = EXCLUDED.updated_ticks_utc,
 process_id = EXCLUDED.process_id",
             _ => ThrowSqlNotImplemented()
         };
+
+        public string FetchCodesAndCounts => _dbDef.Engine switch
+        {
+            DatabaseEngine.PostgreSql => @"
+SELECT P.code, E.industry, E.sector, COUNT(P.*)
+FROM eod_adjusted_prices P
+JOIN entities E ON P.source = E.source AND P.code = E.code
+WHERE P.source = 'eodhd.com'
+GROUP BY P.code, E.industry, E.sector
+HAVING COUNT(P.*) > 500 AND
+AVG(P.close) > 15",
+            _ => ThrowSqlNotImplemented()
+        };
     }
 
     internal class SplitsInternal(DbDef dbDef) : SqlRepositoryBase(dbDef)
@@ -219,7 +232,8 @@ WHERE e.source = combined_data.source AND e.code = combined_data.code;",
             _ => ThrowSqlNotImplemented()
         };
 
-        public string SetLastPriceActionForEntities => _dbDef.Engine switch { 
+        public string SetLastPriceActionForEntities => _dbDef.Engine switch
+        {
             DatabaseEngine.PostgreSql => @"
 WITH combined_data AS (
 SELECT e.source AS e_source,
