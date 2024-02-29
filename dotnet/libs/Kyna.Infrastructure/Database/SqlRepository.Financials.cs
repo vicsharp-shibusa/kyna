@@ -119,7 +119,7 @@ process_id = EXCLUDED.process_id",
 SELECT P.code, E.industry, E.sector, COUNT(P.*)
 FROM eod_adjusted_prices P
 JOIN entities E ON P.source = E.source AND P.code = E.code
-WHERE P.source = 'eodhd.com'
+WHERE P.source = @Source
 GROUP BY P.code, E.industry, E.sector
 HAVING COUNT(P.*) > 500 AND
 AVG(P.close) > 15",
