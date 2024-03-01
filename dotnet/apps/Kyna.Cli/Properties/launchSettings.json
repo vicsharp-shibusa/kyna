@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "Kyna.Cli": {
+      "commandName": "Project",
+      "commandLineArgs": "import -v -f /bin/kyna/kyna-importer/configs/price-eodhd.json"
+    }
+  }
+}

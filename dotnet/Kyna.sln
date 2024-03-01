@@ -35,9 +35,11 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Kyna.Importer.Cli", "apps\K
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Kyna.Backtests.Cli", "apps\Kyna.Backtests.Cli\Kyna.Backtests.Cli.csproj", "{B9EA80EC-1F41-4C61-9654-531F3EBD739D}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Kyna.Backtests", "libs\Kyna.Backtests\Kyna.Backtests.csproj", "{072C282A-B50A-4539-91DD-D4E6A0D5EB88}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Kyna.Backtests", "libs\Kyna.Backtests\Kyna.Backtests.csproj", "{072C282A-B50A-4539-91DD-D4E6A0D5EB88}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Kyna.Backtests.Tests", "tests\Kyna.Backtests.Tests\Kyna.Backtests.Tests.csproj", "{6E2F35A9-9D4A-4894-8A32-6800D9812846}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Kyna.Backtests.Tests", "tests\Kyna.Backtests.Tests\Kyna.Backtests.Tests.csproj", "{6E2F35A9-9D4A-4894-8A32-6800D9812846}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Kyna.Cli", "apps\Kyna.Cli\Kyna.Cli.csproj", "{F358A09A-715C-4F9C-9BEB-71C398B08D7B}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -105,6 +107,10 @@ Global
 		{6E2F35A9-9D4A-4894-8A32-6800D9812846}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{6E2F35A9-9D4A-4894-8A32-6800D9812846}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{6E2F35A9-9D4A-4894-8A32-6800D9812846}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F358A09A-715C-4F9C-9BEB-71C398B08D7B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F358A09A-715C-4F9C-9BEB-71C398B08D7B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F358A09A-715C-4F9C-9BEB-71C398B08D7B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F358A09A-715C-4F9C-9BEB-71C398B08D7B}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -125,6 +131,7 @@ Global
 		{B9EA80EC-1F41-4C61-9654-531F3EBD739D} = {260FF219-1D50-471E-A386-F63F750FF839}
 		{072C282A-B50A-4539-91DD-D4E6A0D5EB88} = {D2059ABB-1D2D-4A22-87A4-2FA412FC6CAD}
 		{6E2F35A9-9D4A-4894-8A32-6800D9812846} = {20FEE790-CF0F-452A-B29E-C01F46F94AF1}
+		{F358A09A-715C-4F9C-9BEB-71C398B08D7B} = {260FF219-1D50-471E-A386-F63F750FF839}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {8C493EF7-27AC-4D91-B302-C3888410942A}

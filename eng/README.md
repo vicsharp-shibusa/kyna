@@ -1,5 +1,25 @@
 # Kyna Engineering Folder
 
+## Local Deployment
+
+The **deploy-from-local.sh** script can be used to deploy the *kyna/dotnet/app* CLI applications to a target directory.
+The script takes two arguments:
+
+1. A path to the apps, e.g., **kyna/dotnet/apps**.
+2. A path to the target location, e.g., **/c/bin**
+
+```
+./eng/deploy-from-local.sh ./dotnet/apps /c/bin
+```
+
+The above script will:
+
+1. Find all the `secrets.json` files in the target directory structure and copy them off.
+2. Perform a **Release** build of the Kyna applications and deploy them to the target directory.
+3. Move the `secrets.json` files back to their original locations.
+
+By adding `/c/bin/kyna` to your $PATH, you can then execute the kyna applications from anywhere.
+
 ## PostgreSQL
 
 For now, you will need [PostgreSQL](https://www.postgresql.org/) to use this app. 

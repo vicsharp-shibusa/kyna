@@ -138,6 +138,16 @@ public static class CliHelper
 
         return answer?.Trim().Equals("y", StringComparison.OrdinalIgnoreCase) ?? false;
     }
+
+    public static bool IsWindows() => System.Runtime.InteropServices.RuntimeInformation.
+        IsOSPlatform(System.Runtime.InteropServices.OSPlatform.Windows);
+
+    public static bool IsLinux() => System.Runtime.InteropServices.RuntimeInformation.
+        IsOSPlatform(System.Runtime.InteropServices.OSPlatform.Linux);
+
+    public static bool IsMacOs() => System.Runtime.InteropServices.RuntimeInformation.
+        IsOSPlatform(System.Runtime.InteropServices.OSPlatform.FreeBSD);
+
 }
 
 public struct CliArg(string[] args, string[] subArgs, bool required, string description)
