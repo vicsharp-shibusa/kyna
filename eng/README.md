@@ -10,17 +10,30 @@ To install Docker for your OS, see [the Docker install page](https://docs.docker
 
 ### Creating the PostgreSQL databases
 
-#### eng/create_postgresql_databases.sh
+#### Individual Database Scripts
 
-This bash script drops all Kyna databases and re-creates them from scratch. Note that this script has **NOT** been tested against a Docker installation.
+There are a number of scripts for creating the various databases:
+
+1. **create_log_databases.sh** - creates the `logs` and `log_tests` databases.
+1. **create_import_databases.sh** - creates the `imports` and `import_tests` databases.
+1. **create_financial_databases.sh** - creates the `financials` and `financial_tests` databases.
+1. **create_backtest_databases.sh** - creates the `backtests` and `backtest_tests` databases.
+
+An argument of `-y` can be passed to any of the above scripts to bypass the "are you sure?" prompt.
+
+Note that **NONE** of these script have been tested against a Docker installation.
+
+#### All-in-One Script
+
+The **eng/create_all_postgresql_databases.sh** script drops all Kyna databases and re-creates them from scratch. Note that this script has **NOT** been tested against a Docker installation.
 
 From the `eng` folder, run this command:
 
 ```bash
-./create_postgresql_databases.sh
+./create_all_postgresql_databases.sh
 
 # to bypass the "are you sure" confirmation check, you can add -y as an argument
-./create_postgresql_databases.sh -y
+./create_all_postgresql_databases.sh -y
 ```
 
 To avoid entering your database password multiple times, run the following command first, or add it to your `.bashrc`:
@@ -29,7 +42,7 @@ To avoid entering your database password multiple times, run the following comma
 export PGPASSWORD=MyPassword
 ```
 
-If you encounter an error about the database being in use, it's likely the result of some database administration tool (e.g., pgAdmin) being open and connected to your database. You can try to disconnect; I close pgAdmin when this happens - that always resolves the issue.
+If you encounter an error about the database being in use, it's likely the result of some database administration tool (e.g., pgAdmin) being open and connected to your database. You can try to disconnect; I close pgAdmin when this happens - that seems to resolve the issue.
 
 If the script will not run on your local machine, it may be related to permissions. From the `eng` folder, try:
 

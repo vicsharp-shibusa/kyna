@@ -165,7 +165,7 @@ void ShowHelp()
 void HandleArguments(string[] args)
 {
     config = new Config(Assembly.GetExecutingAssembly().GetName().Name ?? nameof(Program), "v1",
-        "CLI for importing financial data.");
+        "CLI for migrating from the imports database to the financials database.");
 
     args = CliHelper.HydrateDefaultAppConfig(args, config);
 
