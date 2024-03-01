@@ -12,7 +12,7 @@ public class MovingAverageTests
 
         var movingAverage = new MovingAverage(key, values);
 
-        Assert.Equal([0M, 0M, 15M, 20M, 25M, 30M, 35M, 40M, 45M, 50M], movingAverage.Values);
+        Assert.Equal((decimal[])[0M, 0M, 15M, 20M, 25M, 30M, 35M, 40M, 45M, 50M], movingAverage.Values);
     }
 
     [Fact]
@@ -38,6 +38,6 @@ public class MovingAverageTests
 
         var movingAverage = new MovingAverage(key, values);
 
-        Assert.Equal([0M, 0M, 0M, 0M, 0M], movingAverage.Values);
+        Assert.Equal((decimal[])[0M, 0M, 0M, 0M, 0M], movingAverage.Values);
     }
 }
