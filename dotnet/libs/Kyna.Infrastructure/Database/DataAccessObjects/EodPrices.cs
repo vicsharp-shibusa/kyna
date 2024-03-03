@@ -1,6 +1,6 @@
 ﻿namespace Kyna.Infrastructure.Database.DataAccessObjects;
 
-internal sealed record class EodPrice : DaoEntityBase
+internal sealed record class EodPrice : DaoBase
 {
     private decimal _open;
     private decimal _high;
@@ -46,7 +46,7 @@ internal sealed record class EodPrice : DaoEntityBase
         new(Code, DateEod, Open, High, Low, Close, Volume, 1D);
 }
 
-internal sealed record class AdjustedEodPrice : DaoEntityBase
+internal sealed record class AdjustedEodPrice : DaoBase
 {
     private decimal _open;
     private decimal _high;

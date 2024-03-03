@@ -4,11 +4,8 @@ namespace Kyna.Infrastructure.DataMigration;
 
 public interface IImportsMigrator
 {
-    string Source { get; }
-
-    Task<TimeSpan> MigrateAsync(CancellationToken cancellationToken = default);
-
     event EventHandler<CommunicationEventArgs>? Communicate;
-
+    string Source { get; }
+    Task<TimeSpan> MigrateAsync(CancellationToken cancellationToken = default);
     Task<string> GetInfoAsync();
 }

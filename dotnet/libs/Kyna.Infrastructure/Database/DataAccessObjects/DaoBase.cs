@@ -1,11 +1,11 @@
 ﻿namespace Kyna.Infrastructure.Database.DataAccessObjects;
 
-internal abstract record class DaoEntityBase
+internal abstract record class DaoBase
 {
     // Number of places to the right of the decimal point in money calculations.
     protected const int MoneyPrecision = 4;
 
-    public DaoEntityBase(Guid? processId = null)
+    public DaoBase(Guid? processId = null)
     {
         ProcessId = processId;
     }

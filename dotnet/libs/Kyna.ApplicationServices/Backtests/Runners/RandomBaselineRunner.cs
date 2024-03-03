@@ -61,9 +61,9 @@ internal sealed class RandomBaselineRunner : RunnerBase, IBacktestRunner
                 _configuration.TargetDown.PricePoint.GetEnumDescription(),
                 DateTime.UtcNow.Ticks,
                 DateTime.UtcNow.Ticks,
-                _processId), cancellationToken: cancellationToken);
+                _processId), cancellationToken: cancellationToken).ConfigureAwait(false);
 
-        foreach (var item in await codesAndCountsTask)
+        foreach (var item in await codesAndCountsTask.ConfigureAwait(false))
         {
             // remove 2 from the end because it's less likely the positions at the end
             // will have the time to reach their targets.
@@ -79,10 +79,10 @@ internal sealed class RandomBaselineRunner : RunnerBase, IBacktestRunner
         _runQueue = false;
         while (!_queue.IsEmpty)
         {
-            await Task.Delay(1_000, cancellationToken);
+            await Task.Delay(1_000, cancellationToken).ConfigureAwait(false);
         }
 
-        await WaitForQueueAsync();
+        await WaitForQueueAsync().ConfigureAwait(false);
     }
 
     private void RunDequeue()

@@ -9,8 +9,6 @@ public struct BalanceSheet
 {
     [JsonPropertyName("currency_symbol")]
     public string? CurrencySymbol;
-
     public IDictionary<string, BalanceSheetItem>? Quarterly;
-    
     public IDictionary<string, BalanceSheetItem>? Yearly;
 }

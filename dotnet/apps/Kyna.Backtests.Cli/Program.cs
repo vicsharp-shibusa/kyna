@@ -1,7 +1,6 @@
 ﻿using Kyna.ApplicationServices.Backtests;
 using Kyna.ApplicationServices.Cli;
 using Kyna.ApplicationServices.Configuration;
-using Kyna.ApplicationServices.DataManagement;
 using Kyna.Common;
 using Kyna.Common.Logging;
 using Kyna.Infrastructure.DataImport;

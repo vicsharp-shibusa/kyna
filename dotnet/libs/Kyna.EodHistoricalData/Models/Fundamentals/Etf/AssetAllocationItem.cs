@@ -9,10 +9,8 @@ public struct AssetAllocationItem
 {
     [JsonPropertyName("long_%")]
     public string? LongPercentage;
-
     [JsonPropertyName("short_%")]
     public string? ShortPercentage;
-    
     [JsonPropertyName("net_assets_%")]
     public string? NetAssetsPercentage;
 }

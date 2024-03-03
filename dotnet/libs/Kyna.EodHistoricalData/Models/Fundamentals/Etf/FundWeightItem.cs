@@ -9,7 +9,6 @@ public struct FundWeightItem
 {
     [JsonPropertyName("fund_%")]
     public string? FundPercentage;
-
     [JsonPropertyName("relative_to_category")]
     public string? RelativeToCategory;
 }

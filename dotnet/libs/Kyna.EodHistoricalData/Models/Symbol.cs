@@ -9,8 +9,6 @@ public struct Symbol
     public string? Currency;
     public string? Type;
 
-    public static Symbol Empty => new();
-
     public override readonly string ToString()
     {
         string val = $"{Code} {Exchange} {Type}";

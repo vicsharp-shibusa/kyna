@@ -9,8 +9,6 @@ public struct IncomeStatement
 {
     [JsonPropertyName("currency_symbol")]
     public string? CurrencySymbol;
-
     public IDictionary<string, IncomeStatementItem>? Quarterly;
-
     public IDictionary<string, IncomeStatementItem>? Yearly;
 }

@@ -9,7 +9,6 @@ public struct EquityWeightItem
 {
     [JsonPropertyName("equity_%")]
     public string? EquityPercentage;
-    
     [JsonPropertyName("relative_to_category")]
     public string? RelativeToCategory;
 }

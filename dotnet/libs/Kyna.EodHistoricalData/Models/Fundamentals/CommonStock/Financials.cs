@@ -9,10 +9,8 @@ public struct Financials
 {
     [JsonPropertyName("balance_sheet")]
     public BalanceSheet BalanceSheet;
-
     [JsonPropertyName("cash_flow")]
     public CashFlow CashFlow;
-
     [JsonPropertyName("income_statement")]
     public IncomeStatement IncomeStatement;
 }

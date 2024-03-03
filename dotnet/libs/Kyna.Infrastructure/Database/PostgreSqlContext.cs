@@ -11,9 +11,7 @@ internal sealed class PostgreSqlContext(DbDef dbDef) : DbContextBase(dbDef), IDb
 {
     public override IDbConnection GetOpenConnection()
     {
-        var connection = new NpgsqlConnection(DbDef.ConnectionString);
-        SqlMapper.AddTypeHandler(new SqlDateOnlyTypeHandler());
-        SqlMapper.AddTypeHandler(new SqlTimeOnlyTypeHandler());
+        var connection = GetConnection();
         connection.Open();
         return connection;
     }
@@ -21,10 +19,16 @@ internal sealed class PostgreSqlContext(DbDef dbDef) : DbContextBase(dbDef), IDb
     public override async Task<IDbConnection> GetOpenConnectionAsync(CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
+        var connection = GetConnection();
+        await connection.OpenAsync(cancellationToken).ConfigureAwait(false);
+        return connection;
+    }
+
+    private NpgsqlConnection GetConnection()
+    {
         var connection = new NpgsqlConnection(DbDef.ConnectionString);
         SqlMapper.AddTypeHandler(new SqlDateOnlyTypeHandler());
         SqlMapper.AddTypeHandler(new SqlTimeOnlyTypeHandler());
-        await connection.OpenAsync(cancellationToken);
         return connection;
     }
 

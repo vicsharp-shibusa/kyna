@@ -1,5 +1,4 @@
 ﻿using Kyna.Analysis.Technical;
-using Kyna.Analysis.Technical.Trends;
 using Kyna.ApplicationServices.Analysis;
 using Kyna.ApplicationServices.Cli;
 using Kyna.ApplicationServices.Configuration;
@@ -53,16 +52,6 @@ try
         var json = JsonSerializer.Serialize(chart);
 
         File.WriteAllText("/temp/symbols.json", json);
-        //Console.WriteLine(json);
-        //int i = 0;
-        //foreach (var item in chart)
-        //{
-        //    string str = $"{item.DateTime:yyyy-MM-dd}\t{item.Close}\t{item.AdjustedClose}";
-        //    Console.WriteLine(str);
-        //    i++;
-        //    if (i > 20)
-        //        break;
-        //}
     }
     exitCode = 0;
 }

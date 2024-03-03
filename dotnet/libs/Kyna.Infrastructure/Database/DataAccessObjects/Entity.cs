@@ -1,12 +1,8 @@
 ﻿namespace Kyna.Infrastructure.Database.DataAccessObjects;
 
-internal sealed record class Entity : DaoEntityBase
+internal sealed record class Entity : DaoBase
 {
-    public Entity()
-    {
-        Source = "";
-        Code = "";
-    }
+    public Entity() : this("", "") { }
 
     public Entity(string source, string code)
     {

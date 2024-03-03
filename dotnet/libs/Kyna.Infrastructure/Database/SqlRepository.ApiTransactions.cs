@@ -16,7 +16,6 @@ VALUES (@TicksUtc, @Source, @Category, @SubCategory,
  @ResponseHeaders, @ResponseStatusCode, @ResponseBody, @ProcessId)",
             _ => ThrowSqlNotImplemented()
         };
-
         public string Fetch => _dbDef.Engine switch
         {
             DatabaseEngine.PostgreSql => @"SELECT
@@ -35,26 +34,22 @@ process_id AS ProcessId
 FROM public.api_transactions",
             _ => ThrowSqlNotImplemented()
         };
-
         public string FetchResponseBodyForId => _dbDef.Engine switch
         {
             DatabaseEngine.PostgreSql => @"SELECT response_body AS ResponseBody
 FROM public.api_transactions WHERE id = @Id",
             _ => ThrowSqlNotImplemented()
         };
-
         public string DeleteForSource => _dbDef.Engine switch
         {
             DatabaseEngine.PostgreSql => @"DELETE FROM public.api_transactions WHERE source = @Source",
             _ => ThrowSqlNotImplemented()
         };
-
         public string Delete => _dbDef.Engine switch
         {
             DatabaseEngine.PostgreSql => $@"DELETE FROM public.api_transactions",
             _ => ThrowSqlNotImplemented()
         };
-
         public string FetchForMigration => _dbDef.Engine switch
         {
             DatabaseEngine.PostgreSql => @"SELECT

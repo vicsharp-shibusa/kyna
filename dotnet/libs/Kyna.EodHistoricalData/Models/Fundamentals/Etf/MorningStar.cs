@@ -8,10 +8,8 @@ namespace Kyna.EodHistoricalData.Models.Fundamentals.Etf;
 public struct MorningStar
 {
     public string Ratio;
-
     [JsonPropertyName("category_benchmark")]
     public string? CategoryBenchmark;
-    
     [JsonPropertyName("sustainability_ratio")]
     public string? SustainabilityRatio;
 }

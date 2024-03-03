@@ -19,7 +19,6 @@ updated_ticks_utc = EXCLUDED.updated_ticks_utc,
 process_id = EXCLUDED.process_id",
             _ => ThrowSqlNotImplemented()
         };
-
         public string Fetch => _dbDef.Engine switch
         {
             DatabaseEngine.PostgreSql => @"SELECT
@@ -29,13 +28,11 @@ process_id AS ProcessId
 FROM public.eod_prices",
             _ => ThrowSqlNotImplemented()
         };
-
         public string Delete => _dbDef.Engine switch
         {
             DatabaseEngine.PostgreSql => @"DELETE FROM public.eod_prices",
             _ => ThrowSqlNotImplemented()
         };
-
         public string DeleteEodPricesWithAdjustedPrices => _dbDef.Engine switch
         {
             DatabaseEngine.PostgreSql => @"DELETE FROM public.eod_prices
@@ -62,7 +59,6 @@ updated_ticks_utc = EXCLUDED.updated_ticks_utc,
 process_id = EXCLUDED.process_id",
             _ => ThrowSqlNotImplemented()
         };
-
         public string Fetch => _dbDef.Engine switch
         {
             DatabaseEngine.PostgreSql => @"SELECT
@@ -72,19 +68,16 @@ process_id AS ProcessId
 FROM public.eod_adjusted_prices",
             _ => ThrowSqlNotImplemented()
         };
-
         public string FetchAllAdjustedSymbolsForSource => _dbDef.Engine switch
         {
             DatabaseEngine.PostgreSql => @"SELECT distinct code FROM eod_adjusted_prices WHERE source = @Source",
             _ => ThrowSqlNotImplemented()
         };
-
         public string Delete => _dbDef.Engine switch
         {
             DatabaseEngine.PostgreSql => @"DELETE FROM public.eod_adjusted_prices",
             _ => ThrowSqlNotImplemented()
         };
-
         public string MigratePricesWithoutSplitsToAdjustedPrices => _dbDef.Engine switch
         {
             DatabaseEngine.PostgreSql => @"INSERT INTO public.eod_adjusted_prices
@@ -112,7 +105,6 @@ updated_ticks_utc = EXCLUDED.updated_ticks_utc,
 process_id = EXCLUDED.process_id",
             _ => ThrowSqlNotImplemented()
         };
-
         public string FetchCodesAndCounts => _dbDef.Engine switch
         {
             DatabaseEngine.PostgreSql => @"
@@ -143,7 +135,6 @@ updated_ticks_utc = EXCLUDED.updated_ticks_utc,
 process_id = EXCLUDED.process_id",
             _ => ThrowSqlNotImplemented()
         };
-
         public string Fetch => _dbDef.Engine switch
         {
             DatabaseEngine.PostgreSql => @"SELECT
@@ -152,13 +143,13 @@ created_ticks_utc AS CreatedTicksUtc, updated_ticks_utc AS UpdatedTicksUtc, proc
 FROM public.splits",
             _ => ThrowSqlNotImplemented()
         };
-
         public string DeleteForSource => _dbDef.Engine switch
         {
             DatabaseEngine.PostgreSql => @"DELETE FROM public.splits WHERE source = @Source",
             _ => ThrowSqlNotImplemented()
         };
     }
+
     internal class FundamentalsInternal(DbDef dbDef) : SqlRepositoryBase(dbDef)
     {
         public string InsertBasicEntity => _dbDef.Engine switch
@@ -170,13 +161,11 @@ VALUES (
 ON CONFLICT (source, code) DO NOTHING",
             _ => ThrowSqlNotImplemented()
         };
-
         public string UpdateSplitsInEntities => _dbDef.Engine switch
         {
             DatabaseEngine.PostgreSql => @"",
             _ => ThrowSqlNotImplemented()
         };
-
         public string HydrateMissingEntities => _dbDef.Engine switch
         {
             DatabaseEngine.PostgreSql => @"
@@ -200,7 +189,6 @@ FROM tickers
 ON CONFLICT(source, code) DO NOTHING;",
             _ => ThrowSqlNotImplemented()
         };
-
         public string SetSplitIndicatorForEntities => _dbDef.Engine switch
         {
             DatabaseEngine.PostgreSql => @"
@@ -212,7 +200,6 @@ FROM splits
 WHERE entities.source = splits.source AND entities.code = splits.code;",
             _ => ThrowSqlNotImplemented()
         };
-
         public string SetPriceActionIndicatorForEntities => _dbDef.Engine switch
         {
             DatabaseEngine.PostgreSql => @"
@@ -231,7 +218,6 @@ FROM (
 WHERE e.source = combined_data.source AND e.code = combined_data.code;",
             _ => ThrowSqlNotImplemented()
         };
-
         public string SetLastPriceActionForEntities => _dbDef.Engine switch
         {
             DatabaseEngine.PostgreSql => @"
@@ -252,7 +238,6 @@ FROM combined_data cd
 WHERE (e.source = cd.e_source OR e.source = cd.p_source) AND (e.code = cd.e_code OR e.code = cd.p_code);",
             _ => ThrowSqlNotImplemented()
         };
-
         public string UpsertEntity => _dbDef.Engine switch
         {
             DatabaseEngine.PostgreSql => @"INSERT INTO public.entities (
@@ -288,7 +273,6 @@ phone = EXCLUDED.phone,
 updated_ticks_utc = EXCLUDED.updated_ticks_utc",
             _ => ThrowSqlNotImplemented()
         };
-
         public string FetchEntity => _dbDef.Engine switch
         {
             DatabaseEngine.PostgreSql => @"
@@ -313,7 +297,6 @@ updated_ticks_utc AS UpdatedTicksUtc
 FROM public.entities",
             _ => ThrowSqlNotImplemented()
         };
-
         public string DeleteEntityForSourceAndCode => _dbDef.Engine switch
         {
             DatabaseEngine.PostgreSql => @"DELETE FROM public.entities

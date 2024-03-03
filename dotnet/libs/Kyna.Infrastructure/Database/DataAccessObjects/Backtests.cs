@@ -1,13 +1,7 @@
 ﻿namespace Kyna.Infrastructure.Database.DataAccessObjects;
 
-internal sealed record class Backtest : DaoEntityBase
+internal sealed record class Backtest : DaoBase
 {
-    /*
- *  (System.Guid id, System.String name, System.String type, System.String source, System.String description,
- *  System.String entrypricepoint, System.Double targetuppercentage, System.String targetuppricepoint,
- *  System.Double targetdownpercentage, System.String targetdownpricepoint, 
- *  System.Guid processid, System.Int64 createdticksutc, System.Int64 updatedticksutc) is required for Kyna.Infrastructure.Database.DataAccessObjects.Backtest materialization
- */
     public Backtest(Guid id, string name, string type, string source, string description,
         string entryPricePoint,
         double targetUpPercentage, string targetUpPricePoint,
@@ -40,7 +34,7 @@ internal sealed record class Backtest : DaoEntityBase
     public string TargetDownPricePoint { get; init; }
 }
 
-internal sealed record class BacktestResult : DaoEntityBase
+internal sealed record class BacktestResult : DaoBase
 {
     public BacktestResult(Guid id, Guid backtestId, string code, string? industry, string? sector,
         DateOnly entryDate, string entryPricePoint, decimal entryPrice,

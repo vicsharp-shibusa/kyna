@@ -38,7 +38,7 @@ internal abstract class RunnerBase
     {
         while (!_resultDetails.IsEmpty)
         {
-            await Task.Delay(milliseconds);
+            await Task.Delay(milliseconds).ConfigureAwait(false);
         }
     }
 

@@ -3,7 +3,7 @@ using System.Diagnostics;
 
 namespace Kyna.Infrastructure.Database.DataAccessObjects;
 
-internal sealed record class Split : DaoEntityBase
+internal sealed record class Split : DaoBase
 {
     public Split(string source, string code, Guid? processId = null) : base(processId)
     {

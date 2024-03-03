@@ -235,7 +235,6 @@ void HandleArguments(string[] args)
                 }
                 config.Source = args[++a];
                 break;
-
             case "--dry-run":
                 config.DryRun = true;
                 break;

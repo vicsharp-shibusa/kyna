@@ -69,19 +69,21 @@ WHERE source = @Source AND code = @Code";
 
         if (useAdjusted)
         {
-            var prices = (await _dbContext.QueryAsync<AdjustedEodPrice>(sql, new { source, code, start, Finish = end })).ToArray();
+            var prices = (await _dbContext.QueryAsync<AdjustedEodPrice>(sql, 
+                new { source, code, start, Finish = end }).ConfigureAwait(false))
+                .ToArray();
 
             // If we don't find adjusted prices, try to find the raw prices.
             if (prices.Length == 0)
             {
-                return await GetOhlcForSourceAndCodeAsync(source, code, start, end, false);
+                return await GetOhlcForSourceAndCodeAsync(source, code, start, end, false).ConfigureAwait(false);
             }
 
             return prices.Select(p => p.ToOhlc());
         }
         else
         {
-            var prices = await _dbContext.QueryAsync<EodPrice>(sql, new { source, code, start, Finish = end });
+            var prices = await _dbContext.QueryAsync<EodPrice>(sql, new { source, code, start, Finish = end }).ConfigureAwait(false);
             return prices.Select(p => p.ToOhlc());
         }
     }

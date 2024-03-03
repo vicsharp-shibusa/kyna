@@ -4,7 +4,6 @@ internal partial class SqlRepository
 {
     internal class BacktestsInternal(DbDef dbDef) : SqlRepositoryBase(dbDef)
     {
-
         public string UpsertBacktest => _dbDef.Engine switch
         {
             DatabaseEngine.PostgreSql => @"INSERT INTO public.backtests(
@@ -32,7 +31,6 @@ process_id = EXCLUDED.process_id,
 updated_ticks_utc = EXCLUDED.updated_ticks_utc",
             _ => ThrowSqlNotImplemented()
         };
-
         public string FetchBacktest => _dbDef.Engine switch
         {
             DatabaseEngine.PostgreSql => @"SELECT
@@ -48,7 +46,6 @@ process_id AS ProcessId
 FROM public.backtests",
             _ => ThrowSqlNotImplemented()
         };
-
         public string UpsertBacktestResult => _dbDef.Engine switch
         {
             DatabaseEngine.PostgreSql => @"INSERT INTO public.backtest_results(
@@ -89,7 +86,6 @@ result_duration_calendar_days = EXCLUDED.result_duration_calendar_days,
 updated_ticks_utc = EXCLUDED.updated_ticks_utc",
             _ => ThrowSqlNotImplemented()
         };
-
         public string FetchBacktestResult => _dbDef.Engine switch {
             DatabaseEngine.PostgreSql => @"SELECT id, backtest_id AS BacktestId, code, industry, sector,
 entry_date AS EntryDate, entry_price_point AS EntryPricePoint, entry_price AS EntryPrice,

@@ -13,15 +13,22 @@ internal abstract class DbContextBase(DbDef dbDef)
 
     public abstract IDbConnection GetOpenConnection();
 
-    public abstract Task<IDbConnection> GetOpenConnectionAsync(CancellationToken cancellationToken = default);
+    public abstract Task<IDbConnection> GetOpenConnectionAsync(
+        CancellationToken cancellationToken = default);
 
-    public void Execute(string sql, object? parameters = null, IDbTransaction? transaction = null, int? commandTimeout = null)
+    public void Execute(string sql, object? parameters = null, 
+        IDbTransaction? transaction = null, int? commandTimeout = null)
     {
-        if (string.IsNullOrWhiteSpace(sql)) { throw new ArgumentNullException(nameof(sql)); }
+        if (string.IsNullOrWhiteSpace(sql))
+        {
+            throw new ArgumentNullException(nameof(sql));
+        }
 
         bool isLocalTransaction = transaction is null;
 
-        var connection = isLocalTransaction ? GetOpenConnection() : transaction!.Connection;
+        var connection = isLocalTransaction 
+            ? GetOpenConnection() 
+            : transaction!.Connection;
 
         Debug.Assert(connection is not null);
         Debug.Assert(connection.State == ConnectionState.Open);
@@ -31,11 +38,17 @@ internal abstract class DbContextBase(DbDef dbDef)
         try
         {
             connection.Execute(sql, parameters, transaction, commandTimeout);
-            if (isLocalTransaction) { transaction.Commit(); }
+            if (isLocalTransaction)
+            {
+                transaction.Commit();
+            }
         }
         catch (Exception exc)
         {
-            if (isLocalTransaction) { transaction.Rollback(); }
+            if (isLocalTransaction)
+            {
+                transaction.Rollback();
+            }
             KLogger.LogCritical(exc);
             throw;
         }
@@ -48,16 +61,24 @@ internal abstract class DbContextBase(DbDef dbDef)
         }
     }
 
-    public async Task ExecuteAsync(string sql, object? parameters = null, IDbTransaction? transaction = null, int? commandTimeout = null,
+    public async Task ExecuteAsync(string sql,
+        object? parameters = null,
+        IDbTransaction? transaction = null,
+        int? commandTimeout = null,
         CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
 
-        if (string.IsNullOrWhiteSpace(sql)) { throw new ArgumentNullException(nameof(sql)); }
+        if (string.IsNullOrWhiteSpace(sql))
+        {
+            throw new ArgumentNullException(nameof(sql));
+        }
 
         bool isLocalTransaction = transaction is null;
 
-        var connection = isLocalTransaction ? await GetOpenConnectionAsync(cancellationToken) : transaction!.Connection;
+        var connection = isLocalTransaction
+            ? await GetOpenConnectionAsync(cancellationToken).ConfigureAwait(false)
+            : transaction!.Connection;
 
         Debug.Assert(connection is not null);
         Debug.Assert(connection.State == ConnectionState.Open);
@@ -66,12 +87,18 @@ internal abstract class DbContextBase(DbDef dbDef)
 
         try
         {
-            await connection.ExecuteAsync(sql, parameters, transaction, commandTimeout);
-            if (isLocalTransaction) { transaction.Commit(); }
+            await connection.ExecuteAsync(sql, parameters, transaction, commandTimeout).ConfigureAwait(false);
+            if (isLocalTransaction)
+            {
+                transaction.Commit();
+            }
         }
         catch (Exception exc)
         {
-            if (isLocalTransaction) { transaction.Rollback(); }
+            if (isLocalTransaction)
+            {
+                transaction.Rollback();
+            }
             KLogger.LogCritical(exc);
             throw;
         }
@@ -86,7 +113,10 @@ internal abstract class DbContextBase(DbDef dbDef)
 
     public IEnumerable<T> Query<T>(string sql, object? parameters = null, int? commandTimeout = null)
     {
-        if (string.IsNullOrWhiteSpace(sql)) { throw new ArgumentNullException(nameof(sql)); }
+        if (string.IsNullOrWhiteSpace(sql))
+        {
+            throw new ArgumentNullException(nameof(sql));
+        }
 
         using var connection = GetOpenConnection();
 
@@ -105,17 +135,23 @@ internal abstract class DbContextBase(DbDef dbDef)
         }
     }
 
-    public async Task<IEnumerable<T>> QueryAsync<T>(string sql, object? parameters = null, int? commandTimeout = null, CancellationToken cancellationToken = default)
+    public async Task<IEnumerable<T>> QueryAsync<T>(string sql,
+        object? parameters = null,
+        int? commandTimeout = null,
+        CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
 
-        if (string.IsNullOrWhiteSpace(sql)) { throw new ArgumentNullException(nameof(sql)); }
+        if (string.IsNullOrWhiteSpace(sql))
+        {
+            throw new ArgumentNullException(nameof(sql));
+        }
 
-        using var connection = await GetOpenConnectionAsync(cancellationToken);
+        using var connection = await GetOpenConnectionAsync(cancellationToken).ConfigureAwait(false);
 
         try
         {
-            return await connection.QueryAsync<T>(sql, parameters, commandTimeout: commandTimeout);
+            return await connection.QueryAsync<T>(sql, parameters, commandTimeout: commandTimeout).ConfigureAwait(false);
         }
         catch (Exception exc)
         {
@@ -128,9 +164,14 @@ internal abstract class DbContextBase(DbDef dbDef)
         }
     }
 
-    public T? QueryFirstOrDefault<T>(string sql, object? parameters = null, int? commandTimeout = null)
+    public T? QueryFirstOrDefault<T>(string sql,
+        object? parameters = null,
+        int? commandTimeout = null)
     {
-        if (string.IsNullOrWhiteSpace(sql)) { throw new ArgumentNullException(nameof(sql)); }
+        if (string.IsNullOrWhiteSpace(sql))
+        {
+            throw new ArgumentNullException(nameof(sql));
+        }
 
         using var connection = GetOpenConnection();
 
@@ -149,17 +190,23 @@ internal abstract class DbContextBase(DbDef dbDef)
         }
     }
 
-    public async Task<T?> QueryFirstOrDefaultAsync<T>(string sql, object? parameters = null, int? commandTimeout = null, CancellationToken cancellationToken = default)
+    public async Task<T?> QueryFirstOrDefaultAsync<T>(string sql,
+        object? parameters = null,
+        int? commandTimeout = null,
+        CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
 
-        if (string.IsNullOrWhiteSpace(sql)) { throw new ArgumentNullException(nameof(sql)); }
+        if (string.IsNullOrWhiteSpace(sql))
+        {
+            throw new ArgumentNullException(nameof(sql));
+        }
 
         using var connection = GetOpenConnection();
 
         try
         {
-            return await connection.QueryFirstOrDefaultAsync<T>(sql, parameters, commandTimeout: commandTimeout);
+            return await connection.QueryFirstOrDefaultAsync<T>(sql, parameters, commandTimeout: commandTimeout).ConfigureAwait(false);
         }
         catch (Exception exc)
         {

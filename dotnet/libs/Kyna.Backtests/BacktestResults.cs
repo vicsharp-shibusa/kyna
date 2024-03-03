@@ -6,7 +6,6 @@ namespace Kyna.Backtests;
 public class BacktestResult(BacktestingConfiguration configuration)
 {
     private readonly List<BacktestResultDetail> _results = new(10_000);
-
     public Guid Id { get; init; } = Guid.NewGuid();
     public BacktestingConfiguration Configuration { get; init; } = configuration;
     public BacktestResultDetail[] Details => [.. _results];

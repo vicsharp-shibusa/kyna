@@ -86,7 +86,7 @@ internal sealed class EodHdImporter : DataImporterBase, IExternalDataImporter
 
         try
         {
-            await InvokeUserCallAsync(CancellationToken.None);
+            await InvokeUserCallAsync(CancellationToken.None).ConfigureAwait(false);
 
             sb.AppendLine($"Source        : {SourceName}");
             sb.AppendLine($"Daily Limit   : {_dailyLimit:#,##0}");
@@ -126,21 +126,21 @@ internal sealed class EodHdImporter : DataImporterBase, IExternalDataImporter
 
         Stopwatch timer = Stopwatch.StartNew();
 
-        await PurgeTransactionsForSourceAsync(cancellationToken);
-        await InvokeUserCallAsync(cancellationToken);
-        await InvokeExchangeListCallAsync(cancellationToken);
-        await InvokeExchangeDetailsCallAsync(cancellationToken);
+        await PurgeTransactionsForSourceAsync(cancellationToken).ConfigureAwait(false);
+        await InvokeUserCallAsync(cancellationToken).ConfigureAwait(false);
+        await InvokeExchangeListCallAsync(cancellationToken).ConfigureAwait(false);
+        await InvokeExchangeDetailsCallAsync(cancellationToken).ConfigureAwait(false);
 
-        var symbols = await InvokeExchangeSymbolsListCallAsync(cancellationToken);
+        var symbols = await InvokeExchangeSymbolsListCallAsync(cancellationToken).ConfigureAwait(false);
 
         if (((symbols?.Keys.Count ?? 0) != 0) || _dryRun)
         {
             InvokeImportForSymbols(symbols!, cancellationToken);
         }
 
-        await InvokeCalendarEarningsCallAsync(cancellationToken);
-        await InvokeCalendarIposCallAsync(cancellationToken);
-        await InvokeCalendarSplitsCallAsync(cancellationToken);
+        await InvokeCalendarEarningsCallAsync(cancellationToken).ConfigureAwait(false);
+        await InvokeCalendarIposCallAsync(cancellationToken).ConfigureAwait(false);
+        await InvokeCalendarSplitsCallAsync(cancellationToken).ConfigureAwait(false);
 
         if (!_concurrentBag.IsEmpty)
         {
@@ -149,7 +149,8 @@ internal sealed class EodHdImporter : DataImporterBase, IExternalDataImporter
 
             foreach (var item in _concurrentBag)
             {
-                await InvokeApiCallAsync(item.Uri, item.Category, item.SubCategory, cancellationToken: cancellationToken);
+                await InvokeApiCallAsync(item.Uri, item.Category, item.SubCategory, 
+                    cancellationToken: cancellationToken).ConfigureAwait(false);
             }
         }
 
@@ -283,7 +284,8 @@ internal sealed class EodHdImporter : DataImporterBase, IExternalDataImporter
 
         CommunicateAction(Constants.Actions.User);
 
-        var response = await GetStringResponseAsync(uri, Constants.Actions.User, cancellationToken: cancellationToken);
+        var response = await GetStringResponseAsync(uri, Constants.Actions.User,
+            cancellationToken: cancellationToken).ConfigureAwait(false);
 
         var user = JsonSerializer.Deserialize<User>(response, JsonOptionsRepository.DefaultSerializerOptions);
 
@@ -333,7 +335,8 @@ internal sealed class EodHdImporter : DataImporterBase, IExternalDataImporter
 
             if (!_dryRun)
             {
-                await InvokeApiCallAsync(uri, Constants.Actions.ExchangeList, cancellationToken: cancellationToken);
+                await InvokeApiCallAsync(uri, Constants.Actions.ExchangeList, cancellationToken: cancellationToken)
+                    .ConfigureAwait(false);
                 AddCallToUsage(uri);
             }
         }
@@ -359,7 +362,8 @@ internal sealed class EodHdImporter : DataImporterBase, IExternalDataImporter
 
                 if (!_dryRun)
                 {
-                    await InvokeApiCallAsync(uri, Constants.Actions.ExchangeDetails, exchange, cancellationToken: cancellationToken);
+                    await InvokeApiCallAsync(uri, Constants.Actions.ExchangeDetails, exchange,
+                        cancellationToken: cancellationToken).ConfigureAwait(false);
                     AddCallToUsage(uri);
                 }
             }
@@ -388,7 +392,7 @@ internal sealed class EodHdImporter : DataImporterBase, IExternalDataImporter
                 if (!_dryRun)
                 {
                     string json = await GetStringResponseAsync(uri, Constants.Actions.ExchangeSymbolList,
-                        exchange, cancellationToken: cancellationToken);
+                        exchange, cancellationToken: cancellationToken).ConfigureAwait(false);
 
                     symbols.Add(exchange, JsonSerializer.Deserialize<Symbol[]>(json, JsonOptionsRepository.DefaultSerializerOptions)!);
 
@@ -428,10 +432,11 @@ internal sealed class EodHdImporter : DataImporterBase, IExternalDataImporter
 
                     if (!_dryRun)
                     {
-                        await InvokeApiCallAsync(uri, Constants.Actions.EndOfDayPrices, code, cancellationToken: cancellationToken);
+                        await InvokeApiCallAsync(uri, Constants.Actions.EndOfDayPrices, code,
+                            cancellationToken: cancellationToken).ConfigureAwait(false);
                         AddCallToUsage(uri);
                     }
-                });
+                }).ConfigureAwait(false);
             }
             else
             {
@@ -447,7 +452,8 @@ internal sealed class EodHdImporter : DataImporterBase, IExternalDataImporter
 
                     if (!_dryRun)
                     {
-                        await InvokeApiCallAsync(uri, Constants.Actions.EndOfDayPrices, code, cancellationToken: cancellationToken);
+                        await InvokeApiCallAsync(uri, Constants.Actions.EndOfDayPrices, code,
+                            cancellationToken: cancellationToken).ConfigureAwait(false);
                         AddCallToUsage(uri);
                     }
                 }
@@ -483,10 +489,11 @@ internal sealed class EodHdImporter : DataImporterBase, IExternalDataImporter
 
                     if (!_dryRun)
                     {
-                        await InvokeApiCallAsync(uri, Constants.Actions.Splits, code, cancellationToken: cancellationToken);
+                        await InvokeApiCallAsync(uri, Constants.Actions.Splits, code,
+                            cancellationToken: cancellationToken).ConfigureAwait(false);
                         AddCallToUsage(uri);
                     }
-                });
+                }).ConfigureAwait(false);
             }
             else
             {
@@ -502,7 +509,8 @@ internal sealed class EodHdImporter : DataImporterBase, IExternalDataImporter
 
                     if (!_dryRun)
                     {
-                        await InvokeApiCallAsync(uri, Constants.Actions.Splits, code, cancellationToken: cancellationToken);
+                        await InvokeApiCallAsync(uri, Constants.Actions.Splits, code,
+                            cancellationToken: cancellationToken).ConfigureAwait(false);
                         AddCallToUsage(uri);
                     }
                 }
@@ -537,10 +545,11 @@ internal sealed class EodHdImporter : DataImporterBase, IExternalDataImporter
 
                     if (!_dryRun)
                     {
-                        await InvokeApiCallAsync(uri, Constants.Actions.Dividends, code, cancellationToken: cancellationToken);
+                        await InvokeApiCallAsync(uri, Constants.Actions.Dividends, code,
+                            cancellationToken: cancellationToken).ConfigureAwait(false);
                         AddCallToUsage(uri);
                     }
-                });
+                }).ConfigureAwait(false);
             }
             else
             {
@@ -556,7 +565,8 @@ internal sealed class EodHdImporter : DataImporterBase, IExternalDataImporter
 
                     if (!_dryRun)
                     {
-                        await InvokeApiCallAsync(uri, Constants.Actions.Dividends, code, cancellationToken: cancellationToken);
+                        await InvokeApiCallAsync(uri, Constants.Actions.Dividends, code,
+                            cancellationToken: cancellationToken).ConfigureAwait(false);
                         AddCallToUsage(uri);
                     }
                 }
@@ -650,10 +660,11 @@ internal sealed class EodHdImporter : DataImporterBase, IExternalDataImporter
 
                     if (!_dryRun)
                     {
-                        await InvokeApiCallAsync(uri, Constants.Actions.InsiderTransactions, code, cancellationToken: cancellationToken);
+                        await InvokeApiCallAsync(uri, Constants.Actions.InsiderTransactions, code,
+                            cancellationToken: cancellationToken).ConfigureAwait(false);
                         AddCallToUsage(uri);
                     }
-                });
+                }).ConfigureAwait(false);
             }
             else
             {
@@ -669,7 +680,8 @@ internal sealed class EodHdImporter : DataImporterBase, IExternalDataImporter
 
                     if (!_dryRun)
                     {
-                        await InvokeApiCallAsync(uri, Constants.Actions.InsiderTransactions, code, cancellationToken: cancellationToken);
+                        await InvokeApiCallAsync(uri, Constants.Actions.InsiderTransactions,
+                            code, cancellationToken: cancellationToken).ConfigureAwait(false);
                         AddCallToUsage(uri);
                     }
                 }
@@ -694,7 +706,8 @@ internal sealed class EodHdImporter : DataImporterBase, IExternalDataImporter
 
             if (!_dryRun)
             {
-                await InvokeApiCallAsync(uri, Constants.Actions.CalendarEarnings, cancellationToken: cancellationToken);
+                await InvokeApiCallAsync(uri, Constants.Actions.CalendarEarnings, cancellationToken: cancellationToken)
+                    .ConfigureAwait(false);
                 AddCallToUsage(uri);
             }
         }
@@ -716,7 +729,8 @@ internal sealed class EodHdImporter : DataImporterBase, IExternalDataImporter
 
             if (!_dryRun)
             {
-                await InvokeApiCallAsync(uri, Constants.Actions.CalendarIpos, cancellationToken: cancellationToken);
+                await InvokeApiCallAsync(uri, Constants.Actions.CalendarIpos, cancellationToken: cancellationToken)
+                    .ConfigureAwait(false);
                 AddCallToUsage(uri);
             }
         }
@@ -738,7 +752,8 @@ internal sealed class EodHdImporter : DataImporterBase, IExternalDataImporter
 
             if (!_dryRun)
             {
-                await InvokeApiCallAsync(uri, Constants.Actions.CalendarSplits, cancellationToken: cancellationToken);
+                await InvokeApiCallAsync(uri, Constants.Actions.CalendarSplits, cancellationToken: cancellationToken)
+                    .ConfigureAwait(false);
                 AddCallToUsage(uri);
             }
         }
@@ -772,10 +787,11 @@ internal sealed class EodHdImporter : DataImporterBase, IExternalDataImporter
 
                     if (!_dryRun)
                     {
-                        await InvokeApiCallAsync(uri, Constants.Actions.Fundamentals, code, cancellationToken: cancellationToken);
+                        await InvokeApiCallAsync(uri, Constants.Actions.Fundamentals, code, cancellationToken: cancellationToken)
+                            .ConfigureAwait(false);
                         AddCallToUsage(uri);
                     }
-                });
+                }).ConfigureAwait(false);
             }
             else
             {
@@ -791,7 +807,8 @@ internal sealed class EodHdImporter : DataImporterBase, IExternalDataImporter
 
                     if (!_dryRun)
                     {
-                        await InvokeApiCallAsync(uri, Constants.Actions.Fundamentals, code, cancellationToken: cancellationToken);
+                        await InvokeApiCallAsync(uri, Constants.Actions.Fundamentals, code, cancellationToken: cancellationToken)
+                            .ConfigureAwait(false);
                         AddCallToUsage(uri);
                     }
                 }

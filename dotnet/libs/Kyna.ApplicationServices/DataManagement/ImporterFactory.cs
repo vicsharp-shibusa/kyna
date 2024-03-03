@@ -12,15 +12,13 @@ public static class ImporterFactory
 
     public static IExternalDataImporter Create(string source, DbDef dbDef,
         FileInfo? configFileInfo = null,
-        string? apiKey = null, Guid? processId = null,
+        string? apiKey = null,
+        Guid? processId = null,
         bool dryRun = false)
     {
         if (source.Equals(YahooImporter.SourceName, StringComparison.OrdinalIgnoreCase))
         {
-            if (configFileInfo == null)
-            {
-                throw new ArgumentNullException(nameof(configFileInfo));
-            }
+            ArgumentNullException.ThrowIfNull(configFileInfo);
 
             var yahooImportConfig = JsonSerializer.Deserialize<YahooImporter.ImportConfigfile>(
                 File.ReadAllText(configFileInfo.FullName),

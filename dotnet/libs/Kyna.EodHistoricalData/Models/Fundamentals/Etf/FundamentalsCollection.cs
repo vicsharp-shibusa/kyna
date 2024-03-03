@@ -8,9 +8,7 @@ namespace Kyna.EodHistoricalData.Models.Fundamentals.Etf;
 public struct FundamentalsCollection
 {
     public General General;
-
     public Technicals Technicals;
-
     [JsonPropertyName("etf_data")]
     public EtfData Data;
 }

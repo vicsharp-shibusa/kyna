@@ -49,7 +49,8 @@ internal abstract class DataImporterBase : IDisposable
         bool letItFail = false,
         CancellationToken cancellationToken = default)
     {
-        _ = await GetStringResponseAsync(uri, category, subCategory, letItFail, cancellationToken);
+        _ = await GetStringResponseAsync(uri, category, subCategory, letItFail, cancellationToken)
+            .ConfigureAwait(false);
     }
 
     protected virtual async Task<string> GetStringResponseAsync(string uri, string category, string? subCategory = null,
@@ -65,8 +66,8 @@ internal abstract class DataImporterBase : IDisposable
 
         var response = await RetryPolicy.ExecuteAsync(async () =>
         {
-            return await _httpClient.GetAsync(uri, cancellationToken);
-        });
+            return await _httpClient.GetAsync(uri, cancellationToken).ConfigureAwait(false);
+        }).ConfigureAwait(false);
 
         if ((response.StatusCode == HttpStatusCode.TooManyRequests ||
             response.StatusCode == HttpStatusCode.ServiceUnavailable) && !letItFail)
@@ -77,9 +78,10 @@ internal abstract class DataImporterBase : IDisposable
 
         string uriWithoutKey = HideToken(uri);
         await _transactionService.RecordTransactionAsync("GET", uriWithoutKey, Source, category, response,
-            _httpClient.DefaultRequestHeaders, payload: null, subCategory, processId: _processId);
+            _httpClient.DefaultRequestHeaders, payload: null, subCategory, processId: _processId)
+            .ConfigureAwait(false);
 
-        return await response.Content.ReadAsStringAsync(cancellationToken);
+        return await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
     }
 
     protected virtual string HideToken(string text) => _apiKey == null ? text : text.Replace(_apiKey, "{SECRET_KEY}");

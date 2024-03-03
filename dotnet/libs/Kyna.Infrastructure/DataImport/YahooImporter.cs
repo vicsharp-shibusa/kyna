@@ -57,7 +57,7 @@ internal sealed class YahooImporter : IExternalDataImporter
 
         Stopwatch timer = Stopwatch.StartNew();
 
-        FileInfo symbolsFileInfo = new FileInfo(Path.Combine(
+        FileInfo symbolsFileInfo = new(Path.Combine(
             new FileInfo(Assembly.GetExecutingAssembly().Location).Directory?.FullName ?? "", "data", "us_symbols.txt"));
 
         if (!symbolsFileInfo.Exists)
@@ -80,9 +80,9 @@ internal sealed class YahooImporter : IExternalDataImporter
                 }
                 else
                 {
-                    await ImportSymbolAsync(symbol, cancellationToken);
+                    await ImportSymbolAsync(symbol, cancellationToken).ConfigureAwait(false);
                 }
-            });
+            }).ConfigureAwait(false);
         }
         else
         {
@@ -94,7 +94,7 @@ internal sealed class YahooImporter : IExternalDataImporter
                 }
                 else
                 {
-                    await ImportSymbolAsync(symbol, cancellationToken);
+                    await ImportSymbolAsync(symbol, cancellationToken).ConfigureAwait(false);
                 }
             }
         }
@@ -107,7 +107,8 @@ internal sealed class YahooImporter : IExternalDataImporter
     {
         try
         {
-            var chart = await YahooFinanceApi.Yahoo.GetHistoricalAsync(symbol.Trim().ToUpper());
+            var chart = await YahooFinanceApi.Yahoo.GetHistoricalAsync(
+                symbol.Trim().ToUpper(), token: cancellationToken).ConfigureAwait(false);
 
             Communicate?.Invoke(this, new CommunicationEventArgs(symbol, null));
 
@@ -125,7 +126,8 @@ internal sealed class YahooImporter : IExternalDataImporter
                 ProcessId = _processId
             });
 
-            await _dbContext.ExecuteAsync(_dbContext.Sql.AdjustedEodPrices.Upsert, daos, cancellationToken: cancellationToken);
+            await _dbContext.ExecuteAsync(_dbContext.Sql.AdjustedEodPrices.Upsert, daos, cancellationToken: cancellationToken)
+                .ConfigureAwait(false);
         }
         catch (Exception exc)
         {

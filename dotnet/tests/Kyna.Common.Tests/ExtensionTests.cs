@@ -168,7 +168,7 @@ public class ExtensionTests
         DateTime saturday = new(2021, 10, 2);
         DateTime nextWeekday = saturday.AddWeekdays(10);
         DateTime expected = new(2021, 10, 15);
-        Assert.True(nextWeekday.DayOfWeek == DayOfWeek.Friday);
+        Assert.Equal(DayOfWeek.Friday, nextWeekday.DayOfWeek);
         Assert.Equal(expected, nextWeekday);
     }
 
@@ -178,7 +178,7 @@ public class ExtensionTests
         DateTime saturday = new(2021, 10, 2);
         DateTime previousWeekday = saturday.AddWeekdays(-1);
         DateTime expected = new(2021, 10, 1);
-        Assert.True(previousWeekday.DayOfWeek == DayOfWeek.Friday);
+        Assert.Equal(DayOfWeek.Friday, previousWeekday.DayOfWeek);
         Assert.Equal(expected, previousWeekday);
     }
 
@@ -187,7 +187,7 @@ public class ExtensionTests
     {
         DateTime saturday = new(2021, 10, 2);
         DateTime previousWeekday = saturday.AddWeekdays(-10);
-        Assert.True(previousWeekday.DayOfWeek == DayOfWeek.Monday);
+        Assert.Equal(DayOfWeek.Monday, previousWeekday.DayOfWeek);
         DateTime expected = new(2021, 9, 20);
         Assert.Equal(expected, previousWeekday);
     }
@@ -207,7 +207,7 @@ public class ExtensionTests
         DateOnly saturday = new(2021, 10, 2);
         DateOnly nextWeekday = saturday.AddWeekdays(10);
         DateOnly expected = new(2021, 10, 15);
-        Assert.True(nextWeekday.DayOfWeek == DayOfWeek.Friday);
+        Assert.Equal(DayOfWeek.Friday, nextWeekday.DayOfWeek);
         Assert.Equal(expected, nextWeekday);
     }
 
@@ -217,7 +217,7 @@ public class ExtensionTests
         DateOnly saturday = new(2021, 10, 2);
         DateOnly previousWeekday = saturday.AddWeekdays(-1);
         DateOnly expected = new(2021, 10, 1);
-        Assert.True(previousWeekday.DayOfWeek == DayOfWeek.Friday);
+        Assert.Equal(DayOfWeek.Friday, previousWeekday.DayOfWeek);
         Assert.Equal(expected, previousWeekday);
     }
 
@@ -226,7 +226,7 @@ public class ExtensionTests
     {
         DateOnly saturday = new(2021, 10, 2);
         DateOnly previousWeekday = saturday.AddWeekdays(-10);
-        Assert.True(previousWeekday.DayOfWeek == DayOfWeek.Monday);
+        Assert.Equal(DayOfWeek.Monday, previousWeekday.DayOfWeek);
         DateOnly expected = new(2021, 9, 20);
         Assert.Equal(expected, previousWeekday);
     }

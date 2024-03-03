@@ -9,16 +9,12 @@ public struct Valuation
 {
     [JsonPropertyName("price/prospective earnings")]
     public string? PriceProspectiveEarnings;
-    
     [JsonPropertyName("price/book")]
     public string? PriceBook;
-    
     [JsonPropertyName("price/sales")]
     public string? PriceSales;
-    
     [JsonPropertyName("price/cash flow")]
     public string? PriceCashFlow;
-    
     [JsonPropertyName("dividend-yield factor")]
     public string? DividendYieldFactor;
 }

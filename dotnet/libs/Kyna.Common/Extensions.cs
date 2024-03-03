@@ -143,7 +143,7 @@ public static class StreamExtensions
         {
             byte[] buffer = Encoding.UTF8.GetBytes(message);
 
-            await stream.WriteAsync(buffer, cancellationToken);
+            await stream.WriteAsync(buffer, cancellationToken).ConfigureAwait(false);
         }
     }
 
@@ -152,7 +152,8 @@ public static class StreamExtensions
 
     public static async Task WriteLineAsync(this Stream stream, string? message = null,
         CancellationToken cancellationToken = default) =>
-        await WriteAsync(stream, $"{message ?? string.Empty}{Environment.NewLine}", cancellationToken);
+        await WriteAsync(stream, $"{message ?? string.Empty}{Environment.NewLine}", cancellationToken)
+            .ConfigureAwait(false);
 }
 
 public static class EnumExtensions

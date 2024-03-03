@@ -2,15 +2,8 @@
 
 namespace Kyna.Backtests;
 
-public struct TestTargetPercentage
+public struct TestTargetPercentage(PricePoint pricePoint, double value)
 {
-
-    public PricePoint PricePoint;
-    public double Value;
-
-    public TestTargetPercentage(PricePoint pricePoint, double value)
-    {
-        PricePoint = pricePoint;
-        Value = value;
-    }
+    public PricePoint PricePoint = pricePoint;
+    public double Value = value;
 }

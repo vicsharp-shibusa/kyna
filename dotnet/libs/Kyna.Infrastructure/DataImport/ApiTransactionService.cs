@@ -29,15 +29,17 @@ internal sealed class ApiTransactionService(DbDef dbDef)
             SubCategory = subCategory,
             RequestHeaders = JsonSerializer.Serialize(requestHeaders, _serializerOptions),
             RequestMethod = method,
-            RequestPayload = payload is null ? null : await payload.ReadAsStringAsync(),
+            RequestPayload = payload is null
+                ? null : await payload.ReadAsStringAsync().ConfigureAwait(false),
             RequestUri = uri,
             ResponseStatusCode = ((int)response.StatusCode).ToString(),
             ResponseHeaders = JsonSerializer.Serialize(response.Headers, _serializerOptions),
-            ResponseBody = await response.Content.ReadAsStringAsync(),
+            ResponseBody = await response.Content.ReadAsStringAsync().ConfigureAwait(false),
             ProcessId = processId
         };
 
-        await _dbContext.ExecuteAsync(_dbContext.Sql.ApiTransactions.Insert, transDao);
+        await _dbContext.ExecuteAsync(_dbContext.Sql.ApiTransactions.Insert, transDao)
+            .ConfigureAwait(false);
     }
 
     public async Task DeleteTransactionsAsync(string source, string category, IEnumerable<string> subCategories)
@@ -51,7 +53,7 @@ internal sealed class ApiTransactionService(DbDef dbDef)
                 source,
                 category,
                 SubCategories = c
-            });
+            }).ConfigureAwait(false);
         }
     }
 }
