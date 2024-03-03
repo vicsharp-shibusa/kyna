@@ -2,7 +2,7 @@
   "profiles": {
     "Kyna.Importer.Cli": {
       "commandName": "Project",
-      "commandLineArgs": "--help"
+      "commandLineArgs": "-v -s yahoo -f configs/price-yahoo.json"
     }
   }
 }

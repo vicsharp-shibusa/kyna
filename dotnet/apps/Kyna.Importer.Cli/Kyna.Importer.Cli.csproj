@@ -23,6 +23,9 @@
 		<None Update="configs\bulk-eodhd.json">
 			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
 		</None>
+		<None Update="configs\price-yahoo.json">
+		  <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</None>
 		<None Update="configs\purge-eodhd.json">
 			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
 		</None>
@@ -37,6 +40,9 @@
 		</None>
 		<None Update="configs\fundamentals-eodhd.json">
 			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</None>
+		<None Update="data\us_symbols.txt">
+		  <CopyToOutputDirectory>Always</CopyToOutputDirectory>
 		</None>
 		<None Update="secrets.json">
 			<CopyToOutputDirectory>Always</CopyToOutputDirectory>

@@ -11,6 +11,7 @@ using Microsoft.Extensions.Logging;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Reflection;
+using System.Text.Json;
 
 ILogger<Program>? logger = null;
 IConfiguration? configuration;
@@ -44,99 +45,24 @@ try
     }
     else
     {
-        string homeDirectory = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+        //var symbols = YahooFinanceApi.Yahoo.Symbols("AAPL");
+        //var results = symbols.QueryAsync();
 
-        var outputPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "kyna-output");
+        var chart = await YahooFinanceApi.Yahoo.GetHistoricalAsync("AAPL");
 
-        if (!Directory.Exists(outputPath))
-        {
-            Directory.CreateDirectory(outputPath);
-        }
+        var json = JsonSerializer.Serialize(chart);
 
-        var stream = File.Create(Path.Combine(outputPath, "candle_patterns.csv"));
-        string source = "eodhd.com";
-        //var symbols = await financialsRepository.GetAllAdjustedSymbolsForSourceAsync(source);
-
-        List<Pattern> patterns = [
-            new("IsDoji", c => c.IsDoji),
-            new("IsLongLeggedDoji", c => c.IsLongLeggedDoji),
-            new("IsDragonflyDoji", c => c.IsDragonflyDoji),
-            new("IsGravestoneDoji", c => c.IsGravestoneDoji),
-            new("IsFourPriceDoji", c => c.IsFourPriceDoji),
-            new("IsBullishBelthold", c => c.IsBullishBelthold),
-            new("IsBearishBelthold", c => c.IsBearishBelthold),
-            new("IsBullisht pMarubozu", c => c.IsBullishMarubozu),
-            new("IsBearishMarubozu", c => c.IsBearishMarubozu),
-            new("IsUmbrella", c => c.IsUmbrella),
-            new("IsInvertedUmbrella", c => c.IsInvertedUmbrella),
-            new("IsSpinningTop", c => c.IsSpinningTop),
-        ];
-
-        Dictionary<string, Collection<(string Symbol, Candlestick Candle)>> dict = new(10_000);
-
-        string[] desiredSymbols = [ "AAPL.US", "MSFT.US", "TSLA.US", "NFLX.US",
-            "AMZN.US", "NVDA.US", "GOOGL.US", "META.US", "UNH.US", "JPM.US",
-            "V.US", "COST.US", "ADBE.US", "PFE.US", "BAC.US", "ACN.US", "ORCL.US",
-            "IBM.US", "HON.US", "DE.US", "T.US", "MO.US", "LULU.US", "MMM.US", "F.US",
-            "EBAY.US"
-        ];
-
-        foreach (var symbol in desiredSymbols)
-        {
-            Console.WriteLine(symbol);
-
-            var ohlc = (await financialsRepository.GetOhlcForSourceAndCodeAsync(source, symbol)).ToArray();
-
-            var maTrend = new MovingAverageTrend(new MovingAverageKey(21), ohlc);
-            var exTrend = new ExtremeTrend(ohlc);
-            var wTrend1 = new WeightedTrend(maTrend, .6D);
-            var wTrend2 = new WeightedTrend(exTrend, .4D);
-
-            var blendedTrend = new CombinedTrend(wTrend1, wTrend2);
-
-            var chart1 = new Chart()
-                .WithPriceActions(ohlc)
-                .WithCandles()
-                .WithTrend(maTrend)
-                .Build();
-
-            var chart2 = new Chart()
-                .WithPriceActions(ohlc)
-                .WithCandles()
-                .WithTrend(exTrend)
-                .Build();
-
-            var chart3 = new Chart()
-                .WithPriceActions(ohlc)
-                .WithCandles()
-                .WithTrend(blendedTrend)
-                .Build();
-
-            using var trendFile = File.Create(Path.Combine(outputPath, $"{symbol}_trend.csv"));
-
-            trendFile.WriteLine("Symbol,Date,Close,MA Trend,MA Value,Ex Trend,Ex Value,Blend Trend,Blend Value");
-            for (int i = 0; i < chart1.PriceActions.Length; i++)
-            {
-                string[] trendItems = [
-                    chart1.PriceActions[i].Symbol,
-                    chart1.PriceActions[i].Date.ToString("yyyy-MM-dd"),
-                    chart1.PriceActions[i].Close.ToString("#,##0.00"),
-                    chart1.TrendValues[i].Sentiment.GetEnumDescription(),
-                    chart1.TrendValues[i].Value.ToString(),
-                    chart2.TrendValues[i].Sentiment.GetEnumDescription(),
-                    chart2.TrendValues[i].Value.ToString(),
-                    chart3.TrendValues[i].Sentiment.GetEnumDescription(),
-                    chart3.TrendValues[i].Value.ToString(),
-                ];
-                trendFile.WriteLine(string.Join(',', trendItems));
-            }
-
-            trendFile.Flush();
-            trendFile.Close();
-        }
-
-        stream.Flush();
-        stream.Close();
+        File.WriteAllText("/temp/symbols.json", json);
+        //Console.WriteLine(json);
+        //int i = 0;
+        //foreach (var item in chart)
+        //{
+        //    string str = $"{item.DateTime:yyyy-MM-dd}\t{item.Close}\t{item.AdjustedClose}";
+        //    Console.WriteLine(str);
+        //    i++;
+        //    if (i > 20)
+        //        break;
+        //}
     }
     exitCode = 0;
 }

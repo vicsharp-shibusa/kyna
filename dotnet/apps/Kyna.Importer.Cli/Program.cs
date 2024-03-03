@@ -294,6 +294,11 @@ void Configure()
     var logDef = dbDefs.FirstOrDefault(d => d.Name == ConfigKeys.DbKeys.Logs);
     var importDef = dbDefs.FirstOrDefault(d => d.Name == ConfigKeys.DbKeys.Imports);
 
+    if (config.Source == "yahoo")
+    {
+        importDef = dbDefs.FirstOrDefault(d => d.Name == ConfigKeys.DbKeys.Financials);
+    }
+
     logger = Kyna.ApplicationServices.Logging.LoggerFactory.Create<Program>(logDef);
     KLogger.SetLogger(logger);
 

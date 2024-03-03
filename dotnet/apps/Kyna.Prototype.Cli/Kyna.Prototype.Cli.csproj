@@ -10,6 +10,10 @@
 	</PropertyGroup>
 
 	<ItemGroup>
+	  <PackageReference Include="YahooFinanceApi" Version="2.3.2" />
+	</ItemGroup>
+
+	<ItemGroup>
 	  <ProjectReference Include="..\..\libs\Kyna.ApplicationServices\Kyna.ApplicationServices.csproj" />
 	</ItemGroup>
 

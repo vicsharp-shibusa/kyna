@@ -15,6 +15,22 @@ public static class ImporterFactory
         string? apiKey = null, Guid? processId = null,
         bool dryRun = false)
     {
+        if (source.Equals(YahooImporter.SourceName, StringComparison.OrdinalIgnoreCase))
+        {
+            if (configFileInfo == null)
+            {
+                throw new ArgumentNullException(nameof(configFileInfo));
+            }
+
+            var yahooImportConfig = JsonSerializer.Deserialize<YahooImporter.ImportConfigfile>(
+                File.ReadAllText(configFileInfo.FullName),
+                JsonOptionsRepository.DefaultSerializerOptions);
+
+            Debug.Assert(yahooImportConfig != null);
+
+            return new YahooImporter(dbDef, new YahooImporter.DataImportConfiguration(yahooImportConfig.Options), processId, dryRun);
+        }
+
         if (source.Equals(EodHdImporter.SourceName, StringComparison.OrdinalIgnoreCase))
         {
             if (string.IsNullOrWhiteSpace(apiKey))
