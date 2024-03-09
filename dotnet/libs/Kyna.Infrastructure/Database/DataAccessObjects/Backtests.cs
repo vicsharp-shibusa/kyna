@@ -1,4 +1,8 @@
-﻿namespace Kyna.Infrastructure.Database.DataAccessObjects;
+﻿using static System.Net.Mime.MediaTypeNames;
+using System;
+using Newtonsoft.Json.Linq;
+
+namespace Kyna.Infrastructure.Database.DataAccessObjects;
 
 internal sealed record class Backtest : DaoBase
 {
@@ -36,7 +40,7 @@ internal sealed record class Backtest : DaoBase
 
 internal sealed record class BacktestResult : DaoBase
 {
-    public BacktestResult(Guid id, Guid backtestId, string code, string? industry, string? sector,
+    public BacktestResult(Guid id, Guid backtestId, string signalName, string code, string? industry, string? sector,
         DateOnly entryDate, string entryPricePoint, decimal entryPrice,
         DateOnly? resultUpDate, string? resultUpPricePoint, decimal? resultUpPrice,
         DateOnly? resultDownDate, string? resultDownPricePoint, decimal? resultDownPrice,
@@ -45,6 +49,7 @@ internal sealed record class BacktestResult : DaoBase
     {
         Id = id;
         BacktestId = backtestId;
+        SignalName = signalName;
         Code = code;
         Industry = industry;
         Sector = sector;
@@ -66,6 +71,7 @@ internal sealed record class BacktestResult : DaoBase
 
     public Guid Id { get; init; }
     public Guid BacktestId { get; init; }
+    public string SignalName { get; init; }
     public string Code { get; init; }
     public string? Industry { get; init; }
     public string? Sector { get; init; }
@@ -78,6 +84,72 @@ internal sealed record class BacktestResult : DaoBase
     public DateOnly? ResultDownDate { get; init; }
     public string? ResultDownPricePoint { get; init; }
     public decimal? ResultDownPrice { get; init; }
+    public string? ResultDirection { get; init; }
+    public int? ResultDurationTradingDays { get; init; }
+    public int? ResultDurationCalendarDays { get; init; }
+}
+
+internal sealed record class BacktestStats : DaoBase
+{
+    public BacktestStats(string source, 
+        string signalName, 
+        string category, 
+        string subCategory, 
+        int numberEntities, 
+        int numberSignals, 
+        double successPercentage, 
+        string successCriterion, 
+        int? successDurationTradingDays, 
+        int? successDurationCalendarDays,
+        long createdTicksUtc, 
+        long updatedTicksUtc,
+        Guid? processId = null) : base(processId)
+    {
+        Source = source;
+        SignalName = signalName;
+        Category = category;
+        SubCategory = subCategory;
+        NumberEntities = numberEntities;
+        NumberSignals = numberSignals;
+        SuccessPercentage = successPercentage;
+        SuccessCriterion = successCriterion;
+        SuccessDurationTradingDays = successDurationTradingDays;
+        SuccessDurationCalendarDays = successDurationCalendarDays;
+        CreatedTicksUtc = createdTicksUtc;
+        UpdatedTicksUtc = updatedTicksUtc;
+    }
+
+    public string Source { get; init; }
+    public string SignalName { get; init; }
+    public string Category { get; init; }
+    public string SubCategory { get; init; }
+    public int NumberEntities { get; init; }
+    public int NumberSignals { get; init; }
+    public double SuccessPercentage { get; init; }
+    public string SuccessCriterion { get; init; }
+    public int? SuccessDurationTradingDays { get; init; }
+    public int? SuccessDurationCalendarDays { get; init; }
+}
+
+internal sealed record class BacktestResultsInfo
+{
+    public BacktestResultsInfo(string signalName, string code,
+        string? industry, string? sector, 
+        string? resultDirection, int? resultDurationTradingDays, int? resultDurationCalendarDays)
+    {
+        SignalName = signalName;
+        Code = code;
+        Industry = industry;
+        Sector = sector;
+        ResultDirection = resultDirection;
+        ResultDurationTradingDays = resultDurationTradingDays;
+        ResultDurationCalendarDays = resultDurationCalendarDays;
+    }
+
+    public string SignalName { get; init; }
+    public string Code { get; init; }
+    public string? Industry { get; init; }
+    public string? Sector { get; init; }
     public string? ResultDirection { get; init; }
     public int? ResultDurationTradingDays { get; init; }
     public int? ResultDurationCalendarDays { get; init; }

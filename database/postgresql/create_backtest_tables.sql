@@ -24,6 +24,7 @@ CREATE TABLE IF NOT EXISTS public.backtest_results
 (
   id UUID NOT NULL,
   backtest_id UUID NOT NULL,
+  signal_name TEXT NOT NULL,
   code TEXT NOT NULL,
   industry TEXT NULL,
   sector TEXT NULL,
@@ -44,4 +45,24 @@ CREATE TABLE IF NOT EXISTS public.backtest_results
   created_utc TIMESTAMP WITH TIME ZONE GENERATED ALWAYS AS (to_timestamp((created_ticks_utc - 621355968000000000) / 10000000)) STORED,
   updated_utc TIMESTAMP WITH TIME ZONE GENERATED ALWAYS AS (to_timestamp((updated_ticks_utc - 621355968000000000) / 10000000)) STORED,
   PRIMARY KEY (id)
+);
+
+CREATE TABLE IF NOT EXISTS public.backtest_stats
+(
+  source TEXT NOT NULL,
+  signal_name TEXT NOT NULL,
+  category TEXT NOT NULL,
+  sub_category TEXT NULL,
+  number_entities INTEGER NOT NULL,
+  number_signals INTEGER NOT NULL,
+  success_percentage DOUBLE PRECISION NOT NULL,
+  success_criterion TEXT NOT NULL,
+  success_duration_trading_days INTEGER NULL,
+  success_duration_calendar_days INTEGER NULL,
+  process_id UUID NULL,
+  created_ticks_utc BIGINT NOT NULL,
+  updated_ticks_utc BIGINT NOT NULL,
+  created_utc TIMESTAMP WITH TIME ZONE GENERATED ALWAYS AS (to_timestamp((created_ticks_utc - 621355968000000000) / 10000000)) STORED,
+  updated_utc TIMESTAMP WITH TIME ZONE GENERATED ALWAYS AS (to_timestamp((updated_ticks_utc - 621355968000000000) / 10000000)) STORED,
+  PRIMARY KEY (source, signal_name, category, sub_category)
 );

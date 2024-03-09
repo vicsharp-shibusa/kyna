@@ -1,0 +1,20 @@
+{
+  "Type": "Candlestick Pattern",
+  "Name": "Engulfing",
+  "Source": "eodhd.com",
+  "Description": "Testing",
+  "EntryPricePoint": "Close",
+  "TargetUp": {
+    "PricePoint": "High",
+    "Value": 0.1
+  },
+  "TargetDown": {
+    "PricePoint": "Low",
+    "Value": 0.1
+  },
+  "LengthOfPrologue": 15,
+  "SignalNames": [
+    "Bullish Engulfing",
+    "Bearish Engulfing"
+  ]
+}

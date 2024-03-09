@@ -17,6 +17,9 @@
 		<None Update="appsettings.json">
 			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</None>
+		<None Update="configs\candlesticks.json">
+		  <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</None>
 		<None Update="configs\baseline.json">
 		  <CopyToOutputDirectory>Always</CopyToOutputDirectory>
 		</None>

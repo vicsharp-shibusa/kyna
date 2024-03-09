@@ -26,6 +26,7 @@ public class BacktestResultDetail
 {
     public Guid Id { get; init; } = Guid.NewGuid();
     public required Guid BacktestId { get; init; }
+    public required string SignalName { get; init; }
     public required string Code { get; init; }
     public string? Industry { get; init; }
     public string? Sector { get; init; }

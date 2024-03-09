@@ -6,4 +6,5 @@ internal interface IBacktestRunner
 {
     event EventHandler<CommunicationEventArgs>? Communicate;
     Task ExecuteAsync(CancellationToken cancellationToken);
+    void WriteActivityCounts();
 }

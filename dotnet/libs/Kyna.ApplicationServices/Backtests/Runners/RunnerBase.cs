@@ -2,7 +2,9 @@
 using Kyna.Common;
 using Kyna.Common.Events;
 using Kyna.Infrastructure.Database;
+using Kyna.Infrastructure.Database.DataAccessObjects;
 using System.Collections.Concurrent;
+using System.Text;
 
 namespace Kyna.ApplicationServices.Backtests.Runners;
 
@@ -12,8 +14,10 @@ internal abstract class RunnerBase
     protected readonly IDbContext _backtestDbContext;
     protected readonly BacktestingConfiguration _configuration;
     protected readonly Guid? _processId;
-    private readonly ConcurrentQueue<BacktestResultDetail> _resultDetails;
+    protected readonly Guid _backtestId = Guid.NewGuid();
+    protected readonly ActivityCounts _activityCounts;
 
+    private readonly ConcurrentQueue<BacktestResultDetail> _resultDetails;
     private readonly bool _runQueue = true;
 
     public event EventHandler<CommunicationEventArgs>? Communicate;
@@ -22,11 +26,50 @@ internal abstract class RunnerBase
         Guid? processId = null)
     {
         _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
-        _processId = processId;
         _finDbContext = DbContextFactory.Create(finDef ?? throw new ArgumentNullException(nameof(finDef)));
         _backtestDbContext = DbContextFactory.Create(backtestsDef ?? throw new ArgumentNullException(nameof(backtestsDef)));
+        _processId = processId;
         _resultDetails = new();
+        _activityCounts = new();
         RunResultDetailDequeue();
+    }
+
+    public void WriteActivityCounts()
+    {
+        StringBuilder sb = new();
+        sb.AppendLine($"Process Id   : {_processId}");
+        sb.AppendLine($"Backtest Id  : {_backtestId}");
+        sb.AppendLine($"Entity count : {_activityCounts.EntityCount.ToString("#,##0").PadLeft(12, ' ')}");
+        sb.AppendLine($"Event count  : {_activityCounts.EventCount.ToString("#,##0").PadLeft(12, ' ')}");
+
+        Communicate?.Invoke(this, new CommunicationEventArgs(sb.ToString(), nameof(RunnerBase)));
+    }
+
+    protected virtual Task<IEnumerable<CodesAndCounts>> GetCodesAndCount(CancellationToken cancellationToken)
+    {
+        OnCommunicate(new CommunicationEventArgs("Fetching data to backtest ...", null));
+        return _finDbContext.QueryAsync<CodesAndCounts>(
+            _finDbContext.Sql.AdjustedEodPrices.FetchCodesAndCounts, new { _configuration.Source },
+            0, cancellationToken);
+    }
+
+    protected virtual Task CreateBacktestingRecord(CancellationToken cancellationToken)
+    {
+        OnCommunicate(new CommunicationEventArgs("Creating backtest record...", null));
+        return _backtestDbContext.ExecuteAsync(_finDbContext.Sql.Backtests.UpsertBacktest,
+            new Backtest(_backtestId,
+                _configuration.Name,
+                _configuration.Type.GetEnumDescription(),
+                _configuration.Source,
+                _configuration.Description,
+                _configuration.EntryPricePoint.GetEnumDescription(),
+                _configuration.TargetUp.Value,
+                _configuration.TargetUp.PricePoint.GetEnumDescription(),
+                _configuration.TargetDown.Value,
+                _configuration.TargetDown.PricePoint.GetEnumDescription(),
+                DateTime.UtcNow.Ticks,
+                DateTime.UtcNow.Ticks,
+                _processId), cancellationToken: cancellationToken);
     }
 
     protected virtual void Enqueue(BacktestResultDetail detail)
@@ -65,6 +108,7 @@ internal abstract class RunnerBase
                                 new Infrastructure.Database.DataAccessObjects.BacktestResult(
                                     resultDetail.Id,
                                     resultDetail.BacktestId,
+                                    resultDetail.SignalName,
                                     resultDetail.Code,
                                     resultDetail.Industry,
                                     resultDetail.Sector,
@@ -82,6 +126,11 @@ internal abstract class RunnerBase
                                     resultDetail.WinnerDurationCalendarDays,
                                     DateTime.UtcNow.Ticks,
                                     DateTime.UtcNow.Ticks));
+
+                            lock (_activityCounts)
+                            {
+                                _activityCounts.EventCount++;
+                            }
                         }
                         catch (Exception exc)
                         {
@@ -91,5 +140,21 @@ internal abstract class RunnerBase
                 }
             }
         });
+    }
+
+#pragma warning disable CS0649 // Field is never assigned to, and will always have its default value null
+    protected struct CodesAndCounts
+    {
+        public string Code;
+        public string? Industry;
+        public string? Sector;
+        public int Count;
+    }
+#pragma warning restore CS0649 // Field is never assigned to, and will always have its default value null
+
+    protected class ActivityCounts
+    {
+        public int EventCount { get; set; }
+        public int EntityCount { get; set; }
     }
 }

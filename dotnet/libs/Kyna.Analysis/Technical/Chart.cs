@@ -2,25 +2,20 @@
 
 namespace Kyna.Analysis.Technical;
 
-public class Chart
+public class Chart(string code, string? industry, string? sector)
 {
     private readonly List<MovingAverage> _movingaverages = new(3);
     private readonly HashSet<MovingAverageKey> _movingAverageKeys = new(3);
     private bool _includeCandles = false;
 
-    public Chart()
-    {
-        PriceActions = [];
-        Candlesticks = [];
-        Trend = null;
-    }
-
-    private ITrend? Trend { get; set; }
+    public string Code { get; } = code;
+    public string? Industry { get; } = industry;
+    public string? Sector { get; } = sector;
+    private ITrend? Trend { get; set; } = null;
     public TrendValue[] TrendValues => Trend?.TrendValues ??
         Enumerable.Repeat(new TrendValue(TrendSentiment.Unknown, 0D), PriceActions.Length).ToArray();
-
-    public Ohlc[] PriceActions { get; private set; }
-    public Candlestick[] Candlesticks { get; private set; }
+    public Ohlc[] PriceActions { get; private set; } = [];
+    public Candlestick[] Candlesticks { get; private set; } = [];
     public int Length => PriceActions.Length;
     public DateOnly Start => PriceActions[0].Date;
     public DateOnly End => PriceActions[^1].Date;
@@ -54,9 +49,8 @@ public class Chart
 
     public Chart WithCandles(IEnumerable<Ohlc> priceActions)
     {
-        PriceActions = priceActions.ToArray();
         _includeCandles = true;
-        return this;
+        return WithPriceActions(priceActions);
     }
 
     public Chart WithCandles()

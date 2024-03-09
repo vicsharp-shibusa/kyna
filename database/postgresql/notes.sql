@@ -35,3 +35,15 @@ select distinct result_direction, count(*), min(result_duration_calendar_days),
 max(result_duration_calendar_days),
 avg(result_duration_calendar_days) from backtest_results
 group by result_direction
+
+
+SELECT signal_name, result_direction, COUNT(*)
+from backtest_results
+group BY signal_name, result_direction
+ORDER BY signal_name;
+
+select signal_name, category, sub_category,
+number_signals, success_percentage, success_duration_calendar_days
+from backtest_stats
+where number_signals > 10
+order by success_percentage desc, success_duration_calendar_days asc

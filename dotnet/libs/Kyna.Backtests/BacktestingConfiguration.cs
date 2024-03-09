@@ -6,7 +6,9 @@ public class BacktestingConfiguration(BacktestType type, string source,
     string name, string description,
     PricePoint entryPricePoint,
     TestTargetPercentage targetUp,
-    TestTargetPercentage targetDown)
+    TestTargetPercentage targetDown,
+    string[]? signalnames = null,
+    int lengthOfPrologue = 15)
 {
     public BacktestType Type { get; init; } = type;
     public string Name { get; init; } = name;
@@ -15,4 +17,6 @@ public class BacktestingConfiguration(BacktestType type, string source,
     public PricePoint EntryPricePoint { get; init; } = entryPricePoint;
     public TestTargetPercentage TargetUp { get; init; } = targetUp;
     public TestTargetPercentage TargetDown { get; init; } = targetDown;
+    public string[]? SignalNames { get; init; } = signalnames;
+    public int LengthOfPrologue { get; init; } = lengthOfPrologue;
 }

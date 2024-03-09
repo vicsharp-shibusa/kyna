@@ -3,7 +3,6 @@ using Kyna.Backtests;
 using Kyna.Common;
 using Kyna.Common.Events;
 using Kyna.Infrastructure.Database;
-using Kyna.Infrastructure.Database.DataAccessObjects;
 using System.Collections.Concurrent;
 using System.Diagnostics;
 
@@ -14,26 +13,20 @@ internal sealed class RandomBaselineRunner : RunnerBase, IBacktestRunner
     private readonly ConcurrentQueue<(string Code, string? Industry, string? Sector, int[] Positions)> _queue;
     private bool _runQueue = true;
     private readonly FinancialsRepository _financialsRepository;
-    private readonly Guid _backtestId = Guid.NewGuid();
 
     public RandomBaselineRunner(DbDef finDef, DbDef backtestDef, BacktestingConfiguration configuration,
         Guid? processId = null)
         : base(finDef, backtestDef, configuration, processId)
     {
+        if (configuration.Type != BacktestType.RandomBaseline)
+        {
+            throw new ArgumentException($"Mismatch on backtesting type; should be {configuration.Type.GetEnumDescription()}");
+        }
+
         _financialsRepository = new(finDef);
         _queue = new();
         RunDequeue();
     }
-
-#pragma warning disable CS0649 // Field is never assigned to, and will always have its default value null
-    private struct CodesAndCounts
-    {
-        public string Code;
-        public string? Industry;
-        public string? Sector;
-        public int Count;
-    }
-#pragma warning restore CS0649 // Field is never assigned to, and will always have its default value null
 
     public async Task ExecuteAsync(CancellationToken cancellationToken)
     {
@@ -43,25 +36,9 @@ internal sealed class RandomBaselineRunner : RunnerBase, IBacktestRunner
 
         Random rnd = new(Guid.NewGuid().GetHashCode());
 
-        OnCommunicate(new CommunicationEventArgs("Fetching data to backtest.", null));
-        var codesAndCountsTask = _finDbContext.QueryAsync<CodesAndCounts>(
-            _finDbContext.Sql.AdjustedEodPrices.FetchCodesAndCounts, new {_configuration.Source },
-            0, cancellationToken);
+        var codesAndCountsTask = GetCodesAndCount(cancellationToken);
 
-        OnCommunicate(new CommunicationEventArgs("Creating backtest record.", null));
-        await _backtestDbContext.ExecuteAsync(_finDbContext.Sql.Backtests.UpsertBacktest, new Backtest(_backtestId,
-                _configuration.Name,
-                _configuration.Type.GetEnumDescription(),
-                _configuration.Source,
-                _configuration.Description,
-                _configuration.EntryPricePoint.GetEnumDescription(),
-                _configuration.TargetUp.Value,
-                _configuration.TargetUp.PricePoint.GetEnumDescription(),
-                _configuration.TargetDown.Value,
-                _configuration.TargetDown.PricePoint.GetEnumDescription(),
-                DateTime.UtcNow.Ticks,
-                DateTime.UtcNow.Ticks,
-                _processId), cancellationToken: cancellationToken).ConfigureAwait(false);
+        await CreateBacktestingRecord(cancellationToken).ConfigureAwait(false);
 
         foreach (var item in await codesAndCountsTask.ConfigureAwait(false))
         {
@@ -95,6 +72,11 @@ internal sealed class RandomBaselineRunner : RunnerBase, IBacktestRunner
                 {
                     if (_queue.TryDequeue(out (string Code, string? Industry, string? Sector, int[] Positions) result))
                     {
+                        lock (_activityCounts)
+                        {
+                            _activityCounts.EntityCount++;
+                        }
+
                         var ohlc = _financialsRepository.GetOhlcForSourceAndCodeAsync(
                             _configuration.Source, result.Code).GetAwaiter().GetResult().ToArray();
 
@@ -112,6 +94,7 @@ internal sealed class RandomBaselineRunner : RunnerBase, IBacktestRunner
                             var detail = new BacktestResultDetail()
                             {
                                 BacktestId = _backtestId,
+                                SignalName = "Random",
                                 Code = result.Code,
                                 Industry = result.Industry,
                                 Sector = result.Sector,
