@@ -13,12 +13,14 @@ string? appName = Assembly.GetExecutingAssembly().GetName().Name;
 string[] backtestNames = ["backtest", "backtests", "backtesting"];
 string[] importerNames = ["import", "importer", "imports"];
 string[] migratorNames = ["migrate", "migrator", "migrates"];
+string[] reportNames = ["report", "reports", "reporting"];
 
 Dictionary<string, string[]> subcommandDict = new()
 {
-    {CommandKeys.Backtests, backtestNames },
+    {CommandKeys.Backtest, backtestNames },
     {CommandKeys.Importer, importerNames  },
-    {CommandKeys.Migrator, migratorNames }
+    {CommandKeys.Migrator, migratorNames },
+    {CommandKeys.Report, reportNames }
 };
 
 Debug.Assert(appName != null);
@@ -218,12 +220,14 @@ string GetSubcommandFilename(string? subcommand)
 
     var commandName = subcommand.ToLower() switch
     {
-        string x when subcommandDict[CommandKeys.Backtests].Contains(x) =>
-            configuration!.GetSection(SectionName)[CommandKeys.Backtests],
+        string x when subcommandDict[CommandKeys.Backtest].Contains(x) =>
+            configuration!.GetSection(SectionName)[CommandKeys.Backtest],
         string x when subcommandDict[CommandKeys.Importer].Contains(x) =>
             configuration!.GetSection(SectionName)[CommandKeys.Importer],
         string x when subcommandDict[CommandKeys.Migrator].Contains(x) =>
             configuration!.GetSection(SectionName)[CommandKeys.Migrator],
+        string x when subcommandDict[CommandKeys.Report].Contains(x) =>
+            configuration!.GetSection(SectionName)[CommandKeys.Report],
         _ => throw new ArgumentException($"Unknown argument: {subcommand}")
     };
 
@@ -275,7 +279,8 @@ class Config(string appName, string appVersion, string? description)
 
 static class CommandKeys
 {
-    public const string Backtests = "backtests";
+    public const string Backtest = "backtest";
     public const string Importer = "importer";
     public const string Migrator = "migrator";
+    public const string Report = "report";
 }

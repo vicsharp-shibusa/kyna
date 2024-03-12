@@ -22,7 +22,8 @@ fi
 kyna_directory="$2/kyna"
 importer_directory="$kyna_directory/kyna-importer"
 migrator_directory="$kyna_directory/kyna-migrator"
-backtest_directory="$kyna_directory/kyna-backtests"
+backtest_directory="$kyna_directory/kyna-backtest"
+report_directory="$kyna_directory/kyna-report"
 
 if [ -d "$launch_directory/temp" ]; then
     rm -rf $launch_directory/temp
@@ -45,6 +46,11 @@ if [ -d "$backtest_directory" ]; then
     rm -rf $backtest_directory
 fi
 
+if [ -d "$report_directory" ]; then
+    cp $report_directory/secrets.json $launch_directory/temp/report_secrets.json
+    rm -rf $report_directory
+fi
+
 if [ -d "$kyna_directory" ]; then
     cp $kyna_directory/secrets.json $launch_directory/temp/kyna_secrets.json
     rm -rf $kyna_directory
@@ -54,10 +60,12 @@ dotnet build -c Release $source_directory/Kyna.Cli/Kyna.Cli.csproj -o $kyna_dire
 dotnet build -c Release $source_directory/Kyna.Importer.Cli/Kyna.Importer.Cli.csproj -o $importer_directory
 dotnet build -c Release $source_directory/Kyna.Migrator.Cli/Kyna.Migrator.Cli.csproj -o $migrator_directory
 dotnet build -c Release $source_directory/Kyna.Backtests.Cli/Kyna.Backtests.Cli.csproj -o $backtest_directory
+dotnet build -c Release $source_directory/Kyna.Report.Cli/Kyna.Report.Cli.csproj -o $report_directory
 
 mv $launch_directory/temp/importer_secrets.json $importer_directory/secrets.json
 mv $launch_directory/temp/migrator_secrets.json $migrator_directory/secrets.json
 mv $launch_directory/temp/backtest_secrets.json $backtest_directory/secrets.json
+mv $launch_directory/temp/report_secrets.json $report_directory/secrets.json
 mv $launch_directory/temp/kyna_secrets.json $kyna_directory/secrets.json
 
 rm -rf $launch_directory/temp/

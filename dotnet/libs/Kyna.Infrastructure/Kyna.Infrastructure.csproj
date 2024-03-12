@@ -18,7 +18,6 @@
 	<ItemGroup>
 	  <ProjectReference Include="..\Kyna.Backtests\Kyna.Backtests.csproj" />
 	  <ProjectReference Include="..\Kyna.EodHistoricalData\Kyna.EodHistoricalData.csproj" />
-	  <ProjectReference Include="..\Kyna.Reports\Kyna.Reports.csproj" />
 	</ItemGroup>
 
 </Project>

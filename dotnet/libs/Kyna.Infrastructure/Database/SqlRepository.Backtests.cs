@@ -160,5 +160,56 @@ WHERE backtest_id = @BacktestId
 ",
             _ => ThrowSqlNotImplemented()
         };
+        public string FetchBacktestSignalCounts => _dbDef.Engine switch
+        {
+            DatabaseEngine.PostgreSql => @"
+SELECT
+signal_name AS SignalName,
+result_direction AS ResultDirection,
+COUNT(*) AS Count
+FROM backtest_results R
+JOIN backtests B ON B.process_id = @ProcessId AND B.id = R.backtest_id
+GROUP BY process_id, signal_name, result_direction
+ORDER BY signal_name, result_direction
+",
+            _ => ThrowSqlNotImplemented()
+        };
+
+        public string FetchBacktestSignalSummary => _dbDef.Engine switch
+        {
+            DatabaseEngine.PostgreSql => @"
+SELECT signal_name AS Name, category, sub_category AS SubCategory,
+number_signals AS NumberSignals,
+success_percentage AS SuccessPercentage,
+success_duration_calendar_days AS SuccessDuration
+FROM backtest_stats
+WHERE process_id = @ProcessId
+AND signal_name = @SignalName
+ORDER BY success_percentage desc, success_duration_calendar_days ASC
+",
+            _ => ThrowSqlNotImplemented()
+        };
+
+        public string FetchBacktestSignalDetails => _dbDef.Engine switch
+        {
+            DatabaseEngine.PostgreSql => @"
+SELECT
+R.signal_name AS Name,
+R.code, R.industry, R.sector,
+R.entry_date AS EntryDate,
+R.entry_price_point AS EntryPricePoint,
+R.entry_price AS EntryPrice,
+R.result_up_date AS ResultUpDate, R.result_up_price_point AS ResultUpPricePoint, R.result_up_price AS ResultUpPrice,
+R.result_down_date AS ResultDownDate, R.result_down_price_point AS ResultDownPricePoint, R.result_down_price AS ResultDownPrice,
+R.result_direction AS ResultDirection,
+R.result_duration_trading_days AS TradingDays,
+R.result_duration_calendar_days AS CalendarDays
+FROM backtest_results R
+JOIN backtests B ON B.process_id = @ProcessId AND B.id = R.backtest_id
+WHERE R.signal_name = @SignalName
+ORDER BY R.code, R.entry_date
+",
+            _ => ThrowSqlNotImplemented()
+        };
     }
 }
