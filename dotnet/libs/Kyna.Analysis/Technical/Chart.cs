@@ -6,7 +6,6 @@ public class Chart(string code, string? industry, string? sector)
 {
     private readonly List<MovingAverage> _movingaverages = new(3);
     private readonly HashSet<MovingAverageKey> _movingAverageKeys = new(3);
-    private bool _includeCandles = false;
 
     public string Code { get; } = code;
     public string? Industry { get; } = industry;
@@ -20,6 +19,41 @@ public class Chart(string code, string? industry, string? sector)
     public DateOnly Start => PriceActions[0].Date;
     public DateOnly End => PriceActions[^1].Date;
     public MovingAverage[] MovingAverages => [.. _movingaverages];
+
+    public bool IsTall(int position, int lookbackPeriod = 0, decimal tolerance = 1M)
+    {
+        if (position < 10)
+        {
+            return false;
+        }
+        if (tolerance < 1M)
+        {
+            tolerance = 1M;
+        }
+
+        var lookbackPosition = lookbackPeriod == 0 ? 0 : Math.Max(position - lookbackPeriod, 0);
+
+        var avg = Candlesticks[lookbackPosition..(position - 1)].Select(c => c.Body.Length).Average();
+        return Candlesticks[position].Body.Length > (tolerance * avg);
+    }
+
+    public bool IsShort(int position, int lookbackPeriod = 0, decimal tolerance = 1M)
+    {
+        if (position < 10)
+        {
+            return false;
+        }
+        if (tolerance > 1M)
+        {
+            tolerance = 1M;
+        }
+
+        var lookbackPosition = lookbackPeriod == 0 ? 0 : Math.Max(position - lookbackPeriod, 0);
+
+        var avg = Candlesticks[lookbackPosition..(position - 1)].Select(c => c.Body.Length).Average();
+        return Candlesticks[position].Body.Length < (tolerance * avg);
+    }
+
     public Chart WithMovingAverage(MovingAverageKey key)
     {
         _movingAverageKeys.Add(key);
@@ -49,14 +83,7 @@ public class Chart(string code, string? industry, string? sector)
 
     public Chart WithCandles(IEnumerable<Ohlc> priceActions)
     {
-        _includeCandles = true;
         return WithPriceActions(priceActions);
-    }
-
-    public Chart WithCandles()
-    {
-        _includeCandles = true;
-        return this;
     }
 
     public Chart WithTrend(ITrend trend)
@@ -72,11 +99,8 @@ public class Chart(string code, string? industry, string? sector)
             throw new Exception($"Cannot construct a chart with {PriceActions.Length} price actions.");
         }
 
-        if (_includeCandles)
-        {
-            Candlesticks = PriceActions.Select(p => new Candlestick(p)).ToArray();
-        }
-        
+        Candlesticks = PriceActions.Select(p => new Candlestick(p)).ToArray();
+
         _movingaverages.Clear();
         foreach (var key in _movingAverageKeys)
         {

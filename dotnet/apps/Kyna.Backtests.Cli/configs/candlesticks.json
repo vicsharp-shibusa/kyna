@@ -1,8 +1,8 @@
 {
   "Type": "Candlestick Pattern",
-  "Name": "Engulfing",
+  "Name": "Reversals",
   "Source": "eodhd.com",
-  "Description": "Testing",
+  "Description": "Reversal Candlestick Signals",
   "EntryPricePoint": "Close",
   "TargetUp": {
     "PricePoint": "High",
@@ -13,8 +13,32 @@
     "Value": 0.1
   },
   "LengthOfPrologue": 15,
+  "MaxParallelization": 10,
   "SignalNames": [
     "Bullish Engulfing",
-    "Bearish Engulfing"
+    "Bearish Engulfing",
+    "Bullish Hammer",
+    "Bearish Hammer",
+    "Dark Cloud Cover",
+    "Piercing Pattern",
+    "Morning Star",
+    "Evening Star",
+    "Morning Doji Star",
+    "Evening Doji Star",
+    "Shooting Star",
+    "Inverted Hammer",
+    "Bullish Harami",
+    "Bearish Harami",
+    "Bullish Harami Cross",
+    "Bearish Harami Cross",
+    "Tweezer Top",
+    "Tweezer Bottom",
+    "Bullish Belthold",
+    "Bearish Belthold",
+    "Upside Gap Two Crows",
+    "Three Black Crows",
+    "Three White Soliders",
+    "Bullish Counterattack",
+    "Bearish Counterattack"
   ]
 }

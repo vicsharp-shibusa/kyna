@@ -8,7 +8,8 @@ public class BacktestingConfiguration(BacktestType type, string source,
     TestTargetPercentage targetUp,
     TestTargetPercentage targetDown,
     string[]? signalnames = null,
-    int lengthOfPrologue = 15)
+    int lengthOfPrologue = 15,
+    int? maxparallelization = null)
 {
     public BacktestType Type { get; init; } = type;
     public string Name { get; init; } = name;
@@ -19,4 +20,5 @@ public class BacktestingConfiguration(BacktestType type, string source,
     public TestTargetPercentage TargetDown { get; init; } = targetDown;
     public string[]? SignalNames { get; init; } = signalnames;
     public int LengthOfPrologue { get; init; } = lengthOfPrologue;
+    public int? MaxParallelization { get; init; } = maxparallelization;
 }

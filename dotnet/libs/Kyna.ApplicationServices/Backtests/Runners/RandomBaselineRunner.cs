@@ -34,23 +34,23 @@ internal sealed class RandomBaselineRunner : RunnerBase, IBacktestRunner
 
         Debug.Assert(_finDbContext != null);
 
-        Random rnd = new(Guid.NewGuid().GetHashCode());
-
         var codesAndCountsTask = GetCodesAndCount(cancellationToken);
 
         await CreateBacktestingRecord(cancellationToken).ConfigureAwait(false);
 
-        foreach (var item in await codesAndCountsTask.ConfigureAwait(false))
+        if (_configuration.MaxParallelization.GetValueOrDefault() < 2)
         {
-            // remove 2 from the end because it's less likely the positions at the end
-            // will have the time to reach their targets.
-            int slices = (item.Count / 10) - 2;
-            int[] positions = new int[slices];
-            for (int i = 0; i < slices; i++)
+            foreach (var item in await codesAndCountsTask.ConfigureAwait(false))
             {
-                positions[i] = (i * 10) + rnd.Next(0, 10);
+                ProcessCodesAndCounts(item);
             }
-            _queue.Enqueue((item.Code, item.Industry, item.Sector, positions));
+        }
+        else
+        {
+            Parallel.ForEach(await codesAndCountsTask, new ParallelOptions()
+            {
+                MaxDegreeOfParallelism = _configuration.MaxParallelization.GetValueOrDefault()
+            }, ProcessCodesAndCounts);
         }
 
         _runQueue = false;
@@ -60,6 +60,21 @@ internal sealed class RandomBaselineRunner : RunnerBase, IBacktestRunner
         }
 
         await WaitForQueueAsync().ConfigureAwait(false);
+    }
+
+    private readonly Random _rnd = new(Guid.NewGuid().GetHashCode());
+
+    private void ProcessCodesAndCounts(CodesAndCounts item)
+    {
+        // remove 2 from the end because it's less likely the positions at the end
+        // will have the time to reach their targets.
+        int slices = (item.Count / 10) - 2;
+        int[] positions = new int[slices];
+        for (int i = 0; i < slices; i++)
+        {
+            positions[i] = (i * 10) + _rnd.Next(0, 10);
+        }
+        _queue.Enqueue((item.Code, item.Industry, item.Sector, positions));
     }
 
     private void RunDequeue()

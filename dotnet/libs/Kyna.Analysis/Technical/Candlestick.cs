@@ -16,8 +16,8 @@ public record class Candlestick : Ohlc
 
     public Candlestick(Ohlc ohlc) : base(ohlc) { }
 
-    public CandlestickColor Color => IsUp ? CandlestickColor.Light
-        : IsDown ? CandlestickColor.Dark
+    public CandlestickColor Color => IsLight ? CandlestickColor.Light
+        : IsDark ? CandlestickColor.Dark
         : CandlestickColor.None;
 
     public PriceRange Body => new(high: Math.Max(Open, Close), low: Math.Min(Open, Close));
@@ -64,7 +64,8 @@ public record class Candlestick : Ohlc
         && Low != 0
         && Volume != 0
         && HasShavenBottom
-        && IsUp;
+        && IsLight
+        && Body.Length > Length / 1.5M;
 
     public bool IsBearishBelthold => !IsDojiBody
         && !IsMarubozu
@@ -72,13 +73,14 @@ public record class Candlestick : Ohlc
         && Low != 0
         && Volume != 0
         && HasShavenHead
-        && IsDown;
+        && IsDark
+        && Body.Length > Length / 1.5M;
 
     protected bool IsMarubozu => !IsDojiBody && Body.Length == Length && Body.Length > 0;
 
-    public bool IsBullishMarubozu => IsMarubozu && IsUp;
+    public bool IsBullishMarubozu => IsMarubozu && IsLight;
 
-    public bool IsBearishMarubozu => IsMarubozu && IsDown;
+    public bool IsBearishMarubozu => IsMarubozu && IsDark;
 
     public bool IsUmbrella => Length > 0
         && !IsDojiBody

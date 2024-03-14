@@ -58,7 +58,7 @@ public sealed partial class ReportService
             yield return signalSummaryReport;
 
             var signalDetailReport = CreateReport($"{signalName} Details",
-                "Name","Code","Industry","Sector",
+                "Name", "Code", "Industry", "Sector",
                 "Entry Date", "Entry Price Point", "Entry Price",
                 "Result Up Date", "Result Up Price Point", "Result Up Price",
                 "Result Down Date", "Result Down Price Point", "Result Down Price",
@@ -80,9 +80,36 @@ public sealed partial class ReportService
         }
     }
 
-    struct SignalNameCount
+    public Task<IEnumerable<ProcessIdInfo>> GetBacktestProcessesAsync() =>
+        _backtestsCtx.QueryAsync<ProcessIdInfo>(_backtestsCtx.Sql.Backtests.FetchProcessIdInfo);
+
+    public async Task DeleteProcessesAsync(params Guid[] processIds)
     {
+        foreach (var pid in processIds)
+        {
+            await _backtestsCtx.ExecuteAsync(_backtestsCtx.Sql.Backtests.DeleteForProcessId,
+                new { ProcessId = pid });
+        }
+    }
+
+    public struct ProcessIdInfo
+    {
+        public Guid ProcessId;
         public string Name;
-        public long Count;
+        public string Type;
+        public string Source;
+        public string Description;
+        public DateTime CreatedUtc;
+        public int ResultCount;
+
+        public override readonly string ToString() =>
+            $"{CreatedUtc:yyyy-MM-dd HH:mm} | {Source} | {Name} | {Type} | {ProcessId} | {Description} | {ResultCount:#,##0} results";
     }
 }
+
+struct SignalNameCount
+{
+    public string Name;
+    public long Count;
+}
+

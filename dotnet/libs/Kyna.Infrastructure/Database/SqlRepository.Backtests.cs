@@ -211,5 +211,32 @@ ORDER BY R.code, R.entry_date
 ",
             _ => ThrowSqlNotImplemented()
         };
+
+        public string FetchProcessIdInfo => _dbDef.Engine switch
+        {
+            DatabaseEngine.PostgreSql => @"
+SELECT B.process_id AS ProcessId,
+B.name, B.type, B.source, B.description, B.created_utc AS CreatedUtc,
+COUNT(R.*) AS ResultCount
+FROM backtests B
+LEFT JOIN backtest_results R ON B.id = R.backtest_id
+GROUP BY B.process_id, B.name, B.type, B.source, B.description, B.created_utc
+ORDER BY B.created_utc DESC
+",
+            _ => ThrowSqlNotImplemented()
+        };
+
+        public string DeleteForProcessId => _dbDef.Engine switch
+        {
+            DatabaseEngine.PostgreSql => @"
+DELETE FROM backtest_stats 
+WHERE process_id = @ProcessId;
+DELETE FROM backtest_results
+WHERE backtest_id IN (SELECT id FROM backtests WHERE process_id = @ProcessId);
+DELETE FROM backtests
+WHERE process_id = @ProcessId;
+",
+            _ => ThrowSqlNotImplemented()
+        };
     }
 }

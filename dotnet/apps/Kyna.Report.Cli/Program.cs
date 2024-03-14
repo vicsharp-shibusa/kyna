@@ -15,7 +15,6 @@ ReportService? reportService = null;
 
 int exitCode = -1;
 
-bool statsReport = false;
 DirectoryInfo? outputDir = null;
 ReportOptions? reportOptions = null;
 Guid processId = Guid.NewGuid();
@@ -31,21 +30,44 @@ try
 {
     HandleArguments(args);
 
+    ValidateArgsAndSetDefaults();
+    Configure();
+
     Debug.Assert(config != null);
+    Debug.Assert(reportService != null);
 
     if (config.ShowHelp)
     {
         ShowHelp();
     }
+    else if (config.ListProcessIds)
+    {
+        var processInfo = (await reportService.GetBacktestProcessesAsync()).ToArray();
+
+        if (processInfo.Length == 0)
+        {
+            Communicate("No processes found", true);
+        }
+        else
+        {
+            foreach (var p in processInfo)
+            {
+                Communicate(p.ToString(), true);
+            }
+        }
+    }
     else
     {
-        ValidateArgsAndSetDefaults();
-
-        Configure();
-
-        if (statsReport)
+        if (config.ProcessIdsToDelete.Any())
         {
-            var reports = reportService!.CreateBacktestingReports(processId).ToArray();
+            Communicate("Deleting backtests ...");
+            await reportService.DeleteProcessesAsync([.. config.ProcessIdsToDelete]);
+        }
+
+        if (config.StatsReport)
+        {
+            Communicate($"Generating stats report for {processId}");
+            var reports = reportService.CreateBacktestingReports(processId).ToArray();
 
             if (reports.Length > 0)
             {
@@ -109,7 +131,9 @@ void ShowHelp()
     CliArg[] localArgs = [
         new CliArg(["--stats"], [], false, "Generate the backtesting stats report."),
         new CliArg(["-o", "--output", "--output-dir"], ["output directory"], true, "Set (or create) output directory."),
-        new CliArg(["-p", "--process", "--process-id"], ["process id"], true, "Filter report by specified process id.")
+        new CliArg(["-p", "--process", "--process-id"], ["process id"], true, "Filter report by specified process id."),
+        new CliArg(["-l", "--list"], [], false, "List process identifiers."),
+        new CliArg(["-d", "--delete"], ["process id"], false, "Delete backtest, results, and stats for specified process id.")
     ];
 
     CliArg[] args = CliHelper.GetDefaultArgDescriptions().Union(localArgs).ToArray();
@@ -137,8 +161,27 @@ void HandleArguments(string[] args)
 
         switch (argument)
         {
+            case "-d":
+            case "--delete":
+                if (a == args.Length - 1)
+                {
+                    throw new ArgumentException($"Expecting a process id after {args[a]}");
+                }
+                if (Guid.TryParse(args[++a], out Guid pid))
+                {
+                    config.ProcessIdsToDelete.Add(pid);
+                }
+                else
+                {
+                    throw new ArgumentException($"'{args[a]}' is not a valid process id.");
+                }
+                break;
+            case "-l":
+            case "--list":
+                config.ListProcessIds = true;
+                break;
             case "--stats":
-                statsReport = true;
+                config.StatsReport = true;
                 break;
             case "-p":
             case "--process":
@@ -174,19 +217,22 @@ void ValidateArgsAndSetDefaults()
         throw new Exception("Logic error; configuration was not created.");
     }
 
-    if (!statsReport)
+    if (!config.ShowHelp && !config.ListProcessIds && config.ProcessIdsToDelete.Count == 0)
     {
-        throw new ArgumentException("There are no reports specified");
-    }
+        if (!config.StatsReport)
+        {
+            throw new ArgumentException("There are no reports specified");
+        }
 
-    if (outputDir == null)
-    {
-        throw new ArgumentException("Missing argument: -o <output directory>.");
-    }
+        if (outputDir == null)
+        {
+            throw new ArgumentException("Missing argument: -o <output directory>.");
+        }
 
-    if (!outputDir.Exists)
-    {
-        outputDir.Create();
+        if (!outputDir.Exists)
+        {
+            outputDir.Create();
+        }
     }
 }
 
@@ -201,7 +247,7 @@ void Configure()
 
     reportOptions = new ReportOptions();
     configuration.GetSection("Report Options").Bind(reportOptions);
-    
+
     var dbDefs = CliHelper.GetDbDefs(configuration);
 
     var logDef = dbDefs.FirstOrDefault(d => d.Name == ConfigKeys.DbKeys.Logs);
@@ -217,4 +263,8 @@ void Configure()
 class Config(string appName, string appVersion, string? description)
     : CliConfigBase(appName, appVersion, description)
 {
+    public bool StatsReport { get; set; }
+    public bool ListProcessIds { get; set; }
+
+    public IList<Guid> ProcessIdsToDelete { get; set; } = new List<Guid>(10);
 }

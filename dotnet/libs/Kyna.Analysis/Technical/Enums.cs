@@ -39,5 +39,51 @@ public enum SignalName
     [Description("Bullish Engulfing")]
     BullishEngulfing,
     [Description("Bearish Engulfing")]
-    BearishEngulfing
+    BearishEngulfing,
+    [Description("Bullish Hammer")]
+    BullishHammer,
+    [Description("Bearish Hammer")]
+    BearishHammer,
+    [Description("Dark Cloud Cover")]
+    DarkCloudCover,
+    [Description("Piercing Pattern")]
+    PiercingPattern,
+    [Description("Morning Star")]
+    MorningStar,
+    [Description("Evening Star")]
+    EveningStar,
+    [Description("Morning Doji Star")]
+    MorningDojiStar,
+    [Description("Evening Doji Star")]
+    EveningDojiStar,
+    [Description("Shooting Star")]
+    ShootingStar,
+    [Description("Inverted Hammer")]
+    InvertedHammer,
+    [Description("Bullish Harami")]
+    BullishHarami,
+    [Description("Bearish Harami")]
+    BearishHarami,
+    [Description("Bullish Harami Cross")]
+    BullishHaramiCross,
+    [Description("Bearish Harami Cross")]
+    BearishHaramiCross,
+    [Description("Tweezer Top")]
+    TweezerTop,
+    [Description("Tweezer Bottom")]
+    TweezerBottom,
+    [Description("Bullish Belthold")]
+    BullishBelthold,
+    [Description("Bearish Belthold")]
+    BearishBelthold,
+    [Description("Upside Gap Two Crows")]
+    UpsideGapTwoCrows,
+    [Description("Three Black Crows")]
+    ThreeBlackCrows,
+    [Description("Three White Soliders")]
+    ThreeWhiteSoliders,
+    [Description("Bullish Counterattack")]
+    BullishCounterattack,
+    [Description("Bearish Counterattack")]
+    BearishCounterattack
 }

@@ -53,30 +53,19 @@ internal class CandlestickSignalRunner : RunnerBase, IBacktestRunner
 
         OnCommunicate(new CommunicationEventArgs("Backtesting record created.", nameof(CandlestickSignalRunner)));
 
-        foreach (var item in await codesAndCountsTask.ConfigureAwait(false))
+        if (_configuration.MaxParallelization.GetValueOrDefault() < 2)
         {
-            var ohlc = _financialsRepository.GetOhlcForSourceAndCodeAsync(
-                _configuration.Source, item.Code).GetAwaiter().GetResult().ToArray();
-
-            var chart = new Chart(item.Code, item.Industry, item.Sector)
-                .WithCandles(ohlc)
-                .WithTrend(new MovingAverageTrend(new MovingAverageKey(21), ohlc))
-                .Build();
-
-            Debug.Assert(!string.IsNullOrWhiteSpace(chart.Code));
-
-            _memoryCache.Set(chart.Code, chart, new MemoryCacheEntryOptions()
+            foreach (var item in await codesAndCountsTask.ConfigureAwait(false))
             {
-                AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(2)
-            });
-
-            foreach (var signal in _signals)
-            {
-                foreach (var match in signal.DiscoverMatches(chart).ToArray())
-                {
-                    _queue.Enqueue(match);
-                }
+                ProcessCodesAndCounts(item);
             }
+        }
+        else
+        {
+            Parallel.ForEach(await codesAndCountsTask.ConfigureAwait(false), new ParallelOptions()
+            {
+                MaxDegreeOfParallelism = _configuration.MaxParallelization.GetValueOrDefault()
+            }, ProcessCodesAndCounts);
         }
 
         _runQueue = false;
@@ -88,6 +77,32 @@ internal class CandlestickSignalRunner : RunnerBase, IBacktestRunner
         await WaitForQueueAsync().ConfigureAwait(false);
 
         await ProcessStatsAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    private void ProcessCodesAndCounts(CodesAndCounts item)
+    {
+        var ohlc = _financialsRepository.GetOhlcForSourceAndCodeAsync(
+            _configuration.Source, item.Code).GetAwaiter().GetResult().ToArray();
+
+        var chart = new Chart(item.Code, item.Industry, item.Sector)
+            .WithCandles(ohlc)
+            .WithTrend(new MovingAverageTrend(new MovingAverageKey(21), ohlc))
+            .Build();
+
+        Debug.Assert(!string.IsNullOrWhiteSpace(chart.Code));
+
+        _memoryCache.Set(chart.Code, chart, new MemoryCacheEntryOptions()
+        {
+            AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(2)
+        });
+
+        foreach (var signal in _signals)
+        {
+            foreach (var match in signal.DiscoverMatches(chart).ToArray())
+            {
+                _queue.Enqueue(match);
+            }
+        }
     }
 
     private async Task ProcessStatsAsync(CancellationToken cancellationToken)

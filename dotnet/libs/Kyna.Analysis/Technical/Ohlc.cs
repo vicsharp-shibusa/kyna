@@ -33,8 +33,8 @@ public record class Ohlc : PriceRange
     public double Factor { get; }
     public decimal AveragePrice => (Open + High + Low + Close) / 4M;
     public decimal Liquidity => Close * Volume;
-    public bool IsUp => Close > Open;
-    public bool IsDown => Open > Close;
+    public bool IsLight => Close > Open;
+    public bool IsDark => Open > Close;
     public bool IsFlat => Open == Close;
 
     public decimal GetPricePoint(PricePoint pricePoint)

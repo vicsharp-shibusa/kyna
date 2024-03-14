@@ -1,4 +1,5 @@
-﻿using Kyna.Common.Events;
+﻿using Kyna.Backtests;
+using Kyna.Common.Events;
 
 namespace Kyna.ApplicationServices.Backtests;
 
