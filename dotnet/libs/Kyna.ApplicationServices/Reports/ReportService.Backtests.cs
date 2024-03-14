@@ -85,36 +85,4 @@ public sealed partial class ReportService
         public string Name;
         public long Count;
     }
-
-#pragma warning disable CS0649 // Field is never assigned to, and will always have its default value null
-    struct SignalSummaryDetails
-    {
-        public string Name;
-        public string Category;
-        public string SubCategory;
-        public int NumberSignals;
-        public double SuccessPercentage;
-        public int SuccessDuration;
-    }
-
-    struct SignalDetails
-    {
-        public string Name;
-        public string Code;
-        public string? Industry;
-        public string? Sector;
-        public DateOnly EntryDate;
-        public string EntryPricePoint;
-        public decimal EntryPrice;
-        public DateOnly? ResultUpDate;
-        public string? ResultUpPricePoint;
-        public decimal? ResultUpPrice;
-        public DateOnly? ResultDownDate;
-        public string? ResultDownPricePoint;
-        public decimal? ResultDownPrice;
-        public string? ResultDirection;
-        public int? TradingDays;
-        public int? CalendarDays;
-    }
-#pragma warning restore CS0649 // Field is never assigned to, and will always have its default value null
 }
