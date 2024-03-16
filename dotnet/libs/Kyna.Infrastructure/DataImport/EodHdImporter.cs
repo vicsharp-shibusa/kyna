@@ -94,10 +94,11 @@ internal sealed class EodHdImporter : DataImporterBase, IExternalDataImporter
             sb.AppendLine($"Available     : {_available:#,##0}");
             sb.AppendLine($"Requests Date : {_apiRequestsDate:yyyy-MM-dd}");
         }
-        catch
+        catch (Exception exc)
         {
             sb.Clear();
             sb.AppendLine("An error has occurred.");
+            sb.AppendLine(exc.ToString());
             sb.AppendLine("A likely scenario is that your api key is missing or invalid.");
             sb.AppendLine($"Your api key: \"{_apiKey}\"");
         }
