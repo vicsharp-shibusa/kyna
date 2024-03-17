@@ -146,7 +146,7 @@ catch (Exception exc)
 }
 finally
 {
-    if (!(config?.ShowHelp ?? false))
+    if (!(config?.ShowHelp ?? false) && !(config?.ShowInfo ?? false))
     {
         KLogger.LogEvent(EventIdRepository.GetAppFinishedEvent(config!), processId);
     }
