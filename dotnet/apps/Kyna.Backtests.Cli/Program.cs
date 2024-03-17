@@ -54,8 +54,6 @@ try
             backtestingService.WriteConfigInfo();
 
             await backtestingService.ExecuteAsync();
-
-
         }
         catch (AggregateException ex)
         {
