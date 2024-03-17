@@ -92,16 +92,6 @@ try
                 }
             }
         }
-
-
-        //var symbols = YahooFinanceApi.Yahoo.Symbols("AAPL");
-        //var results = symbols.QueryAsync();
-
-        //var chart = await YahooFinanceApi.Yahoo.GetHistoricalAsync("AAPL");
-
-        //var json = JsonSerializer.Serialize(chart);
-
-        //File.WriteAllText("/temp/symbols.json", json);
     }
     exitCode = 0;
 }

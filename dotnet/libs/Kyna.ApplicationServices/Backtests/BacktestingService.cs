@@ -19,8 +19,8 @@ public sealed class BacktestingService : IDisposable
 
     public event EventHandler<CommunicationEventArgs>? Communicate;
 
-    public BacktestingService(DbDef finDef, DbDef backtestDef, 
-        FileInfo? configFileInfo, 
+    public BacktestingService(DbDef finDef, DbDef backtestDef,
+        FileInfo? configFileInfo,
         Guid? processId = null)
     {
         if (!(configFileInfo?.Exists ?? false))
@@ -34,10 +34,9 @@ public sealed class BacktestingService : IDisposable
 
         _configuration = JsonSerializer.Deserialize<BacktestingConfiguration>(
             File.ReadAllText(configFileInfo.FullName),
-            JsonOptionsRepository.DefaultSerializerOptions) ?? throw new ArgumentException($"Could not deserialize {configFileInfo.Name}");
+            options) ?? throw new ArgumentException($"Could not deserialize {configFileInfo.Name}");
 
-        _backtestRunner = BacktestRunnerFactory.Create(finDef, backtestDef, _configuration,
-            processId);
+        _backtestRunner = BacktestRunnerFactory.Create(finDef, backtestDef, _configuration, processId);
         if (_backtestRunner == null)
         {
             throw new ArgumentException($"Could not construct backtest runner for type '{_configuration?.Type.GetEnumDescription()}'");
@@ -115,7 +114,7 @@ public sealed class BacktestingService : IDisposable
 
 internal static class BacktestRunnerFactory
 {
-    public static IBacktestRunner? Create(DbDef finDef, DbDef backtestDef, 
+    public static IBacktestRunner? Create(DbDef finDef, DbDef backtestDef,
         BacktestingConfiguration configuration,
         Guid? processId = null)
     {

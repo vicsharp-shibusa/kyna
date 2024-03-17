@@ -25,7 +25,7 @@ public static class MigratorFactory
 
             var eodHdMigratorConfig = JsonSerializer.Deserialize<EodHdMigrator.MigrationConfiguration>(
                 File.ReadAllText(configFileInfo.FullName),
-                JsonOptionsRepository.DefaultSerializerOptions);
+                options);
 
             Debug.Assert(eodHdMigratorConfig != null);
 
