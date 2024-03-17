@@ -19,7 +19,9 @@ public sealed class BacktestingService : IDisposable
 
     public event EventHandler<CommunicationEventArgs>? Communicate;
 
-    public BacktestingService(DbDef finDef, DbDef backtestDef, FileInfo? configFileInfo, Guid? processId = null)
+    public BacktestingService(DbDef finDef, DbDef backtestDef, 
+        FileInfo? configFileInfo, 
+        Guid? processId = null)
     {
         if (!(configFileInfo?.Exists ?? false))
         {
@@ -34,7 +36,8 @@ public sealed class BacktestingService : IDisposable
             File.ReadAllText(configFileInfo.FullName),
             JsonOptionsRepository.DefaultSerializerOptions) ?? throw new ArgumentException($"Could not deserialize {configFileInfo.Name}");
 
-        _backtestRunner = BacktestRunnerFactory.Create(finDef, backtestDef, _configuration, processId);
+        _backtestRunner = BacktestRunnerFactory.Create(finDef, backtestDef, _configuration,
+            processId);
         if (_backtestRunner == null)
         {
             throw new ArgumentException($"Could not construct backtest runner for type '{_configuration?.Type.GetEnumDescription()}'");
@@ -112,7 +115,8 @@ public sealed class BacktestingService : IDisposable
 
 internal static class BacktestRunnerFactory
 {
-    public static IBacktestRunner? Create(DbDef finDef, DbDef backtestDef, BacktestingConfiguration configuration,
+    public static IBacktestRunner? Create(DbDef finDef, DbDef backtestDef, 
+        BacktestingConfiguration configuration,
         Guid? processId = null)
     {
         if (configuration.Type == BacktestType.CandlestickPattern)
@@ -128,7 +132,8 @@ internal static class BacktestRunnerFactory
                 var signal = repo.Find(configuration.SignalNames[c]) ?? throw new Exception($"Could not find signal for '{configuration.SignalNames[c]}'");
                 signals[c] = signal;
             }
-            return new CandlestickSignalRunner(finDef, backtestDef, configuration, signals, processId);
+            return new CandlestickSignalRunner(finDef, backtestDef, configuration,
+                signals, processId);
         }
         if (configuration.Type == BacktestType.RandomBaseline)
         {

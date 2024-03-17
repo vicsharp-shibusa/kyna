@@ -101,7 +101,7 @@ internal abstract class RunnerBase
                     if (resultDetail != null)
                     {
                         Communicate?.Invoke(this, new CommunicationEventArgs(
-                            $"{resultDetail.Code}\t{resultDetail.Entry.Date:yyyy-MM-dd}", null));
+                            $"{resultDetail.SignalName}\t{resultDetail.Code}\t{resultDetail.Entry.Date:yyyy-MM-dd}", null));
                         try
                         {
                             _backtestDbContext.Execute(_backtestDbContext.Sql.Backtests.UpsertBacktestResult,

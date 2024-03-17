@@ -1,6 +1,5 @@
 ﻿using Kyna.Analysis.Technical;
 using Kyna.Analysis.Technical.Signals;
-using Kyna.Analysis.Technical.Trends;
 using Kyna.ApplicationServices.Analysis;
 using Kyna.Backtests;
 using Kyna.Common;
@@ -53,11 +52,32 @@ internal class CandlestickSignalRunner : RunnerBase, IBacktestRunner
 
         OnCommunicate(new CommunicationEventArgs("Backtesting record created.", nameof(CandlestickSignalRunner)));
 
+        Chart? market = null;
+        var len = _configuration.MarketConfiguration?.Codes?.Length ?? 0;
+        if (len > 0 && _configuration.MarketConfiguration?.Trends != null)
+        {
+            List<Ohlc[]> ohlcsList = new(len);
+            for (int i = 0; i < len; i++)
+            {
+                var code = _configuration.MarketConfiguration.Codes![i];
+                if (!string.IsNullOrWhiteSpace(code))
+                {
+                    ohlcsList.Add((await _financialsRepository.GetOhlcForSourceAndCodeAsync(
+                        _configuration.Source, code)).ToArray());
+                }
+            }
+            market = ChartFactory.Create("Market", new ChartConfiguration()
+            {
+                Interval = "Daily",
+                Trends = _configuration.MarketConfiguration.Trends
+            }, ohlcsList.ToArray());
+        }
+
         if (_configuration.MaxParallelization.GetValueOrDefault() < 2)
         {
             foreach (var item in await codesAndCountsTask.ConfigureAwait(false))
             {
-                ProcessCodesAndCounts(item);
+                ProcessCodesAndCounts(item, market);
             }
         }
         else
@@ -65,7 +85,7 @@ internal class CandlestickSignalRunner : RunnerBase, IBacktestRunner
             Parallel.ForEach(await codesAndCountsTask.ConfigureAwait(false), new ParallelOptions()
             {
                 MaxDegreeOfParallelism = _configuration.MaxParallelization.GetValueOrDefault()
-            }, ProcessCodesAndCounts);
+            }, (item) => ProcessCodesAndCounts(item, market));
         }
 
         _runQueue = false;
@@ -79,15 +99,13 @@ internal class CandlestickSignalRunner : RunnerBase, IBacktestRunner
         await ProcessStatsAsync(cancellationToken).ConfigureAwait(false);
     }
 
-    private void ProcessCodesAndCounts(CodesAndCounts item)
+    private void ProcessCodesAndCounts(CodesAndCounts item, Chart? market = null)
     {
         var ohlc = _financialsRepository.GetOhlcForSourceAndCodeAsync(
             _configuration.Source, item.Code).GetAwaiter().GetResult().ToArray();
 
-        var chart = new Chart(item.Code, item.Industry, item.Sector)
-            .WithCandles(ohlc)
-            .WithTrend(new MovingAverageTrend(new MovingAverageKey(21), ohlc))
-            .Build();
+        var chart = ChartFactory.Create(item.Code, item.Industry, item.Sector,
+            ohlc, _configuration.ChartConfiguration);
 
         Debug.Assert(!string.IsNullOrWhiteSpace(chart.Code));
 
@@ -98,7 +116,7 @@ internal class CandlestickSignalRunner : RunnerBase, IBacktestRunner
 
         foreach (var signal in _signals)
         {
-            foreach (var match in signal.DiscoverMatches(chart).ToArray())
+            foreach (var match in signal.DiscoverMatches(chart, market, _configuration.OnlySignalWithMarket).ToArray())
             {
                 _queue.Enqueue(match);
             }
@@ -107,7 +125,7 @@ internal class CandlestickSignalRunner : RunnerBase, IBacktestRunner
 
     private async Task ProcessStatsAsync(CancellationToken cancellationToken)
     {
-        var repo = new CandlestickSignalRepository(new SignalOptions());
+        var repo = new CandlestickSignalRepository(new SignalOptions(_configuration.LengthOfPrologue));
 
         var backtestResults = await _backtestDbContext.QueryAsync<BacktestResultsInfo>(
             _backtestDbContext.Sql.Backtests.FetchBacktestResultInfo,
@@ -159,7 +177,7 @@ internal class CandlestickSignalRunner : RunnerBase, IBacktestRunner
             List<Task> tasks = new(tickers.Length);
             foreach (var ticker in tickers)
             {
-                OnCommunicate(new CommunicationEventArgs($"Processing stats for {ticker}",
+                OnCommunicate(new CommunicationEventArgs($"{name} - processing stats for {ticker}",
                     nameof(CandlestickSignalRunner)));
                 var totalInstances = signalSubset.Count(s => s.Code.Equals(ticker));
                 if (totalInstances == 0)
@@ -188,7 +206,7 @@ internal class CandlestickSignalRunner : RunnerBase, IBacktestRunner
                     continue;
                 }
 
-                OnCommunicate(new CommunicationEventArgs($"Processing stats for {industry}",
+                OnCommunicate(new CommunicationEventArgs($"{name} - processing stats for {industry}",
                     nameof(CandlestickSignalRunner)));
 
                 var categoryCount = backtestResults.Count(b => b.Industry != null &&
@@ -218,7 +236,7 @@ internal class CandlestickSignalRunner : RunnerBase, IBacktestRunner
                 {
                     continue;
                 }
-                OnCommunicate(new CommunicationEventArgs($"Processing stats for {sector}",
+                OnCommunicate(new CommunicationEventArgs($"{name} - processing stats for {sector}",
                     nameof(CandlestickSignalRunner)));
                 var categoryCount = backtestResults.Count(b => b.Sector != null &&
                     b.Sector.Equals(sector));
@@ -270,7 +288,7 @@ internal class CandlestickSignalRunner : RunnerBase, IBacktestRunner
                         {
                             BacktestId = _backtestId,
                             SignalName = signalMatch.SignalName,
-                            Code = chart.Code,
+                            Code = chart.Code ?? "UNKNOWN",
                             Industry = chart.Industry,
                             Sector = chart.Sector,
                             Up = upAction == null ? null : new ResultDetail()

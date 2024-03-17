@@ -2,14 +2,24 @@
 
 namespace Kyna.Analysis.Technical;
 
-public class Chart(string code, string? industry, string? sector)
+public class Chart
 {
     private readonly List<MovingAverage> _movingaverages = new(3);
     private readonly HashSet<MovingAverageKey> _movingAverageKeys = new(3);
 
-    public string Code { get; } = code;
-    public string? Industry { get; } = industry;
-    public string? Sector { get; } = sector;
+    internal Chart(string? name, string? industry, string? sector,
+        ChartInterval interval = ChartInterval.Daily)
+    {
+        Code = name;
+        Industry = industry;
+        Sector = sector;
+        Interval = interval;
+    }
+
+    public ChartInterval Interval { get; }
+    public string? Code { get; }
+    public string? Industry { get; }
+    public string? Sector { get; }
     private ITrend? Trend { get; set; } = null;
     public TrendValue[] TrendValues => Trend?.TrendValues ??
         Enumerable.Repeat(new TrendValue(TrendSentiment.Unknown, 0D), PriceActions.Length).ToArray();
@@ -19,6 +29,16 @@ public class Chart(string code, string? industry, string? sector)
     public DateOnly Start => PriceActions[0].Date;
     public DateOnly End => PriceActions[^1].Date;
     public MovingAverage[] MovingAverages => [.. _movingaverages];
+
+    public int? GetIndexOfDate(DateOnly date)
+    {
+        var ohlc = PriceActions.FirstOrDefault(p => p.Date.Equals(date));
+        if (ohlc != null)
+        {
+            return Array.IndexOf(PriceActions, ohlc);
+        }
+        return null;
+    }
 
     public bool IsTall(int position, int lookbackPeriod = 0, decimal tolerance = 1M)
     {

@@ -37,12 +37,22 @@ public abstract class OhlcSignalBase(
     /// </summary>
     public abstract Func<Chart, int, int, int, bool> IsMatch { get; init; }
 
-    public virtual IEnumerable<SignalMatch> DiscoverMatches(Chart chart)
+    public virtual IEnumerable<SignalMatch> DiscoverMatches(Chart chart, Chart? market = null, bool signalOnlyWithMarket = false)
     {
         if (chart.Length >= (NumberRequired + Options.LengthOfPrologue))
         {
+            bool useMarket = signalOnlyWithMarket && market != null && market.PriceActions.Length > 0;
+
             for (int i = Options.LengthOfPrologue; i < chart.Length - NumberRequired; i++)
             {
+                if (useMarket)
+                {
+                    var index = market!.GetIndexOfDate(chart.PriceActions[i].Date);
+                    if (index.HasValue && market.TrendValues[index.Value].Sentiment != Sentiment)
+                    {
+                        continue;
+                    }
+                }
                 if (IsMatch(chart, i, NumberRequired, Options.LengthOfPrologue))
                 {
                     yield return new SignalMatch()

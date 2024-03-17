@@ -2,6 +2,15 @@
 
 namespace Kyna.Analysis.Technical;
 
+public enum ChartInterval
+{
+    Daily = 0,
+    Weekly,
+    Monthly,
+    Quarterly,
+    Annually
+}
+
 public enum CandlestickColor
 {
     None = 0,
