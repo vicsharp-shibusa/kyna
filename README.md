@@ -1,6 +1,6 @@
 # Kyna
 
-[Kyna](https://www.theparentz.com/baby-names/kyna) is an MIT-licensed, open-source project with the goal of creating a stable framework from which coders/traders/investors can collect historical stock data, backtest trading ideas against that data, and make informed decisions with their money.
+[Kyna](https://www.theparentz.com/baby-names/kyna) is an MIT-licensed, open-source project with the goal of creating a reliable framework from which coders/traders/investors can collect historical stock data, backtest trading ideas against that data, and make informed decisions with their money.
 
 What we're doing here is not groundbreaking science, but it is 100% transparent and grounded in a set of tools available to retail investors. Anyone is welcome to a copy of the code repository for their own purposes. Those who want to *contribute* are invited to do so - we welcome the help from any interested and capable party.
 
@@ -10,9 +10,9 @@ If the development process or the thought processes behind the decisions are of 
 
 Kyna is intended to be a suite of software tools that
 
-1. collect historical pricing and volume data for equity and option markets,
+1. collect historical pricing and volume data for equity markets,
 2. collect financial news,
-3. analyze the efficacy of tradeable events,
+3. analyze the efficacy of tradeable signals,
 4. report on results of backtesting analysis,
 5. and identify possible points of timely interest within the market.
 
@@ -26,45 +26,51 @@ Kyna is intended to be a suite of software tools that
 
 ---
 
-## Current Phase (1.1)
+## Project Management
 
-The objectives of this phase are:
+### Current Project Phase
 
-1. Define the model for preserving data from third-party APIs.
-2. Construct a generic import mechanism for capturing and preserving data.
-3. Build an import tool for interfacing with the [eodhd.com API](https://eodhd.com/) and compose an algorithm for API credit management.
-    1. Equity data (required).
-    2. Fundamental data (desired).
-    3. Options data (desired).
-4. Build and test a CLI for managing data imports.
-5. Deploy the import CLI to a "production" environment.
+The current phase is [Phase 1.5](https://github.com/vicsharp-shibusa/kyna/milestone/8), in which we are building signal capturing logic for all of the primary "candlestick reversal patterns."
+Also in this phase, we added an alternative data importer using the Yahoo Finance API.
+This importer, `YahooImporter` follows a simpler path than the `EodHdImporter` in that it does not separate the data collection from the migration - it combines the process and writes directly to the `financials` database; this is because we're not making direct API calls, but rather using a NuGet package. Plus, the Yahoo Finance API is free.
 
-![Phase 1.1 Plan](./docs/images//kyna-plans-phase-1-1.png)
+### Project History
 
-## Upcoming Objectives
+The project started in the second half of January, 2024.
+We began [Phase 0](https://github.com/vicsharp-shibusa/kyna/milestone/1) by creating the [public repo](https://github.com/vicsharp-shibusa/kyna) and shelling out the initial architecture for the code base.
+A simple [design doc](https://github.com/vicsharp-shibusa/kyna/blob/main/docs/designs.md) was composed.
+We constructed a system for logging and a database-agnostic context solution, and worked out the standards for PostgreSQL database access.
+The `Kyna.Prototype.Cli` was constructed; its purpose was to be the place in which solutions and short-term needs could be managed in a "throw-away" context.
+The [Phase 0](https://github.com/vicsharp-shibusa/kyna/milestone/1) milestone closed on February 2, 2024.
 
-1. Create a news collector.
-    1. Map the news to our symbol (ticker) data.
-    2. Explore the possibility of determining sentiment. 
-2. Construct a backtesting system and use it to create accurate and reliable tables of technical analysis statistics for a variety of indicators (e.g. moving averages, candlestick patterns, etc., etc.).
-   
----
+[Phase 1.0](https://github.com/vicsharp-shibusa/kyna/milestone/2) consisted of constructing the first draft of the `EodHdImporter`, a utility for fetching market data from [eodhd.com](https://eodhd.com/).
+Using [eodhd.com](https://eodhd.com/) as our model, we built the `imports` database and the `api_transactions` table therein.
+Data is captured from the [eodhd.com](https://eodhd.com/) API and HTTP JSON reponses are stored in the `api_transactions` table.
+We could have chosen to migrate this data directly into its final form, but we chose this intermediate step because the [eodhd.com](https://eodhd.com/) API is a credit-based system (each call requires some number of credits) with a daily limit of 100,000.
+We did not want failures in the migration (to the final form of the data) to result in having to re-fetch and re-spend the credits.
+Therefore, we employed the principle of *separation of concerns* and isolated the first task to simply capturing the required data and preserving the resulting JSON - migration could be handled in a second step.
+[Phase 1.0](https://github.com/vicsharp-shibusa/kyna/milestone/2) was closed on February 4, 2024.
 
-## Project History
-  
-### Phase Zero
-#### Completed 25-Jan-2024
+[Phase 1.1](https://github.com/vicsharp-shibusa/kyna/milestone/3) consisted of constructing the database and models for the final state of the data collected from [eodhd.com](https://eodhd.com/) and building `Kyna.Migrator.Cli` to facilitate the migration from the `imports.api_transactions` table to the relevant tables in the `financials` database.
+[Phase 1.1](https://github.com/vicsharp-shibusa/kyna/milestone/3) was closed on February 18, 2024.
 
-Phase Zero (0) was centered around the core plumbing of the application - shelling out the .NET architecture and prototyping the command line interfaces that will be used to accomplish the objectives listed above.
+[Phase 1.2](https://github.com/vicsharp-shibusa/kyna/milestone/5) was the beginning of building an analysis framework and the `Kyna.Analysis` library.
+Simple in-memory charts and moving averages were composed.
+[Phase 1.2](https://github.com/vicsharp-shibusa/kyna/milestone/5) was completed on February 19, 2024.
 
-Phase Zero was chronicled in the following YouTube videos:
+[Phase 1.3](https://github.com/vicsharp-shibusa/kyna/milestone/6) was a hardening iteration in which a few tweaks were made to the migrator.
+This phase closed on February 21, 2024.
 
-1. [Intro to the Project](https://www.youtube.com/watch?v=WYS0sxiRKO0)
-2. [Creating the DB Context](https://www.youtube.com/watch?v=SWtjWNUZ8dw)
-3. [Creating a Custom PostgreSQL Logger Provider](https://www.youtube.com/watch?v=oPaNXDXvYC0)
-4. [Phase Zero Review](https://www.youtube.com/watch?v=g39s5nZ0cuA)
+[Phase 1.4](https://github.com/vicsharp-shibusa/kyna/milestone/7) was the iteration in which back-testing got underway.
+A model for "trends" was constructed, the `Kyna.Backtests.Cli` was built, and an initial, random "baseline test" was performed to set the standard for future signal tests.
+The `Kyna.Cli` was constructed in this phase; this app is an orchestration app that calls the other CLI executables.
+With this tool, instead of having to call the different apps separately, a user can call the core `kyna` app, as in `kyna import ...` or `kyna backtest ...`.
+[Phase 1.4](https://github.com/vicsharp-shibusa/kyna/milestone/7) was completed on March 1, 2024.
 
----
+### YouTube
+
+This project is being chronicled on a [YouTube channel Playlist](https://www.youtube.com/playlist?list=PLGw44r0iH8bayhAUZsMaK15Ny7--x8Mq_).
+For more information about the thought processes behind various choices, please subscribe to the channel.
 
 ### Backtesting Approach
 
@@ -76,11 +82,3 @@ Many "indicators" or "patterns" evangelized in the finfluencer marketplace requi
 
 Determining success of an indicator (e.g., does the stock go up or down after {INSERT PATTERN HERE}?) is, of course, a top priority. To properly gauge the efficacy of a given indicator, a baseline probability of "success" is required. Early in the process, we will randomnly select price points on many charts and check the up/down ratio to use as our measuring stick. In other words, by throwing a dart at the chart, is it more likely to go up or down 10% from that point? 
 
-Some potential baseline up/down ratios we intend to consider:
-
-| Up  | Down | Notes             |
-| --- | ---- | ----------------- |
-|  5% |  5%  |                   |
-| 10% | 10%  |                   |
-| 20% | 20%  |                   |
-| 24% |  8%  | Classic 3:1 ratio |

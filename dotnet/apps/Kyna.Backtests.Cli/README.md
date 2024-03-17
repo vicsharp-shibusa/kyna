@@ -2,7 +2,7 @@
 
 The Kyna backtests utility is a command line interface for executing back-testing scenarios.
 
-The `-f <configuration file>` is *required* when not showing help. The configuration file must be JSON.
+The `-f <configuration file>` argument is *required* when not showing help. The configuration file must be JSON.
 
 ## Help Text
 
