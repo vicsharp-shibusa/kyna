@@ -5,7 +5,6 @@ using Kyna.Common;
 using Kyna.Common.Logging;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
-using System.Configuration;
 using System.Diagnostics;
 using System.Reflection;
 
@@ -71,7 +70,7 @@ try
 
             if (reports.Length > 0)
             {
-                var fileName = $"backtest_stats_{DateTime.Now:yyyyMMddHHmm}.xlsx";
+                var fileName = $"backtest_stats_{processId.ToString()[..8]}_{DateTime.Now:yyyyMMddHHmm}.xlsx";
                 ReportService.CreateSpreadsheet(Path.Combine(outputDir!.FullName, fileName), reports);
             }
         }
@@ -257,7 +256,7 @@ void Configure()
     logger = Kyna.ApplicationServices.Logging.LoggerFactory.Create<Program>(logDef);
     KLogger.SetLogger(logger);
 
-    reportService = new ReportService(finDef, bckDef, reportOptions);
+    reportService = new ReportService(bckDef, reportOptions);
 }
 
 class Config(string appName, string appVersion, string? description)

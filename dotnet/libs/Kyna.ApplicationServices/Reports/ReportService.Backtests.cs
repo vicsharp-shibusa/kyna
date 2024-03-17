@@ -1,4 +1,5 @@
 ﻿using Kyna.Infrastructure.Database.DataAccessObjects.Reports;
+using System.Diagnostics;
 
 namespace Kyna.ApplicationServices.Reports;
 
@@ -6,9 +7,22 @@ public sealed partial class ReportService
 {
     public IEnumerable<Report> CreateBacktestingReports(Guid processId)
     {
+        string sql = $@"{_backtestsCtx.Sql.Backtests.FetchBacktest}
+WHERE process_id = @ProcessId";
+
+        var backtest = _backtestsCtx.QueryFirstOrDefault<Infrastructure.Database.DataAccessObjects.Backtest>(
+            sql, new { processId });
+
+        Debug.Assert(backtest != null);
+
         var summaryReport = CreateReport("Report Details", "Detail", "Value");
         summaryReport.AddRow("Process Id", processId);
         summaryReport.AddRow("Time Generated", DateTime.Now);
+        summaryReport.AddRow("Name", backtest.Name);
+        summaryReport.AddRow("Type", backtest.Type);
+        summaryReport.AddRow("Source", backtest.Source);
+        summaryReport.AddRow("Description", backtest.Description);
+        summaryReport.AddRow("Backtest (local) Time", backtest.CreatedUtc.ToLocalTime());
 
         yield return summaryReport;
 
