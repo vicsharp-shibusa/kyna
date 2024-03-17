@@ -3,6 +3,7 @@ using Kyna.ApplicationServices.Analysis;
 using Kyna.ApplicationServices.Cli;
 using Kyna.ApplicationServices.Configuration;
 using Kyna.ApplicationServices.Logging;
+using Kyna.Backtests;
 using Kyna.Common;
 using Kyna.Common.Logging;
 using Microsoft.Extensions.Configuration;
@@ -44,14 +45,63 @@ try
     }
     else
     {
+        int num = 1;
+        bool onlySignalWithMarket = false;
+
+        var options = JsonOptionsRepository.DefaultSerializerOptions;
+        options.Converters.Add(new EnumDescriptionConverter<PricePoint>());
+        options.Converters.Add(new EnumDescriptionConverter<BacktestType>());
+
+        foreach (var move in new double[] { .05, .1, .15, .2 })
+        {
+            foreach (var len in new int[] { 5, 10, 15, 20, 25, 30 })
+            {
+                foreach (var trendDesc in new string[] { "S21C", "S50C", "S100C", "S200C", "E21C", "E50C", "E100C", "E200C" })
+                {
+                    ChartConfiguration chartConfig = new ChartConfiguration()
+                    {
+                        Interval = "Daily",
+                        Trends = [new TrendConfiguration() { Trend = trendDesc }]
+                    };
+
+                    string[] descItems = new string[] {
+                        $"move: {move}",
+                        $"prologue len: {len}",
+                        $"trend desc: {trendDesc}"
+                    };
+
+                    var backtestConfig = new BacktestingConfiguration(BacktestType.CandlestickPattern,
+                        "eodhd.com",
+                        $"Bullish Engulfing {num}",
+                        string.Join(';', descItems),
+                        PricePoint.Close,
+                        new TestTargetPercentage(PricePoint.High, move),
+                        new TestTargetPercentage(PricePoint.Low, move),
+                        [SignalName.BullishEngulfing.GetEnumDescription()],
+                        len,
+                        10,
+                        onlySignalWithMarket,
+                        chartConfig, null);
+
+                    var btJson = JsonSerializer.Serialize(backtestConfig, options);
+
+                    var fileName = Path.Combine("\\temp", $"bullish-engulfing-{num}.json");
+                    File.WriteAllText(fileName, btJson);
+                    Console.WriteLine(fileName);
+                    num++;
+                }
+            }
+        }
+
+
         //var symbols = YahooFinanceApi.Yahoo.Symbols("AAPL");
         //var results = symbols.QueryAsync();
 
-        var chart = await YahooFinanceApi.Yahoo.GetHistoricalAsync("AAPL");
+        //var chart = await YahooFinanceApi.Yahoo.GetHistoricalAsync("AAPL");
 
-        var json = JsonSerializer.Serialize(chart);
+        //var json = JsonSerializer.Serialize(chart);
 
-        File.WriteAllText("/temp/symbols.json", json);
+        //File.WriteAllText("/temp/symbols.json", json);
     }
     exitCode = 0;
 }
