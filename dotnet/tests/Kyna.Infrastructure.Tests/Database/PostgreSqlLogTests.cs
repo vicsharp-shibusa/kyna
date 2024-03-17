@@ -1,6 +1,5 @@
 ﻿using Kyna.Infrastructure.Database;
 using Microsoft.Extensions.Configuration;
-using System.Data.Common;
 using System.Diagnostics;
 
 namespace Kyna.Infrastructure.Tests.Database;

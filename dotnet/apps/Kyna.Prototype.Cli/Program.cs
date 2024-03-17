@@ -58,17 +58,17 @@ try
             {
                 foreach (var trendDesc in new string[] { "S21C", "S50C", "S100C", "S200C", "E21C", "E50C", "E100C", "E200C" })
                 {
-                    ChartConfiguration chartConfig = new ChartConfiguration()
+                    ChartConfiguration chartConfig = new()
                     {
                         Interval = "Daily",
                         Trends = [new TrendConfiguration() { Trend = trendDesc }]
                     };
 
-                    string[] descItems = new string[] {
+                    string[] descItems = [
                         $"move: {move}",
                         $"prologue len: {len}",
                         $"trend desc: {trendDesc}"
-                    };
+                    ];
 
                     var backtestConfig = new BacktestingConfiguration(BacktestType.CandlestickPattern,
                         "eodhd.com",

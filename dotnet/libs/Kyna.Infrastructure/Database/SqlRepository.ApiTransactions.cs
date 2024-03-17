@@ -8,12 +8,12 @@ internal partial class SqlRepository
         {
             DatabaseEngine.PostgreSql => @"
 INSERT INTO public.api_transactions(
- ticks_utc, source, category, sub_category, 
- request_uri, request_method, request_payload, request_headers, 
- response_headers, response_status_code, response_body, process_id)
+ticks_utc, source, category, sub_category, 
+request_uri, request_method, request_payload, request_headers, 
+response_headers, response_status_code, response_body, process_id)
 VALUES (@TicksUtc, @Source, @Category, @SubCategory,
- @RequestUri, @RequestMethod, @RequestPayload, @RequestHeaders,
- @ResponseHeaders, @ResponseStatusCode, @ResponseBody, @ProcessId)",
+@RequestUri, @RequestMethod, @RequestPayload, @RequestHeaders,
+@ResponseHeaders, @ResponseStatusCode, @ResponseBody, @ProcessId)",
             _ => ThrowSqlNotImplemented()
         };
         public string Fetch => _dbDef.Engine switch

@@ -70,7 +70,7 @@ internal class CandlestickSignalRunner : RunnerBase, IBacktestRunner
             {
                 Interval = "Daily",
                 Trends = _configuration.MarketConfiguration.Trends
-            }, ohlcsList.ToArray());
+            }, [.. ohlcsList]);
         }
 
         if (_configuration.MaxParallelization.GetValueOrDefault() < 2)

@@ -360,12 +360,10 @@ public sealed class DecimalJsonConverter : JsonConverter<decimal>
     }
 }
 
-public sealed class NullableDecimalJsonConverter : JsonConverter<decimal?>
+public sealed partial class NullableDecimalJsonConverter : JsonConverter<decimal?>
 {
     // Sometimes the values delivered by the eodhd API are exponential values (e.g., "1.0E+18").
-#pragma warning disable SYSLIB1045 // Convert to 'GeneratedRegexAttribute'.
-    private static readonly Regex _notationRegex = new(@"([\d\.]+)?E\+(\d+)", RegexOptions.IgnoreCase);
-#pragma warning restore SYSLIB1045 // Convert to 'GeneratedRegexAttribute'.
+    private static readonly Regex _notationRegex = NotationRegex();
 
     public override decimal? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
     {
@@ -413,6 +411,9 @@ public sealed class NullableDecimalJsonConverter : JsonConverter<decimal?>
             writer.WriteNullValue();
         }
     }
+
+    [GeneratedRegex(@"([\d\.]+)?E\+(\d+)", RegexOptions.IgnoreCase, "en-US")]
+    private static partial Regex NotationRegex();
 }
 
 public sealed class BooleanJsonConverter : JsonConverter<bool>

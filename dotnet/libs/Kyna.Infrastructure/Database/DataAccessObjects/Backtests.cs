@@ -1,8 +1,4 @@
-﻿using static System.Net.Mime.MediaTypeNames;
-using System;
-using Newtonsoft.Json.Linq;
-
-namespace Kyna.Infrastructure.Database.DataAccessObjects;
+﻿namespace Kyna.Infrastructure.Database.DataAccessObjects;
 
 internal sealed record class Backtest : DaoBase
 {

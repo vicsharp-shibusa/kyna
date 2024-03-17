@@ -99,7 +99,7 @@ internal sealed class EodHdImporter : DataImporterBase, IExternalDataImporter
             sb.Clear();
             sb.AppendLine("An error has occurred.");
             sb.AppendLine(exc.ToString());
-            sb.AppendLine("A likely scenario is that your api key is missing or invalid.");
+            sb.AppendLine("Likely scenarios include an invalid API key, a missing database table, or an invalid connection string.");
             sb.AppendLine($"Your api key: \"{_apiKey}\"");
         }
 
