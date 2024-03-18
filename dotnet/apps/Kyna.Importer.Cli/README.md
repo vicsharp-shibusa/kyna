@@ -20,12 +20,12 @@ kyna-importer v1
 CLI for importing financial data.
 
 -f|--file <configuration file>  JSON import configuration file to process.
-[?|-?|-h|--help]                Show this help.
-[-v|--verbose]                  Turn on verbose communication.
 [-s|--source <source name>]     Source for import. When excluded, defaults to eodhd.com
 [--dry-run]                     Executes a 'dry run' - reports only what the app would do with the specified configuration.
 [--info|--show-info]            Show source-specific information.
 [-y]                            Accept danger automatically.
+[?|-?|-h|--help]                Show this help.
+[-v|--verbose]                  Turn on verbose communication.
 ```
 
 ## Sample `secrets.json` File

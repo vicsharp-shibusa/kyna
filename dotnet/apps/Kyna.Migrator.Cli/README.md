@@ -16,10 +16,10 @@ kyna-migrator v1
 CLI for migrating from the imports database to the financials database.
 
 -f|--file <configuration file>  JSON import configuration file to process.
-[?|-?|-h|--help]                Show this help.
-[-v|--verbose]                  Turn on verbose communication.
 [--dry-run]                     Executes a 'dry run' - reports only what the app would do with the specified configuration.
 [--info|--show-info]            Displays summary info from the provided configuration file.
+[?|-?|-h|--help]                Show this help.
+[-v|--verbose]                  Turn on verbose communication.
 ```
 
 ## Sample JSON Configuration Files

@@ -150,7 +150,7 @@ void ShowHelp()
         new CliArg(["--info","--show-info"], [], false, "Displays summary info from the provided configuration file.")
     ];
 
-    CliArg[] args = CliHelper.GetDefaultArgDescriptions().Union(localArgs).ToArray();
+    CliArg[] args = localArgs.Union(CliHelper.GetDefaultArgDescriptions()).ToArray();
 
     Communicate($"{config.AppName} {config.AppVersion}".Trim(), true);
     Communicate(null, true);

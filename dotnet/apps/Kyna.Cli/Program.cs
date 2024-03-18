@@ -114,8 +114,6 @@ void Communicate(string? message, bool force = false, LogLevel logLevel = LogLev
 
 void ShowHelp()
 {
-    CliArg[] localArgs = [];
-
     CliArg[] args =
     [
         new CliArg(["command"], ["args"], false, "Run sub-command."),

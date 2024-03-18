@@ -135,7 +135,7 @@ void ShowHelp()
         new CliArg(["-d", "--delete"], ["process id"], false, "Delete backtest, results, and stats for specified process id.")
     ];
 
-    CliArg[] args = CliHelper.GetDefaultArgDescriptions().Union(localArgs).ToArray();
+    CliArg[] args = localArgs.Union(CliHelper.GetDefaultArgDescriptions()).ToArray();
 
     Communicate($"{config.AppName} {config.AppVersion}".Trim(), true);
     Communicate(null, true);

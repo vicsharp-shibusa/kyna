@@ -17,6 +17,7 @@ Commands:
         backtest   | backtests  | backtesting
         import     | importer   | imports
         migrate    | migrator   | migrates
+        report     | reports    | reporting
 ```
 
 You can get command-specific help by either passing the command to the `help` argument or by passing `--help` to the command argument.

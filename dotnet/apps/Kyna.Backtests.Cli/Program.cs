@@ -143,7 +143,7 @@ void ShowHelp()
         new CliArg(["-f", "--file"], ["configuration file"], true, "JSON import configuration file to process.")
     ];
 
-    CliArg[] args = CliHelper.GetDefaultArgDescriptions().Union(localArgs).ToArray();
+    CliArg[] args = localArgs.Union(CliHelper.GetDefaultArgDescriptions()).ToArray();
 
     Communicate($"{config.AppName} {config.AppVersion}".Trim(), true);
     Communicate(null, true);

@@ -28,6 +28,7 @@ public static class CliHelper
             {
                 case "?":
                 case "-?":
+                case "-h":
                 case "--help":
                     config.ShowHelp = true;
                     break;

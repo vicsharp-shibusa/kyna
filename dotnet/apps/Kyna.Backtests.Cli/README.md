@@ -7,7 +7,7 @@ The `-f <configuration file>` argument is *required* when not showing help. The 
 ## Help Text
 
 ```
-kyna-backtests v1
+kyna-backtest v1
 
 CLI for importing financial data.
 

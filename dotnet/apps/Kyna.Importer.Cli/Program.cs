@@ -189,7 +189,7 @@ void ShowHelp()
         new CliArg(["-y"], [], false, "Accept danger automatically.")
     ];
 
-    CliArg[] args = CliHelper.GetDefaultArgDescriptions().Union(localArgs).ToArray();
+    CliArg[] args = localArgs.Union(CliHelper.GetDefaultArgDescriptions()).ToArray();
 
     Communicate($"{config.AppName} {config.AppVersion}".Trim(), true);
     Communicate(null, true);

@@ -137,7 +137,7 @@ void Communicate(string message, bool force = false, LogLevel logLevel = LogLeve
 
 void ShowHelp()
 {
-    CliArg[] args = CliHelper.GetDefaultArgDescriptions().Union([]).ToArray();
+    CliArg[] args = CliHelper.GetDefaultArgDescriptions();
 
     Communicate($"{config.AppName} {config.AppVersion}".Trim(), true);
     Communicate("", true);
