@@ -13,6 +13,7 @@
     "Value": 0.1
   },
   "Length Of Prologue": 15,
+  "Volume Factor":  1.2,
   "Max Parallelization": 0,
   "Signal Names": [
     "Bullish Engulfing"

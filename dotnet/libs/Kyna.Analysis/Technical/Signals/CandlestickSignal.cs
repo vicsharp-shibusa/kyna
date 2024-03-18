@@ -6,5 +6,5 @@ public sealed class CandlestickSignal(SignalName signalName,
     TrendSentiment requiredSentiment,
     SignalOptions options) : OhlcSignalBase(signalName, numberRequired, sentiment, requiredSentiment, options)
 {
-    public override required Func<Chart, int, int, int, bool> IsMatch { get; init; }
+    public override required Func<Chart, int, int, int, double, bool> IsMatch { get; init; }
 }

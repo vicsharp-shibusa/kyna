@@ -32,12 +32,14 @@ public abstract class OhlcSignalBase(
     /// <summary>
     /// Represents a function to determine if a given position on a chart
     /// is a match for a specified signal.
-    /// The arguments are Chart, position in chart, number of OHLC required, and
-    /// length of prologue.
+    /// The arguments are Chart, position in chart, number of OHLC required,
+    /// length of prologue, and volume factor.
+    /// Volume factor is the factor applied to volume on the key candle, when appropriate.
     /// </summary>
-    public abstract Func<Chart, int, int, int, bool> IsMatch { get; init; }
+    public abstract Func<Chart, int, int, int, double, bool> IsMatch { get; init; }
 
-    public virtual IEnumerable<SignalMatch> DiscoverMatches(Chart chart, Chart? market = null, bool signalOnlyWithMarket = false)
+    public virtual IEnumerable<SignalMatch> DiscoverMatches(Chart chart, Chart? market = null, bool signalOnlyWithMarket = false,
+        double volumeFactor = 1D)
     {
         if (chart.Length >= (NumberRequired + Options.LengthOfPrologue))
         {
@@ -53,7 +55,7 @@ public abstract class OhlcSignalBase(
                         continue;
                     }
                 }
-                if (IsMatch(chart, i, NumberRequired, Options.LengthOfPrologue))
+                if (IsMatch(chart, i, NumberRequired, Options.LengthOfPrologue, volumeFactor))
                 {
                     yield return new SignalMatch()
                     {

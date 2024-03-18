@@ -116,7 +116,8 @@ internal class CandlestickSignalRunner : RunnerBase, IBacktestRunner
 
         foreach (var signal in _signals)
         {
-            foreach (var match in signal.DiscoverMatches(chart, market, _configuration.OnlySignalWithMarket).ToArray())
+            foreach (var match in signal.DiscoverMatches(chart, market, _configuration.OnlySignalWithMarket,
+                _configuration.VolumeFactor).ToArray())
             {
                 _queue.Enqueue(match);
             }

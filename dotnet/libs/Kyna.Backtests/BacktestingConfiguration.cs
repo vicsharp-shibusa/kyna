@@ -46,6 +46,9 @@ public class BacktestingConfiguration(BacktestType type,
     [JsonPropertyName("Only Signal With Market")]
     public bool OnlySignalWithMarket { get; init; } = onlySignalWithMarket;
 
+    [JsonPropertyName("Volume Factor")]
+    public double VolumeFactor { get; init; } = 1D;
+
     [JsonPropertyName("Chart Configuration")]
     public ChartConfiguration? ChartConfiguration { get; init; } = chartConfiguration;
 

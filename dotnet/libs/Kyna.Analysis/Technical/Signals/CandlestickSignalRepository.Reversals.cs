@@ -13,7 +13,8 @@ public sealed partial class CandlestickSignalRepository
     private static bool IsBullishEngulfing(Chart chart,
         int position,
         int numberRequired,
-        int lengthOfPrologue)
+        int lengthOfPrologue,
+        double volumeFactor = 1D)
     {
         CheckSignalArgs(chart, position, numberRequired, lengthOfPrologue);
 
@@ -25,14 +26,15 @@ public sealed partial class CandlestickSignalRepository
             second.IsLight &&
             second.Body.Low < first.Body.Low &&
             second.Body.High > first.Body.High &&
-            second.Volume > first.Volume &&
+            second.Volume > (first.Volume * volumeFactor) &&
             PrologueIsBearish(first, prologue, chart.TrendValues[position].Sentiment);
     }
 
     private static bool IsBearishEngulfing(Chart chart,
         int position,
         int numberRequired,
-        int lengthOfPrologue)
+        int lengthOfPrologue,
+        double volumeFactor = 1D)
     {
         CheckSignalArgs(chart, position, numberRequired, lengthOfPrologue);
 
@@ -44,7 +46,7 @@ public sealed partial class CandlestickSignalRepository
             second.IsDark &&
             second.Body.Low < first.Body.Low &&
             second.Body.High > first.Body.High &&
-            second.Volume > first.Volume &&
+            second.Volume > (first.Volume * volumeFactor) &&
             PrologueIsBullish(first, prologue, chart.TrendValues[position].Sentiment);
     }
 
@@ -54,7 +56,8 @@ public sealed partial class CandlestickSignalRepository
     private static bool IsBullishHammer(Chart chart,
         int position,
         int numberRequired,
-        int lengthOfPrologue)
+        int lengthOfPrologue,
+        double volumeFactor = 1D)
     {
         CheckSignalArgs(chart, position, numberRequired, lengthOfPrologue);
 
@@ -68,7 +71,8 @@ public sealed partial class CandlestickSignalRepository
     private static bool IsBearishHammer(Chart chart,
         int position,
         int numberRequired,
-        int lengthOfPrologue)
+        int lengthOfPrologue,
+        double volumeFactor = 1D)
     {
         CheckSignalArgs(chart, position, numberRequired, lengthOfPrologue);
 
@@ -82,7 +86,8 @@ public sealed partial class CandlestickSignalRepository
     private static bool IsDarkCloudCover(Chart chart,
         int position,
         int numberRequired,
-        int lengthOfPrologue)
+        int lengthOfPrologue,
+        double volumeFactor = 1D)
     {
         CheckSignalArgs(chart, position, numberRequired, lengthOfPrologue);
 
@@ -102,7 +107,8 @@ public sealed partial class CandlestickSignalRepository
     private static bool IsPiercing(Chart chart,
         int position,
         int numberRequired,
-        int lengthOfPrologue)
+        int lengthOfPrologue,
+        double volumeFactor = 1D)
     {
         CheckSignalArgs(chart, position, numberRequired, lengthOfPrologue);
 
@@ -122,7 +128,8 @@ public sealed partial class CandlestickSignalRepository
     private static bool IsMorningStar(Chart chart,
        int position,
        int numberRequired,
-       int lengthOfPrologue)
+       int lengthOfPrologue,
+       double volumeFactor = 1D)
     {
         CheckSignalArgs(chart, position, numberRequired, lengthOfPrologue);
 
@@ -140,15 +147,16 @@ public sealed partial class CandlestickSignalRepository
             third.IsLight &&
             third.Low > second.Low &&
             third.Close > first.Body.MidPoint &&
-            third.Volume > first.Volume &&
-            third.Volume > second.Volume &&
+            third.Volume > (first.Volume * volumeFactor) &&
+            third.Volume > (second.Volume * volumeFactor) &&
             PrologueIsBearish(first, prologue, chart.TrendValues[position].Sentiment);
     }
 
     private static bool IsEveningStar(Chart chart,
        int position,
        int numberRequired,
-       int lengthOfPrologue)
+       int lengthOfPrologue,
+       double volumeFactor = 1D)
     {
         CheckSignalArgs(chart, position, numberRequired, lengthOfPrologue);
 
@@ -166,15 +174,16 @@ public sealed partial class CandlestickSignalRepository
             third.IsDark &&
             third.High < second.High &&
             third.Close < first.Body.MidPoint &&
-            third.Volume > first.Volume &&
-            third.Volume > second.Volume &&
+            third.Volume > (first.Volume * volumeFactor) &&
+            third.Volume > (second.Volume * volumeFactor) &&
             PrologueIsBullish(first, prologue, chart.TrendValues[position].Sentiment);
     }
 
     private static bool IsMorningDojiStar(Chart chart,
        int position,
        int numberRequired,
-       int lengthOfPrologue)
+       int lengthOfPrologue,
+       double volumeFactor = 1D)
     {
         CheckSignalArgs(chart, position, numberRequired, lengthOfPrologue);
 
@@ -191,15 +200,16 @@ public sealed partial class CandlestickSignalRepository
             third.IsLight &&
             third.Low > second.Low &&
             third.Close > first.Body.MidPoint &&
-            third.Volume > first.Volume &&
-            third.Volume > second.Volume &&
+            third.Volume > (first.Volume * volumeFactor) &&
+            third.Volume > (second.Volume * volumeFactor) &&
             PrologueIsBearish(first, prologue, chart.TrendValues[position].Sentiment);
     }
 
     private static bool IsEveningDojiStar(Chart chart,
        int position,
        int numberRequired,
-       int lengthOfPrologue)
+       int lengthOfPrologue,
+       double volumeFactor = 1D)
     {
         CheckSignalArgs(chart, position, numberRequired, lengthOfPrologue);
 
@@ -216,15 +226,16 @@ public sealed partial class CandlestickSignalRepository
             third.IsDark &&
             third.High < second.High &&
             third.Close < first.Body.MidPoint &&
-            third.Volume > first.Volume &&
-            third.Volume > second.Volume &&
+            third.Volume > (first.Volume * volumeFactor) &&
+            third.Volume > (second.Volume * volumeFactor) &&
             PrologueIsBullish(first, prologue, chart.TrendValues[position].Sentiment);
     }
 
     private static bool IsShootingStar(Chart chart,
        int position,
        int numberRequired,
-       int lengthOfPrologue)
+       int lengthOfPrologue,
+       double volumeFactor = 1D)
     {
         CheckSignalArgs(chart, position, numberRequired, lengthOfPrologue);
 
@@ -238,7 +249,8 @@ public sealed partial class CandlestickSignalRepository
     private static bool IsInvertedHammer(Chart chart,
        int position,
        int numberRequired,
-       int lengthOfPrologue)
+       int lengthOfPrologue,
+       double volumeFactor = 1D)
     {
         CheckSignalArgs(chart, position, numberRequired, lengthOfPrologue);
 
@@ -252,7 +264,8 @@ public sealed partial class CandlestickSignalRepository
     private static bool IsBullishHarami(Chart chart,
        int position,
        int numberRequired,
-       int lengthOfPrologue)
+       int lengthOfPrologue,
+       double volumeFactor = 1D)
     {
         CheckSignalArgs(chart, position, numberRequired, lengthOfPrologue);
 
@@ -271,7 +284,8 @@ public sealed partial class CandlestickSignalRepository
     private static bool IsBearishHarami(Chart chart,
        int position,
        int numberRequired,
-       int lengthOfPrologue)
+       int lengthOfPrologue,
+       double volumeFactor = 1D)
     {
         CheckSignalArgs(chart, position, numberRequired, lengthOfPrologue);
 
@@ -290,7 +304,8 @@ public sealed partial class CandlestickSignalRepository
     private static bool IsBullishHaramiCross(Chart chart,
        int position,
        int numberRequired,
-       int lengthOfPrologue)
+       int lengthOfPrologue,
+       double volumeFactor = 1D)
     {
         CheckSignalArgs(chart, position, numberRequired, lengthOfPrologue);
 
@@ -308,7 +323,8 @@ public sealed partial class CandlestickSignalRepository
     private static bool IsBearishHaramiCross(Chart chart,
        int position,
        int numberRequired,
-       int lengthOfPrologue)
+       int lengthOfPrologue,
+       double volumeFactor = 1D)
     {
         CheckSignalArgs(chart, position, numberRequired, lengthOfPrologue);
 
@@ -326,7 +342,8 @@ public sealed partial class CandlestickSignalRepository
     private static bool IsTweezerTop(Chart chart,
        int position,
        int numberRequired,
-       int lengthOfPrologue)
+       int lengthOfPrologue,
+       double volumeFactor = 1D)
     {
         CheckSignalArgs(chart, position, numberRequired, lengthOfPrologue);
 
@@ -343,7 +360,8 @@ public sealed partial class CandlestickSignalRepository
     private static bool IsTweezerBottom(Chart chart,
        int position,
        int numberRequired,
-       int lengthOfPrologue)
+       int lengthOfPrologue,
+       double volumeFactor = 1D)
     {
         CheckSignalArgs(chart, position, numberRequired, lengthOfPrologue);
 
@@ -360,7 +378,8 @@ public sealed partial class CandlestickSignalRepository
     private static bool IsBullishBelthold(Chart chart,
        int position,
        int numberRequired,
-       int lengthOfPrologue)
+       int lengthOfPrologue,
+       double volumeFactor = 1D)
     {
         CheckSignalArgs(chart, position, numberRequired, lengthOfPrologue);
 
@@ -375,7 +394,8 @@ public sealed partial class CandlestickSignalRepository
     private static bool IsBearishBelthold(Chart chart,
        int position,
        int numberRequired,
-       int lengthOfPrologue)
+       int lengthOfPrologue,
+       double volumeFactor = 1D)
     {
         CheckSignalArgs(chart, position, numberRequired, lengthOfPrologue);
 
@@ -390,7 +410,8 @@ public sealed partial class CandlestickSignalRepository
     private static bool IsUpsideGapTwoCrows(Chart chart,
        int position,
        int numberRequired,
-       int lengthOfPrologue)
+       int lengthOfPrologue,
+       double volumeFactor = 1D)
     {
         CheckSignalArgs(chart, position, numberRequired, lengthOfPrologue);
 
@@ -412,7 +433,8 @@ public sealed partial class CandlestickSignalRepository
     private static bool IsThreeBlackCrows(Chart chart,
        int position,
        int numberRequired,
-       int lengthOfPrologue)
+       int lengthOfPrologue,
+       double volumeFactor = 1D)
     {
         CheckSignalArgs(chart, position, numberRequired, lengthOfPrologue);
 
@@ -434,7 +456,8 @@ public sealed partial class CandlestickSignalRepository
     private static bool IsThreeWhiteSoldiers(Chart chart,
        int position,
        int numberRequired,
-       int lengthOfPrologue)
+       int lengthOfPrologue,
+       double volumeFactor = 1D)
     {
         CheckSignalArgs(chart, position, numberRequired, lengthOfPrologue);
 
@@ -456,7 +479,8 @@ public sealed partial class CandlestickSignalRepository
     private static bool IsBullishCounterattack(Chart chart,
        int position,
        int numberRequired,
-       int lengthOfPrologue)
+       int lengthOfPrologue,
+       double volumeFactor = 1D)
     {
         CheckSignalArgs(chart, position, numberRequired, lengthOfPrologue);
 
@@ -474,7 +498,8 @@ public sealed partial class CandlestickSignalRepository
     private static bool IsBearishCounterattack(Chart chart,
        int position,
        int numberRequired,
-       int lengthOfPrologue)
+       int lengthOfPrologue,
+       double volumeFactor = 1D)
     {
         CheckSignalArgs(chart, position, numberRequired, lengthOfPrologue);
 
