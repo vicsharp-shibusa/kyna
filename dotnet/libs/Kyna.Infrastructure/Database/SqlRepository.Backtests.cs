@@ -105,17 +105,18 @@ FROM public.backtest_results",
         {
             DatabaseEngine.PostgreSql => @"
 INSERT INTO public.backtest_stats(
+backtest_id,
 source, signal_name, category, sub_category, 
 number_entities, number_signals, 
 success_percentage, success_criterion, 
 success_duration_trading_days, success_duration_calendar_days, 
 process_id, created_ticks_utc, updated_ticks_utc)
-VALUES (@Source, @SignalName, @Category, @SubCategory,
+VALUES (@BacktestId, @Source, @SignalName, @Category, @SubCategory,
 @NumberEntities, @NumberSignals,
 @SuccessPercentage, @SuccessCriterion,
 @SuccessDurationTradingDays, @SuccessDurationCalendarDays,
 @ProcessId, @CreatedTicksUtc, @UpdatedTicksUtc)
-ON CONFLICT (source, signal_name, category, sub_category) DO UPDATE SET
+ON CONFLICT (backtest_id, source, signal_name, category, sub_category) DO UPDATE SET
 number_entities = EXCLUDED.number_entities,
 number_signals = EXCLUDED.number_signals,
 success_percentage = EXCLUDED.success_percentage,
@@ -130,7 +131,7 @@ updated_ticks_utc = EXCLUDED.updated_ticks_utc
         public string FetchBacktestStats => _dbDef.Engine switch
         {
             DatabaseEngine.PostgreSql => @"
-SELECT source, signal_name AS SignalName, category, sub_category AS SubCategory, 
+SELECT backtest_id AS BacktestId, source, signal_name AS SignalName, category, sub_category AS SubCategory, 
 number_entities AS NumberEntities, number_signals AS NumberSignals, 
 success_percentage AS SuccessPercentage, success_criterion AS SuccessCriterion, 
 success_duration_trading_days AS SuccessDurationTradingDays,

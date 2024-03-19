@@ -98,7 +98,8 @@ public class PostgreSqlBacktestTests
 
     private static BacktestStats CreateBacktestStats()
     {
-        return new BacktestStats("Test", "Test Signal", "Category", "Sub Category",
+        return new BacktestStats(Guid.NewGuid(),
+            "Test", "Test Signal", "Category", "Sub Category",
             100, 10, 50D, "Type 1", 40, 56, DateTime.UtcNow.Ticks, DateTime.UtcNow.Ticks, Guid.NewGuid());
     }
 }

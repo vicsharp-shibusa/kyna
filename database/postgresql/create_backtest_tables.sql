@@ -60,9 +60,10 @@ CREATE TABLE IF NOT EXISTS public.backtest_stats
   success_duration_trading_days INTEGER NULL,
   success_duration_calendar_days INTEGER NULL,
   process_id UUID NULL,
+  backtest_id UUID NOT NULL,
   created_ticks_utc BIGINT NOT NULL,
   updated_ticks_utc BIGINT NOT NULL,
   created_utc TIMESTAMP WITH TIME ZONE GENERATED ALWAYS AS (to_timestamp((created_ticks_utc - 621355968000000000) / 10000000)) STORED,
   updated_utc TIMESTAMP WITH TIME ZONE GENERATED ALWAYS AS (to_timestamp((updated_ticks_utc - 621355968000000000) / 10000000)) STORED,
-  PRIMARY KEY (source, signal_name, category, sub_category)
+  PRIMARY KEY (backtest_id, source, signal_name, category, sub_category)
 );
