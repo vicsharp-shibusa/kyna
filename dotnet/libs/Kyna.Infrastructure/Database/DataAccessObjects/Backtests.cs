@@ -1,4 +1,6 @@
-﻿namespace Kyna.Infrastructure.Database.DataAccessObjects;
+﻿using Newtonsoft.Json.Linq;
+
+namespace Kyna.Infrastructure.Database.DataAccessObjects;
 
 internal sealed record class Backtest : DaoBase
 {
@@ -87,7 +89,9 @@ internal sealed record class BacktestResult : DaoBase
 
 internal sealed record class BacktestStats : DaoBase
 {
-    public BacktestStats(string source, 
+    public BacktestStats(
+        Guid backtestId,
+        string source, 
         string signalName, 
         string category, 
         string subCategory, 
@@ -101,6 +105,7 @@ internal sealed record class BacktestStats : DaoBase
         long updatedTicksUtc,
         Guid? processId = null) : base(processId)
     {
+        BacktestId = backtestId;
         Source = source;
         SignalName = signalName;
         Category = category;
@@ -115,6 +120,7 @@ internal sealed record class BacktestStats : DaoBase
         UpdatedTicksUtc = updatedTicksUtc;
     }
 
+    public Guid BacktestId { get; init; }
     public string Source { get; init; }
     public string SignalName { get; init; }
     public string Category { get; init; }

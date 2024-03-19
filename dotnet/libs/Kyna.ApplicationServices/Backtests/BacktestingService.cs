@@ -1,5 +1,4 @@
-﻿using Kyna.Analysis.Technical;
-using Kyna.Analysis.Technical.Signals;
+﻿using Kyna.Analysis.Technical.Signals;
 using Kyna.ApplicationServices.Backtests.Runners;
 using Kyna.Backtests;
 using Kyna.Common;
@@ -7,77 +6,31 @@ using Kyna.Common.Events;
 using Kyna.Infrastructure.Database;
 using System.Diagnostics;
 using System.Text;
-using System.Text.Json;
 using static Kyna.ApplicationServices.Reports.ReportService;
 
 namespace Kyna.ApplicationServices.Backtests;
 
 public sealed class BacktestingService : IDisposable
 {
+    private readonly IDbContext _financialsCtx;
     private readonly IDbContext _backtestsCtx;
-    private readonly IBacktestRunner? _backtestRunner;
+    private IBacktestRunner? _backtestRunner;
     private bool _disposedValue;
-    private readonly BacktestingConfiguration? _configuration;
+    private DbDef _finDef, _bckDef;
 
     public event EventHandler<CommunicationEventArgs>? Communicate;
 
-    public BacktestingService(DbDef finDef, DbDef backtestDef,
-        FileInfo? configFileInfo,
-        Guid? processId = null)
+    public BacktestingService(DbDef finDef, DbDef backtestDef)
     {
+        _finDef = finDef;
+        _bckDef = backtestDef;
+        _financialsCtx = DbContextFactory.Create(finDef);
         _backtestsCtx = DbContextFactory.Create(backtestDef);
-
-        if (configFileInfo?.Exists ?? false)
-        {
-            var options = JsonOptionsRepository.DefaultSerializerOptions;
-            options.Converters.Add(new EnumDescriptionConverter<BacktestType>());
-            options.Converters.Add(new EnumDescriptionConverter<PricePoint>());
-
-            _configuration = JsonSerializer.Deserialize<BacktestingConfiguration>(
-                File.ReadAllText(configFileInfo.FullName),
-                options) ?? throw new ArgumentException($"Could not deserialize {configFileInfo.Name}");
-
-            _backtestRunner = BacktestRunnerFactory.Create(finDef, backtestDef, _configuration, processId);
-            if (_backtestRunner == null)
-            {
-                throw new ArgumentException($"Could not construct backtest runner for type '{_configuration?.Type.GetEnumDescription()}'");
-            }
-            _backtestRunner.Communicate += BacktestRunner_Communicate;
-        }
     }
 
     private void BacktestRunner_Communicate(object? sender, CommunicationEventArgs e)
     {
         Communicate?.Invoke(sender, e);
-    }
-
-    public void WriteConfigInfo()
-    {
-        if (_configuration != null)
-        {
-            StringBuilder sb = new();
-
-            sb.AppendLine($"Type               : {_configuration.Type.GetEnumDescription()}");
-            sb.AppendLine($"Name               : {_configuration.Name}");
-            sb.AppendLine($"Source             : {_configuration.Source}");
-            sb.AppendLine($"Description        : {_configuration.Description}");
-            sb.AppendLine($"Entry Price Point  : {_configuration.EntryPricePoint.GetEnumDescription()}");
-            sb.AppendLine($"Target Up          : {_configuration.TargetUp}");
-            sb.AppendLine($"Target Down        : {_configuration.TargetDown}");
-            sb.AppendLine($"Length of Prologue : {_configuration.LengthOfPrologue}");
-            if ((_configuration.SignalNames?.Length ?? 0) > 0)
-            {
-                sb.AppendLine("Signal Names:");
-                foreach (var sn in _configuration.SignalNames!)
-                {
-                    sb.AppendLine($"\t{sn}");
-                }
-            }
-
-            sb.AppendLine();
-
-            Communicate?.Invoke(this, new CommunicationEventArgs(sb.ToString(), nameof(BacktestingService)));
-        }
     }
 
     public Task<IEnumerable<ProcessIdInfo>> GetBacktestProcessesAsync() =>
@@ -92,15 +45,23 @@ public sealed class BacktestingService : IDisposable
         }
     }
 
-    public void WriteActivityCounts() => _backtestRunner?.WriteActivityCounts();
+    public Task ExecuteAsync(FileInfo configFile) =>
+        ExecuteAsync([configFile]);
 
-    public Task ExecuteAsync()
+    public Task ExecuteAsync(FileInfo[] configFiles)
     {
+        if (configFiles.Length == 0)
+        {
+            return Task.CompletedTask;
+        }
+
         CancellationTokenSource cts = new();
 
+        _backtestRunner = BacktestRunnerFactory.Create(_finDef, _bckDef, configFiles[0]);
         Debug.Assert(_backtestRunner != null);
+        _backtestRunner.Communicate += BacktestRunner_Communicate;
 
-        return _backtestRunner!.ExecuteAsync(cts.Token);
+        return _backtestRunner!.ExecuteAsync(configFiles, cts.Token);
     }
 
     private void Dispose(bool disposing)
@@ -129,9 +90,9 @@ public sealed class BacktestingService : IDisposable
 internal static class BacktestRunnerFactory
 {
     public static IBacktestRunner? Create(DbDef finDef, DbDef backtestDef,
-        BacktestingConfiguration configuration,
-        Guid? processId = null)
+        FileInfo configFile)
     {
+        var configuration = RunnerBase.DeserializeConfigFile(configFile);
         if (configuration.Type == BacktestType.CandlestickPattern)
         {
             if ((configuration.SignalNames?.Length ?? 0) == 0)
@@ -145,12 +106,12 @@ internal static class BacktestRunnerFactory
                 var signal = repo.Find(configuration.SignalNames[c]) ?? throw new Exception($"Could not find signal for '{configuration.SignalNames[c]}'");
                 signals[c] = signal;
             }
-            return new CandlestickSignalRunner(finDef, backtestDef, configuration,
-                signals, processId);
+            return new CandlestickSignalRunner(finDef, backtestDef, configuration.Source,
+                signals);
         }
         if (configuration.Type == BacktestType.RandomBaseline)
         {
-            return new RandomBaselineRunner(finDef, backtestDef, configuration, processId);
+            return new RandomBaselineRunner(finDef, backtestDef, configuration.Source);
         }
         return null;
     }

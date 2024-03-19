@@ -1,6 +1,5 @@
 ﻿using Kyna.ApplicationServices.Analysis;
 using Kyna.Backtests;
-using Kyna.Common;
 using Kyna.Common.Events;
 using Kyna.Infrastructure.Database;
 using System.Collections.Concurrent;
@@ -10,47 +9,50 @@ namespace Kyna.ApplicationServices.Backtests.Runners;
 
 internal sealed class RandomBaselineRunner : RunnerBase, IBacktestRunner
 {
-    private readonly ConcurrentQueue<(string Code, string? Industry, string? Sector, int[] Positions)> _queue;
+    private readonly ConcurrentQueue<(BacktestingConfiguration Configuration, Guid BacktestId,
+        string Code, string? Industry, string? Sector, int[] Positions)> _queue;
     private bool _runQueue = true;
     private readonly FinancialsRepository _financialsRepository;
+    private readonly Task<IEnumerable<CodesAndCounts>> _codesAndCountsTask;
 
-    public RandomBaselineRunner(DbDef finDef, DbDef backtestDef, BacktestingConfiguration configuration,
-        Guid? processId = null)
-        : base(finDef, backtestDef, configuration, processId)
+    public RandomBaselineRunner(DbDef finDef, DbDef backtestDef, string source)
+        : base(finDef, backtestDef)
     {
-        if (configuration.Type != BacktestType.RandomBaseline)
-        {
-            throw new ArgumentException($"Mismatch on backtesting type; should be {configuration.Type.GetEnumDescription()}");
-        }
-
+        _codesAndCountsTask = GetCodesAndCount(source, CancellationToken.None);
         _financialsRepository = new(finDef);
         _queue = new();
         RunDequeue();
     }
 
-    public async Task ExecuteAsync(CancellationToken cancellationToken)
+    public Task ExecuteAsync(FileInfo configFile, CancellationToken cancellationToken) =>
+        ExecuteAsync([configFile], cancellationToken);
+
+    public async Task ExecuteAsync(FileInfo[] configFiles, CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
 
         Debug.Assert(_finDbContext != null);
 
-        var codesAndCountsTask = GetCodesAndCount(cancellationToken);
-
-        await CreateBacktestingRecord(cancellationToken).ConfigureAwait(false);
-
-        if (_configuration.MaxParallelization.GetValueOrDefault() < 2)
+        foreach (var configFile in configFiles)
         {
-            foreach (var item in await codesAndCountsTask.ConfigureAwait(false))
+            var configuration = DeserializeConfigFile(configFile);
+
+            var backtestId = await CreateBacktestingRecord(configuration, cancellationToken).ConfigureAwait(false);
+
+            if (configuration.MaxParallelization.GetValueOrDefault() < 2)
             {
-                ProcessCodesAndCounts(item);
+                foreach (var item in await _codesAndCountsTask.ConfigureAwait(false))
+                {
+                    ProcessCodesAndCounts(backtestId, configuration, item);
+                }
             }
-        }
-        else
-        {
-            Parallel.ForEach(await codesAndCountsTask, new ParallelOptions()
+            else
             {
-                MaxDegreeOfParallelism = _configuration.MaxParallelization.GetValueOrDefault()
-            }, ProcessCodesAndCounts);
+                Parallel.ForEach(await _codesAndCountsTask, new ParallelOptions()
+                {
+                    MaxDegreeOfParallelism = configuration.MaxParallelization.GetValueOrDefault()
+                }, (item) => ProcessCodesAndCounts(backtestId, configuration, item));
+            }
         }
 
         _runQueue = false;
@@ -60,11 +62,13 @@ internal sealed class RandomBaselineRunner : RunnerBase, IBacktestRunner
         }
 
         await WaitForQueueAsync().ConfigureAwait(false);
+
     }
 
     private readonly Random _rnd = new(Guid.NewGuid().GetHashCode());
 
-    private void ProcessCodesAndCounts(CodesAndCounts item)
+    private void ProcessCodesAndCounts(Guid backtestId,
+        BacktestingConfiguration configuration, CodesAndCounts item)
     {
         // remove 2 from the end because it's less likely the positions at the end
         // will have the time to reach their targets.
@@ -74,7 +78,7 @@ internal sealed class RandomBaselineRunner : RunnerBase, IBacktestRunner
         {
             positions[i] = (i * 10) + _rnd.Next(0, 10);
         }
-        _queue.Enqueue((item.Code, item.Industry, item.Sector, positions));
+        _queue.Enqueue((configuration, backtestId, item.Code, item.Industry, item.Sector, positions));
     }
 
     private void RunDequeue()
@@ -85,7 +89,9 @@ internal sealed class RandomBaselineRunner : RunnerBase, IBacktestRunner
             {
                 try
                 {
-                    if (_queue.TryDequeue(out (string Code, string? Industry, string? Sector, int[] Positions) result))
+                    if (_queue.TryDequeue(out (BacktestingConfiguration Configuration,
+                        Guid BacktestId,
+                        string Code, string? Industry, string? Sector, int[] Positions) result))
                     {
                         lock (_activityCounts)
                         {
@@ -93,22 +99,22 @@ internal sealed class RandomBaselineRunner : RunnerBase, IBacktestRunner
                         }
 
                         var ohlc = _financialsRepository.GetOhlcForSourceAndCodeAsync(
-                            _configuration.Source, result.Code).GetAwaiter().GetResult().ToArray();
+                            result.Configuration.Source, result.Code).GetAwaiter().GetResult().ToArray();
 
                         foreach (var p in result.Positions)
                         {
-                            var price = ohlc[p].GetPricePoint(_configuration.EntryPricePoint);
-                            var targetUpPrice = price * (1M + (decimal)Math.Abs(_configuration.TargetUp.Value));
-                            var targetDownPrice = price * (1M - (decimal)Math.Abs(_configuration.TargetDown.Value));
+                            var price = ohlc[p].GetPricePoint(result.Configuration.EntryPricePoint);
+                            var targetUpPrice = price * (1M + (decimal)Math.Abs(result.Configuration.TargetUp.Value));
+                            var targetDownPrice = price * (1M - (decimal)Math.Abs(result.Configuration.TargetDown.Value));
 
                             var upAction = ohlc.Skip(p + 1).FirstOrDefault(x => x.GetPricePoint(
-                                _configuration.TargetUp.PricePoint) >= targetUpPrice);
+                                result.Configuration.TargetUp.PricePoint) >= targetUpPrice);
                             var downAction = ohlc.Skip(p + 1).FirstOrDefault(x => x.GetPricePoint(
-                                _configuration.TargetDown.PricePoint) <= targetDownPrice);
+                                result.Configuration.TargetDown.PricePoint) <= targetDownPrice);
 
                             var detail = new BacktestResultDetail()
                             {
-                                BacktestId = _backtestId,
+                                BacktestId = result.BacktestId,
                                 SignalName = "Random",
                                 Code = result.Code,
                                 Industry = result.Industry,
@@ -116,20 +122,20 @@ internal sealed class RandomBaselineRunner : RunnerBase, IBacktestRunner
                                 Up = upAction == null ? null : new ResultDetail()
                                 {
                                     Date = upAction.Date,
-                                    Price = upAction.GetPricePoint(_configuration.TargetUp.PricePoint),
-                                    PricePoint = _configuration.TargetUp.PricePoint,
+                                    Price = upAction.GetPricePoint(result.Configuration.TargetUp.PricePoint),
+                                    PricePoint = result.Configuration.TargetUp.PricePoint,
                                 },
                                 Down = downAction == null ? null : new ResultDetail()
                                 {
                                     Date = downAction.Date,
-                                    Price = downAction.GetPricePoint(_configuration.TargetDown.PricePoint),
-                                    PricePoint = _configuration.TargetDown.PricePoint
+                                    Price = downAction.GetPricePoint(result.Configuration.TargetDown.PricePoint),
+                                    PricePoint = result.Configuration.TargetDown.PricePoint
                                 },
                                 Entry = new ResultDetail()
                                 {
                                     Date = ohlc[p].Date,
-                                    PricePoint = _configuration.EntryPricePoint,
-                                    Price = ohlc[p].GetPricePoint(_configuration.EntryPricePoint)
+                                    PricePoint = result.Configuration.EntryPricePoint,
+                                    Price = ohlc[p].GetPricePoint(result.Configuration.EntryPricePoint)
                                 }
                             };
 

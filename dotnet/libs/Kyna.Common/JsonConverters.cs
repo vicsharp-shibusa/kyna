@@ -7,42 +7,37 @@ namespace Kyna.Common;
 
 public static class JsonOptionsRepository
 {
-    private static JsonSerializerOptions? _options;
-
     public static JsonSerializerOptions DefaultSerializerOptions
     {
         get
         {
-            if (_options == null)
+            var options = new JsonSerializerOptions()
             {
-                _options = new()
-                {
-                    PropertyNameCaseInsensitive = true,
-                    IncludeFields = true
-                };
+                PropertyNameCaseInsensitive = true,
+                IncludeFields = true
+            };
 
-                _options.Converters.Add(new NullableStringJsonConverter());
+            options.Converters.Add(new NullableStringJsonConverter());
 
-                _options.Converters.Add(new DateOnlyJsonConverter());
-                _options.Converters.Add(new NullableDateOnlyJsonConverter());
+            options.Converters.Add(new DateOnlyJsonConverter());
+            options.Converters.Add(new NullableDateOnlyJsonConverter());
 
-                _options.Converters.Add(new DateTimeJsonConverter());
-                _options.Converters.Add(new NullableDateTimeJsonConverter());
+            options.Converters.Add(new DateTimeJsonConverter());
+            options.Converters.Add(new NullableDateTimeJsonConverter());
 
-                _options.Converters.Add(new DoubleJsonConverter());
-                _options.Converters.Add(new NullableDoubleJsonConverter());
+            options.Converters.Add(new DoubleJsonConverter());
+            options.Converters.Add(new NullableDoubleJsonConverter());
 
-                _options.Converters.Add(new DecimalJsonConverter());
-                _options.Converters.Add(new NullableDecimalJsonConverter());
+            options.Converters.Add(new DecimalJsonConverter());
+            options.Converters.Add(new NullableDecimalJsonConverter());
 
-                _options.Converters.Add(new LongJsonConverter());
-                _options.Converters.Add(new NullableLongJsonConverter());
+            options.Converters.Add(new LongJsonConverter());
+            options.Converters.Add(new NullableLongJsonConverter());
 
-                _options.Converters.Add(new BooleanJsonConverter());
-                _options.Converters.Add(new NullableBooleanJsonConverter());
-            }
+            options.Converters.Add(new BooleanJsonConverter());
+            options.Converters.Add(new NullableBooleanJsonConverter());
 
-            return _options;
+            return options;
         }
     }
 }

@@ -5,6 +5,6 @@ namespace Kyna.ApplicationServices.Backtests;
 internal interface IBacktestRunner
 {
     event EventHandler<CommunicationEventArgs>? Communicate;
-    Task ExecuteAsync(CancellationToken cancellationToken);
-    void WriteActivityCounts();
+    Task ExecuteAsync(FileInfo configFile, CancellationToken cancellationToken);
+    Task ExecuteAsync(FileInfo[] configFiles, CancellationToken cancellationToken);
 }

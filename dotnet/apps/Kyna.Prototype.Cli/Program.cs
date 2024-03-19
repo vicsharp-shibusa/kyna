@@ -52,43 +52,48 @@ try
         options.Converters.Add(new EnumDescriptionConverter<PricePoint>());
         options.Converters.Add(new EnumDescriptionConverter<BacktestType>());
 
-        foreach (var move in new double[] { .05, .1, .15, .2 })
+        foreach (var move in new double[] { .1, .2 })
         {
-            foreach (var len in new int[] { 5, 10, 15, 20, 25, 30 })
+            foreach (var len in new int[] { 15, 30 })
             {
-                foreach (var trendDesc in new string[] { "S21C", "S50C", "S100C", "S200C", "E21C", "E50C", "E100C", "E200C" })
+                foreach (var vol in new double[] { 1D, 1.5D, 2D })
                 {
-                    ChartConfiguration chartConfig = new()
+                    foreach (var trendDesc in new string[] { "S21C", "S50C", "S200C", "E21C", "E50C", "E200C" })
                     {
-                        Interval = "Daily",
-                        Trends = [new TrendConfiguration() { Trend = trendDesc }]
-                    };
+                        ChartConfiguration chartConfig = new()
+                        {
+                            Interval = "Daily",
+                            Trends = [new TrendConfiguration() { Trend = trendDesc }]
+                        };
 
-                    string[] descItems = [
-                        $"move: {move}",
-                        $"prologue len: {len}",
-                        $"trend desc: {trendDesc}"
-                    ];
+                        string[] descItems = [
+                            $"move: {move}",
+                            $"prologue len: {len}",
+                            $"trend desc: {trendDesc}",
+                            $"vol factor: {vol}"
+                        ];
 
-                    var backtestConfig = new BacktestingConfiguration(BacktestType.CandlestickPattern,
-                        "eodhd.com",
-                        $"Bullish Engulfing {num}",
-                        string.Join(';', descItems),
-                        PricePoint.Close,
-                        new TestTargetPercentage(PricePoint.High, move),
-                        new TestTargetPercentage(PricePoint.Low, move),
-                        [SignalName.BullishEngulfing.GetEnumDescription()],
-                        len,
-                        10,
-                        onlySignalWithMarket,
-                        chartConfig, null);
+                        var backtestConfig = new BacktestingConfiguration(BacktestType.CandlestickPattern,
+                            "eodhd.com",
+                            $"Bullish Engulfing {num}",
+                            string.Join(';', descItems),
+                            PricePoint.Close,
+                            new TestTargetPercentage(PricePoint.High, move),
+                            new TestTargetPercentage(PricePoint.Low, move),
+                            [SignalName.BullishEngulfing.GetEnumDescription()],
+                            len,
+                            vol,
+                            10,
+                            onlySignalWithMarket,
+                            chartConfig, null);
 
-                    var btJson = JsonSerializer.Serialize(backtestConfig, options);
+                        var btJson = JsonSerializer.Serialize(backtestConfig, options);
 
-                    var fileName = Path.Combine("\\temp", $"bullish-engulfing-{num}.json");
-                    File.WriteAllText(fileName, btJson);
-                    Console.WriteLine(fileName);
-                    num++;
+                        var fileName = Path.Combine("\\repos\\kyna-ins-and-outs\\configuration\\bullish-engulfing", $"bullish-engulfing-{num}.json");
+                        File.WriteAllText(fileName, btJson);
+                        Console.WriteLine(fileName);
+                        num++;
+                    }
                 }
             }
         }

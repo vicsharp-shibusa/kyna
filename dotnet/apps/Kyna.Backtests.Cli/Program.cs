@@ -1,10 +1,8 @@
 ﻿using Kyna.ApplicationServices.Backtests;
 using Kyna.ApplicationServices.Cli;
 using Kyna.ApplicationServices.Configuration;
-using Kyna.ApplicationServices.Reports;
 using Kyna.Common;
 using Kyna.Common.Logging;
-using Kyna.Infrastructure.DataImport;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using System.Diagnostics;
@@ -60,43 +58,47 @@ try
         Debug.Assert(backtestingService != null);
         if (config.ProcessIdsToDelete.Any())
         {
-            Communicate("Deleting backtests ...");
+            Communicate("Deleting backtests ...", true);
             await backtestingService.DeleteProcessesAsync([.. config.ProcessIdsToDelete]);
         }
 
-        if (config.ConfigFile != null)
+        if (config.ConfigDir != null || config.ConfigFile != null)
         {
             KLogger.LogEvent(EventIdRepository.GetAppStartedEvent(config!), processId);
+        }
 
-            CancellationTokenSource cts = new();
+        CancellationTokenSource cts = new();
 
-            TimeSpan duration = TimeSpan.Zero;
+        try
+        {
+            Debug.Assert(backtestingService != null);
 
-            try
+            if (config.ConfigDir != null)
             {
-                Debug.Assert(backtestingService != null);
-
-                backtestingService.WriteConfigInfo();
-
-                await backtestingService.ExecuteAsync();
-            }
-            catch (AggregateException ex)
-            {
-                cts.Cancel(true);
-
-                foreach (var e in ex.InnerExceptions)
+                var files = config.ConfigDir.GetFiles("*.json", SearchOption.TopDirectoryOnly);
+                if (files.Length == 0)
                 {
-                    Communicate(e.ToString(), true, LogLevel.Error);
+                    throw new ArgumentException("No JSON configuration files found in directory.");
                 }
+                await backtestingService.ExecuteAsync(files);
             }
-            catch (ApiLimitReachedException)
+            if (config.ConfigFile != null)
             {
-                Communicate("API credit limit reached; halting processing", false, LogLevel.Warning);
+                await backtestingService.ExecuteAsync(config.ConfigFile);
             }
-            finally
+        }
+        catch (AggregateException ex)
+        {
+            cts.Cancel(true);
+
+            foreach (var e in ex.InnerExceptions)
             {
-                cts.Dispose();
+                Communicate(e.ToString(), true, LogLevel.Error);
             }
+        }
+        finally
+        {
+            cts.Dispose();
         }
     }
 
@@ -195,6 +197,18 @@ void HandleArguments(string[] args)
 
         switch (argument)
         {
+            case "-i":
+            case "--input-dir":
+                if (a == args.Length - 1)
+                {
+                    throw new ArgumentException($"Expecting a directory name after {args[a]}");
+                }
+                config.ConfigDir = new DirectoryInfo(args[++a]);
+                if (!config.ConfigDir.Exists)
+                {
+                    throw new ArgumentException("The specified directory does not exist.");
+                }
+                break;
             case "-d":
             case "--delete":
                 if (a == args.Length - 1)
@@ -256,7 +270,7 @@ void Configure()
     var finDef = dbDefs.FirstOrDefault(d => d.Name == ConfigKeys.DbKeys.Financials);
     var bckDef = dbDefs.FirstOrDefault(d => d.Name == ConfigKeys.DbKeys.Backtests);
 
-    backtestingService = new BacktestingService(finDef, bckDef, config.ConfigFile, processId);
+    backtestingService = new BacktestingService(finDef, bckDef);
     if (backtestingService == null)
     {
         throw new Exception($"Could not instantiate {nameof(BacktestingService)}");
@@ -275,6 +289,7 @@ void Backtests_Communicate(object? sender, Kyna.Common.Events.CommunicationEvent
 class Config(string appName, string appVersion, string? description)
     : CliConfigBase(appName, appVersion, description)
 {
+    public DirectoryInfo? ConfigDir { get; set; }
     public FileInfo? ConfigFile { get; set; }
     public bool ListProcessIds { get; set; }
     public IList<Guid> ProcessIdsToDelete { get; set; } = new List<Guid>(10);

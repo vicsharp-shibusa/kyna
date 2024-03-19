@@ -2,7 +2,6 @@
 using Kyna.Analysis.Technical.Signals;
 using Kyna.ApplicationServices.Analysis;
 using Kyna.Backtests;
-using Kyna.Common;
 using Kyna.Common.Events;
 using Kyna.Infrastructure.Database;
 using Kyna.Infrastructure.Database.DataAccessObjects;
@@ -15,97 +14,105 @@ namespace Kyna.ApplicationServices.Backtests.Runners;
 internal class CandlestickSignalRunner : RunnerBase, IBacktestRunner
 {
     private readonly FinancialsRepository _financialsRepository;
-    private readonly ConcurrentQueue<SignalMatch> _queue;
+    private readonly ConcurrentQueue<(BacktestingConfiguration Configuration,
+        Guid BacktestId, SignalMatch SignalMatch)> _queue;
     private bool _runQueue = true;
     private readonly CandlestickSignal[] _signals;
+    private readonly Task<IEnumerable<CodesAndCounts>> _codesAndCountsTask;
 
     private readonly MemoryCache _memoryCache = new(new MemoryCacheOptions()
     {
         ExpirationScanFrequency = TimeSpan.FromSeconds(30),
     });
 
-    public CandlestickSignalRunner(DbDef finDef, DbDef backtestsDef,
-        BacktestingConfiguration configuration,
-        IEnumerable<CandlestickSignal> candlestickSignals,
-        Guid? processId = null)
-        : base(finDef, backtestsDef, configuration, processId)
+    public CandlestickSignalRunner(DbDef finDef, DbDef backtestsDef, string source,
+        IEnumerable<CandlestickSignal> candlestickSignals)
+        : base(finDef, backtestsDef)
     {
-        if (configuration.Type != BacktestType.CandlestickPattern)
-        {
-            throw new ArgumentException($"Mismatch on backtesting type; should be {configuration.Type.GetEnumDescription()}");
-        }
+        _codesAndCountsTask = GetCodesAndCount(source, CancellationToken.None);
         _signals = candlestickSignals.ToArray();
         _financialsRepository = new(finDef);
         _queue = new();
         RunDequeue();
     }
+    public Task ExecuteAsync(FileInfo configFile, CancellationToken cancellationToken) =>
+        ExecuteAsync([configFile], cancellationToken);
 
-    public async Task ExecuteAsync(CancellationToken cancellationToken)
+    public async Task ExecuteAsync(FileInfo[] configFiles, CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
 
         Debug.Assert(_finDbContext != null);
 
-        var codesAndCountsTask = GetCodesAndCount(cancellationToken);
-
-        await CreateBacktestingRecord(cancellationToken).ConfigureAwait(false);
-
-        OnCommunicate(new CommunicationEventArgs("Backtesting record created.", nameof(CandlestickSignalRunner)));
-
-        Chart? market = null;
-        var len = _configuration.MarketConfiguration?.Codes?.Length ?? 0;
-        if (len > 0 && _configuration.MarketConfiguration?.Trends != null)
+        foreach (var configFile in configFiles)
         {
-            List<Ohlc[]> ohlcsList = new(len);
-            for (int i = 0; i < len; i++)
+            WriteConfigInfo(configFile);
+
+            var configuration = DeserializeConfigFile(configFile);
+
+            var backtestId = await CreateBacktestingRecord(configuration, cancellationToken).ConfigureAwait(false);
+
+            OnCommunicate(new CommunicationEventArgs("Backtesting record created.", nameof(CandlestickSignalRunner)));
+
+            Chart? market = null;
+            var len = configuration.MarketConfiguration?.Codes?.Length ?? 0;
+            if (len > 0 && configuration.MarketConfiguration?.Trends != null)
             {
-                var code = _configuration.MarketConfiguration.Codes![i];
-                if (!string.IsNullOrWhiteSpace(code))
+                List<Ohlc[]> ohlcsList = new(len);
+                for (int i = 0; i < len; i++)
                 {
-                    ohlcsList.Add((await _financialsRepository.GetOhlcForSourceAndCodeAsync(
-                        _configuration.Source, code)).ToArray());
+                    var code = configuration.MarketConfiguration.Codes![i];
+                    if (!string.IsNullOrWhiteSpace(code))
+                    {
+                        ohlcsList.Add((await _financialsRepository.GetOhlcForSourceAndCodeAsync(
+                            configuration.Source, code)).ToArray());
+                    }
+                }
+                market = ChartFactory.Create("Market", new ChartConfiguration()
+                {
+                    Interval = "Daily",
+                    Trends = configuration.MarketConfiguration.Trends
+                }, [.. ohlcsList]);
+            }
+
+            OnCommunicate(new CommunicationEventArgs("Fetching data to process ...", nameof(CandlestickSignalRunner)));
+
+            if (configuration.MaxParallelization.GetValueOrDefault() < 2)
+            {
+                foreach (var item in await _codesAndCountsTask.ConfigureAwait(false))
+                {
+                    ProcessCodesAndCounts(backtestId, configuration, item, market);
                 }
             }
-            market = ChartFactory.Create("Market", new ChartConfiguration()
+            else
             {
-                Interval = "Daily",
-                Trends = _configuration.MarketConfiguration.Trends
-            }, [.. ohlcsList]);
-        }
-
-        if (_configuration.MaxParallelization.GetValueOrDefault() < 2)
-        {
-            foreach (var item in await codesAndCountsTask.ConfigureAwait(false))
-            {
-                ProcessCodesAndCounts(item, market);
+                Parallel.ForEach(await _codesAndCountsTask.ConfigureAwait(false), new ParallelOptions()
+                {
+                    MaxDegreeOfParallelism = configuration.MaxParallelization.GetValueOrDefault()
+                }, (item) => ProcessCodesAndCounts(backtestId, configuration, item, market));
             }
-        }
-        else
-        {
-            Parallel.ForEach(await codesAndCountsTask.ConfigureAwait(false), new ParallelOptions()
+
+            while (!_queue.IsEmpty)
             {
-                MaxDegreeOfParallelism = _configuration.MaxParallelization.GetValueOrDefault()
-            }, (item) => ProcessCodesAndCounts(item, market));
+                await Task.Delay(1_000, cancellationToken).ConfigureAwait(false);
+            }
+
+            await ProcessStatsAsync(configuration, backtestId, cancellationToken).ConfigureAwait(false);
         }
 
         _runQueue = false;
-        while (!_queue.IsEmpty)
-        {
-            await Task.Delay(1_000, cancellationToken).ConfigureAwait(false);
-        }
 
         await WaitForQueueAsync().ConfigureAwait(false);
-
-        await ProcessStatsAsync(cancellationToken).ConfigureAwait(false);
     }
 
-    private void ProcessCodesAndCounts(CodesAndCounts item, Chart? market = null)
+    private void ProcessCodesAndCounts(Guid backtestId,
+        BacktestingConfiguration configuration, CodesAndCounts item, Chart? market = null)
     {
         var ohlc = _financialsRepository.GetOhlcForSourceAndCodeAsync(
-            _configuration.Source, item.Code).GetAwaiter().GetResult().ToArray();
+            configuration.Source, item.Code).GetAwaiter().GetResult().ToArray();
 
         var chart = ChartFactory.Create(item.Code, item.Industry, item.Sector,
-            ohlc, _configuration.ChartConfiguration);
+            ohlc, configuration.ChartConfiguration);
 
         Debug.Assert(!string.IsNullOrWhiteSpace(chart.Code));
 
@@ -116,21 +123,23 @@ internal class CandlestickSignalRunner : RunnerBase, IBacktestRunner
 
         foreach (var signal in _signals)
         {
-            foreach (var match in signal.DiscoverMatches(chart, market, _configuration.OnlySignalWithMarket,
-                _configuration.VolumeFactor).ToArray())
+            foreach (var match in signal.DiscoverMatches(chart, market, configuration.OnlySignalWithMarket,
+                configuration.VolumeFactor).ToArray())
             {
-                _queue.Enqueue(match);
+                _queue.Enqueue((configuration, backtestId, match));
             }
         }
     }
 
-    private async Task ProcessStatsAsync(CancellationToken cancellationToken)
+    private async Task ProcessStatsAsync(BacktestingConfiguration configuration,
+        Guid backtestId,
+        CancellationToken cancellationToken)
     {
-        var repo = new CandlestickSignalRepository(new SignalOptions(_configuration.LengthOfPrologue));
+        var repo = new CandlestickSignalRepository(new SignalOptions(configuration.LengthOfPrologue));
 
         var backtestResults = await _backtestDbContext.QueryAsync<BacktestResultsInfo>(
             _backtestDbContext.Sql.Backtests.FetchBacktestResultInfo,
-            new { BacktestId = _backtestId }, cancellationToken: cancellationToken);
+            new { backtestId }, cancellationToken: cancellationToken);
 
         var signalNames = backtestResults.Select(b => b.SignalName).Distinct().ToArray();
 
@@ -151,8 +160,8 @@ internal class CandlestickSignalRunner : RunnerBase, IBacktestRunner
 
             var percentage = signal.Sentiment switch
             {
-                TrendSentiment.Bullish => _configuration.TargetUp.Value * 100D,
-                TrendSentiment.Bearish => _configuration.TargetDown.Value * 100D,
+                TrendSentiment.Bullish => configuration.TargetUp.Value * 100D,
+                TrendSentiment.Bearish => configuration.TargetDown.Value * 100D,
                 _ => 0D
             };
 
@@ -167,7 +176,7 @@ internal class CandlestickSignalRunner : RunnerBase, IBacktestRunner
             double ratio = matchingResults.Length / (double)signalSubset.Length;
 
             await _backtestDbContext.ExecuteAsync(_backtestDbContext.Sql.Backtests.UpsertBacktestStats,
-                    new BacktestStats(_configuration.Source,
+                    new BacktestStats(backtestId, configuration.Source,
                     name, "Overall", "All", numberEntities, signalSubset.Length, ratio, criterion,
                     Convert.ToInt32(matchingResults.Average(r => r.ResultDurationTradingDays)),
                     Convert.ToInt32(matchingResults.Average(r => r.ResultDurationCalendarDays)),
@@ -190,7 +199,7 @@ internal class CandlestickSignalRunner : RunnerBase, IBacktestRunner
                 ratio = matchingResults.Length / (double)totalInstances;
 
                 tasks.Add(_backtestDbContext.ExecuteAsync(_backtestDbContext.Sql.Backtests.UpsertBacktestStats,
-                    new BacktestStats(_configuration.Source,
+                    new BacktestStats(backtestId, configuration.Source,
                     name, "Entity", ticker, 1, totalInstances, ratio, criterion,
                     Convert.ToInt32(matchingResults.Average(r => r.ResultDurationTradingDays)),
                     Convert.ToInt32(matchingResults.Average(r => r.ResultDurationCalendarDays)),
@@ -221,7 +230,7 @@ internal class CandlestickSignalRunner : RunnerBase, IBacktestRunner
                     s.Industry.Equals(industry) && s.ResultDirection == successResult).ToArray();
                 ratio = matchingResults.Length / (double)totalInstances;
                 tasks.Add(_backtestDbContext.ExecuteAsync(_backtestDbContext.Sql.Backtests.UpsertBacktestStats,
-                    new BacktestStats(_configuration.Source,
+                    new BacktestStats(backtestId, configuration.Source,
                     name, "Industry", industry, categoryCount, totalInstances, ratio, criterion,
                     Convert.ToInt32(matchingResults.Average(r => r.ResultDurationTradingDays)),
                     Convert.ToInt32(matchingResults.Average(r => r.ResultDurationCalendarDays)),
@@ -250,7 +259,7 @@ internal class CandlestickSignalRunner : RunnerBase, IBacktestRunner
                     s.Sector.Equals(sector) && s.ResultDirection == successResult).ToArray();
                 ratio = matchingResults.Length / (double)totalInstances;
                 tasks.Add(_backtestDbContext.ExecuteAsync(_backtestDbContext.Sql.Backtests.UpsertBacktestStats,
-                    new BacktestStats(_configuration.Source,
+                    new BacktestStats(backtestId, configuration.Source,
                     name, "Sector", sector, categoryCount, totalInstances, ratio, criterion,
                     Convert.ToInt32(matchingResults.Average(r => r.ResultDurationTradingDays)),
                     Convert.ToInt32(matchingResults.Average(r => r.ResultDurationCalendarDays)),
@@ -268,47 +277,48 @@ internal class CandlestickSignalRunner : RunnerBase, IBacktestRunner
             {
                 try
                 {
-                    if (_queue.TryDequeue(out SignalMatch signalMatch))
+                    if (_queue.TryDequeue(out (BacktestingConfiguration Configuration, Guid BacktestId,
+                        SignalMatch SignalMatch) result))
                     {
-                        if (!_memoryCache.TryGetValue(signalMatch.Code, out Chart? chart) || chart == null)
+                        if (!_memoryCache.TryGetValue(result.SignalMatch.Code, out Chart? chart) || chart == null)
                         {
-                            throw new Exception($"Unable to pull chart for {signalMatch.Code} out of cache.");
+                            throw new Exception($"Unable to pull chart for {result.SignalMatch.Code} out of cache.");
                         }
 
-                        var price = chart.PriceActions[signalMatch.Signal.End].GetPricePoint(_configuration.EntryPricePoint);
+                        var price = chart.PriceActions[result.SignalMatch.Signal.End].GetPricePoint(result.Configuration.EntryPricePoint);
 
-                        var targetUpPrice = price * (1M + (decimal)Math.Abs(_configuration.TargetUp.Value));
-                        var targetDownPrice = price * (1M - (decimal)Math.Abs(_configuration.TargetDown.Value));
+                        var targetUpPrice = price * (1M + (decimal)Math.Abs(result.Configuration.TargetUp.Value));
+                        var targetDownPrice = price * (1M - (decimal)Math.Abs(result.Configuration.TargetDown.Value));
 
-                        var upAction = chart.PriceActions.Skip(signalMatch.Signal.End + 1).FirstOrDefault(x => x.GetPricePoint(
-                            _configuration.TargetUp.PricePoint) >= targetUpPrice);
-                        var downAction = chart.PriceActions.Skip(signalMatch.Signal.End + 1).FirstOrDefault(x => x.GetPricePoint(
-                            _configuration.TargetDown.PricePoint) <= targetDownPrice);
+                        var upAction = chart.PriceActions.Skip(result.SignalMatch.Signal.End + 1).FirstOrDefault(x => x.GetPricePoint(
+                            result.Configuration.TargetUp.PricePoint) >= targetUpPrice);
+                        var downAction = chart.PriceActions.Skip(result.SignalMatch.Signal.End + 1).FirstOrDefault(x => x.GetPricePoint(
+                            result.Configuration.TargetDown.PricePoint) <= targetDownPrice);
 
                         var detail = new BacktestResultDetail()
                         {
-                            BacktestId = _backtestId,
-                            SignalName = signalMatch.SignalName,
+                            BacktestId = result.BacktestId,
+                            SignalName = result.SignalMatch.SignalName,
                             Code = chart.Code ?? "UNKNOWN",
                             Industry = chart.Industry,
                             Sector = chart.Sector,
                             Up = upAction == null ? null : new ResultDetail()
                             {
                                 Date = upAction.Date,
-                                Price = upAction.GetPricePoint(_configuration.TargetUp.PricePoint),
-                                PricePoint = _configuration.TargetUp.PricePoint,
+                                Price = upAction.GetPricePoint(result.Configuration.TargetUp.PricePoint),
+                                PricePoint = result.Configuration.TargetUp.PricePoint,
                             },
                             Down = downAction == null ? null : new ResultDetail()
                             {
                                 Date = downAction.Date,
-                                Price = downAction.GetPricePoint(_configuration.TargetDown.PricePoint),
-                                PricePoint = _configuration.TargetDown.PricePoint
+                                Price = downAction.GetPricePoint(result.Configuration.TargetDown.PricePoint),
+                                PricePoint = result.Configuration.TargetDown.PricePoint
                             },
                             Entry = new ResultDetail()
                             {
-                                Date = chart.PriceActions[signalMatch.Signal.End].Date,
-                                PricePoint = _configuration.EntryPricePoint,
-                                Price = chart.PriceActions[signalMatch.Signal.End].GetPricePoint(_configuration.EntryPricePoint)
+                                Date = chart.PriceActions[result.SignalMatch.Signal.End].Date,
+                                PricePoint = result.Configuration.EntryPricePoint,
+                                Price = chart.PriceActions[result.SignalMatch.Signal.End].GetPricePoint(result.Configuration.EntryPricePoint)
                             }
                         };
 

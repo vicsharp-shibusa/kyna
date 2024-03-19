@@ -1,10 +1,12 @@
-﻿using Kyna.Backtests;
+﻿using Kyna.Analysis.Technical;
+using Kyna.Backtests;
 using Kyna.Common;
 using Kyna.Common.Events;
 using Kyna.Infrastructure.Database;
 using Kyna.Infrastructure.Database.DataAccessObjects;
 using System.Collections.Concurrent;
 using System.Text;
+using System.Text.Json;
 
 namespace Kyna.ApplicationServices.Backtests.Runners;
 
@@ -12,64 +14,100 @@ internal abstract class RunnerBase
 {
     protected readonly IDbContext _finDbContext;
     protected readonly IDbContext _backtestDbContext;
-    protected readonly BacktestingConfiguration _configuration;
-    protected readonly Guid? _processId;
-    protected readonly Guid _backtestId = Guid.NewGuid();
     protected readonly ActivityCounts _activityCounts;
-
+    protected readonly Guid _processId = Guid.NewGuid();
     private readonly ConcurrentQueue<BacktestResultDetail> _resultDetails;
     private readonly bool _runQueue = true;
 
     public event EventHandler<CommunicationEventArgs>? Communicate;
 
-    public RunnerBase(DbDef? finDef, DbDef? backtestsDef, BacktestingConfiguration? configuration,
-        Guid? processId = null)
+    public RunnerBase(DbDef? finDef, DbDef? backtestsDef)
     {
-        _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
         _finDbContext = DbContextFactory.Create(finDef ?? throw new ArgumentNullException(nameof(finDef)));
         _backtestDbContext = DbContextFactory.Create(backtestsDef ?? throw new ArgumentNullException(nameof(backtestsDef)));
-        _processId = processId;
         _resultDetails = new();
         _activityCounts = new();
         RunResultDetailDequeue();
     }
 
-    public void WriteActivityCounts()
+    protected void WriteConfigInfo(FileInfo configFile)
     {
-        StringBuilder sb = new();
-        sb.AppendLine($"Process Id   : {_processId}");
-        sb.AppendLine($"Backtest Id  : {_backtestId}");
-        sb.AppendLine($"Entity count : {_activityCounts.EntityCount.ToString("#,##0").PadLeft(12, ' ')}");
-        sb.AppendLine($"Event count  : {_activityCounts.EventCount.ToString("#,##0").PadLeft(12, ' ')}");
+        if (Communicate != null)
+        {
+            var configuration = DeserializeConfigFile(configFile);
 
-        Communicate?.Invoke(this, new CommunicationEventArgs(sb.ToString(), nameof(RunnerBase)));
+            if (configuration != null)
+            {
+                StringBuilder sb = new();
+
+                sb.AppendLine($"Type               : {configuration.Type.GetEnumDescription()}");
+                sb.AppendLine($"Name               : {configuration.Name}");
+                sb.AppendLine($"Source             : {configuration.Source}");
+                sb.AppendLine($"Description        : {configuration.Description}");
+                sb.AppendLine($"Entry Price Point  : {configuration.EntryPricePoint.GetEnumDescription()}");
+                sb.AppendLine($"Target Up          : {configuration.TargetUp}");
+                sb.AppendLine($"Target Down        : {configuration.TargetDown}");
+                sb.AppendLine($"Length of Prologue : {configuration.LengthOfPrologue}");
+                if ((configuration.SignalNames?.Length ?? 0) > 0)
+                {
+                    sb.AppendLine("Signal Names:");
+                    foreach (var sn in configuration.SignalNames!)
+                    {
+                        sb.AppendLine($"\t{sn}");
+                    }
+                }
+
+                sb.AppendLine();
+
+                Communicate.Invoke(this, new CommunicationEventArgs(sb.ToString(), nameof(BacktestingService)));
+            }
+        }
     }
 
-    protected virtual Task<IEnumerable<CodesAndCounts>> GetCodesAndCount(CancellationToken cancellationToken)
+    internal static BacktestingConfiguration DeserializeConfigFile(FileInfo configFile)
+    {
+        if (!configFile.Exists)
+        {
+            throw new ArgumentException($"Configuration file, {configFile.FullName}, does not exist.");
+        }
+        var options = JsonOptionsRepository.DefaultSerializerOptions;
+        options.Converters.Add(new EnumDescriptionConverter<BacktestType>());
+        options.Converters.Add(new EnumDescriptionConverter<PricePoint>());
+
+        return JsonSerializer.Deserialize<BacktestingConfiguration>(
+            File.ReadAllText(configFile.FullName),
+            options) ?? throw new ArgumentException($"Could not deserialize {configFile.FullName}");
+    }
+
+    protected virtual Task<IEnumerable<CodesAndCounts>> GetCodesAndCount(string source,
+        CancellationToken cancellationToken)
     {
         OnCommunicate(new CommunicationEventArgs("Fetching data to backtest ...", null));
         return _finDbContext.QueryAsync<CodesAndCounts>(
-            _finDbContext.Sql.AdjustedEodPrices.FetchCodesAndCounts, new { _configuration.Source },
+            _finDbContext.Sql.AdjustedEodPrices.FetchCodesAndCounts, new { source },
             0, cancellationToken);
     }
 
-    protected virtual Task CreateBacktestingRecord(CancellationToken cancellationToken)
+    protected virtual async Task<Guid> CreateBacktestingRecord(BacktestingConfiguration configuration,
+        CancellationToken cancellationToken)
     {
+        Guid backtestId = Guid.NewGuid();
         OnCommunicate(new CommunicationEventArgs("Creating backtest record...", null));
-        return _backtestDbContext.ExecuteAsync(_finDbContext.Sql.Backtests.UpsertBacktest,
-            new Backtest(_backtestId,
-                _configuration.Name,
-                _configuration.Type.GetEnumDescription(),
-                _configuration.Source,
-                _configuration.Description,
-                _configuration.EntryPricePoint.GetEnumDescription(),
-                _configuration.TargetUp.Value,
-                _configuration.TargetUp.PricePoint.GetEnumDescription(),
-                _configuration.TargetDown.Value,
-                _configuration.TargetDown.PricePoint.GetEnumDescription(),
+        await _backtestDbContext.ExecuteAsync(_finDbContext.Sql.Backtests.UpsertBacktest,
+            new Backtest(backtestId,
+                configuration.Name,
+                configuration.Type.GetEnumDescription(),
+                configuration.Source,
+                configuration.Description,
+                configuration.EntryPricePoint.GetEnumDescription(),
+                configuration.TargetUp.Value,
+                configuration.TargetUp.PricePoint.GetEnumDescription(),
+                configuration.TargetDown.Value,
+                configuration.TargetDown.PricePoint.GetEnumDescription(),
                 DateTime.UtcNow.Ticks,
                 DateTime.UtcNow.Ticks,
                 _processId), cancellationToken: cancellationToken);
+        return backtestId;
     }
 
     protected virtual void Enqueue(BacktestResultDetail detail)

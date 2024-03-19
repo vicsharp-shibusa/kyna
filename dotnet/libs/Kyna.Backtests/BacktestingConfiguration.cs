@@ -12,6 +12,7 @@ public class BacktestingConfiguration(BacktestType type,
     TestTargetPercentage targetDown,
     string[]? signalnames = null,
     int lengthOfPrologue = 15,
+    double volumeFactor = 1D,
     int? maxparallelization = null,
     bool onlySignalWithMarket = false,
     ChartConfiguration? chartConfiguration = null,
@@ -47,7 +48,7 @@ public class BacktestingConfiguration(BacktestType type,
     public bool OnlySignalWithMarket { get; init; } = onlySignalWithMarket;
 
     [JsonPropertyName("Volume Factor")]
-    public double VolumeFactor { get; init; } = 1D;
+    public double VolumeFactor { get; init; } = volumeFactor;
 
     [JsonPropertyName("Chart Configuration")]
     public ChartConfiguration? ChartConfiguration { get; init; } = chartConfiguration;
