@@ -264,6 +264,5 @@ class Config(string appName, string appVersion, string? description)
 {
     public bool StatsReport { get; set; }
     public bool ListProcessIds { get; set; }
-
     public IList<Guid> ProcessIdsToDelete { get; set; } = new List<Guid>(10);
 }

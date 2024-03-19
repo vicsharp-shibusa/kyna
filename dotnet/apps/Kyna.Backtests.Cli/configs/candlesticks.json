@@ -3,19 +3,19 @@
   "Name": "Reversals",
   "Source": "eodhd.com",
   "Description": "Reversal Candlestick Signals",
-  "EntryPricePoint": "Close",
-  "TargetUp": {
-    "PricePoint": "High",
+  "Entry Price Point": "Close",
+  "Target Up": {
+    "Price Point": "High",
     "Value": 0.1
   },
-  "TargetDown": {
-    "PricePoint": "Low",
+  "Target Down": {
+    "Price Point": "Low",
     "Value": 0.1
   },
-  "LengthOfPrologue": 15,
+  "Length O fPrologue": 15,
   "Volume Factor": 1.2,
-  "MaxParallelization": 10,
-  "SignalNames": [
+  "Max Parallelization": 10,
+  "Signal Names": [
     "Bullish Engulfing",
     "Bearish Engulfing",
     "Bullish Hammer",

@@ -8,11 +8,13 @@ using Kyna.Infrastructure.Database;
 using System.Diagnostics;
 using System.Text;
 using System.Text.Json;
+using static Kyna.ApplicationServices.Reports.ReportService;
 
 namespace Kyna.ApplicationServices.Backtests;
 
 public sealed class BacktestingService : IDisposable
 {
+    private readonly IDbContext _backtestsCtx;
     private readonly IBacktestRunner? _backtestRunner;
     private bool _disposedValue;
     private readonly BacktestingConfiguration? _configuration;
@@ -23,25 +25,25 @@ public sealed class BacktestingService : IDisposable
         FileInfo? configFileInfo,
         Guid? processId = null)
     {
-        if (!(configFileInfo?.Exists ?? false))
+        _backtestsCtx = DbContextFactory.Create(backtestDef);
+
+        if (configFileInfo?.Exists ?? false)
         {
-            throw new ArgumentException($"Confile file '{configFileInfo?.Name ?? ""}' does not exist.");
+            var options = JsonOptionsRepository.DefaultSerializerOptions;
+            options.Converters.Add(new EnumDescriptionConverter<BacktestType>());
+            options.Converters.Add(new EnumDescriptionConverter<PricePoint>());
+
+            _configuration = JsonSerializer.Deserialize<BacktestingConfiguration>(
+                File.ReadAllText(configFileInfo.FullName),
+                options) ?? throw new ArgumentException($"Could not deserialize {configFileInfo.Name}");
+
+            _backtestRunner = BacktestRunnerFactory.Create(finDef, backtestDef, _configuration, processId);
+            if (_backtestRunner == null)
+            {
+                throw new ArgumentException($"Could not construct backtest runner for type '{_configuration?.Type.GetEnumDescription()}'");
+            }
+            _backtestRunner.Communicate += BacktestRunner_Communicate;
         }
-
-        var options = JsonOptionsRepository.DefaultSerializerOptions;
-        options.Converters.Add(new EnumDescriptionConverter<BacktestType>());
-        options.Converters.Add(new EnumDescriptionConverter<PricePoint>());
-
-        _configuration = JsonSerializer.Deserialize<BacktestingConfiguration>(
-            File.ReadAllText(configFileInfo.FullName),
-            options) ?? throw new ArgumentException($"Could not deserialize {configFileInfo.Name}");
-
-        _backtestRunner = BacktestRunnerFactory.Create(finDef, backtestDef, _configuration, processId);
-        if (_backtestRunner == null)
-        {
-            throw new ArgumentException($"Could not construct backtest runner for type '{_configuration?.Type.GetEnumDescription()}'");
-        }
-        _backtestRunner.Communicate += BacktestRunner_Communicate;
     }
 
     private void BacktestRunner_Communicate(object? sender, CommunicationEventArgs e)
@@ -75,6 +77,18 @@ public sealed class BacktestingService : IDisposable
             sb.AppendLine();
 
             Communicate?.Invoke(this, new CommunicationEventArgs(sb.ToString(), nameof(BacktestingService)));
+        }
+    }
+
+    public Task<IEnumerable<ProcessIdInfo>> GetBacktestProcessesAsync() =>
+        _backtestsCtx.QueryAsync<ProcessIdInfo>(_backtestsCtx.Sql.Backtests.FetchProcessIdInfo);
+
+    public async Task DeleteProcessesAsync(params Guid[] processIds)
+    {
+        foreach (var pid in processIds)
+        {
+            await _backtestsCtx.ExecuteAsync(_backtestsCtx.Sql.Backtests.DeleteForProcessId,
+                new { ProcessId = pid });
         }
     }
 

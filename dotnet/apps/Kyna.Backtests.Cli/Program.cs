@@ -1,6 +1,7 @@
 ﻿using Kyna.ApplicationServices.Backtests;
 using Kyna.ApplicationServices.Cli;
 using Kyna.ApplicationServices.Configuration;
+using Kyna.ApplicationServices.Reports;
 using Kyna.Common;
 using Kyna.Common.Logging;
 using Kyna.Infrastructure.DataImport;
@@ -28,6 +29,8 @@ Config? config = null;
 try
 {
     HandleArguments(args);
+    ValidateArgsAndSetDefaults();
+    Configure();
 
     Debug.Assert(config != null);
 
@@ -35,42 +38,65 @@ try
     {
         ShowHelp();
     }
-    else
+    else if (config.ListProcessIds)
     {
-        ValidateArgsAndSetDefaults();
+        Debug.Assert(backtestingService != null);
+        var processInfo = (await backtestingService.GetBacktestProcessesAsync()).ToArray();
 
-        Configure();
-
-        KLogger.LogEvent(EventIdRepository.GetAppStartedEvent(config!), processId);
-
-        CancellationTokenSource cts = new();
-
-        TimeSpan duration = TimeSpan.Zero;
-
-        try
+        if (processInfo.Length == 0)
         {
-            Debug.Assert(backtestingService != null);
-
-            backtestingService.WriteConfigInfo();
-
-            await backtestingService.ExecuteAsync();
+            Communicate("No processes found", true);
         }
-        catch (AggregateException ex)
+        else
         {
-            cts.Cancel(true);
-
-            foreach (var e in ex.InnerExceptions)
+            foreach (var p in processInfo)
             {
-                Communicate(e.ToString(), true, LogLevel.Error);
+                Communicate(p.ToString(), true);
             }
         }
-        catch (ApiLimitReachedException)
+    }
+    else
+    {
+        Debug.Assert(backtestingService != null);
+        if (config.ProcessIdsToDelete.Any())
         {
-            Communicate("API credit limit reached; halting processing", false, LogLevel.Warning);
+            Communicate("Deleting backtests ...");
+            await backtestingService.DeleteProcessesAsync([.. config.ProcessIdsToDelete]);
         }
-        finally
+
+        if (config.ConfigFile != null)
         {
-            cts.Dispose();
+            KLogger.LogEvent(EventIdRepository.GetAppStartedEvent(config!), processId);
+
+            CancellationTokenSource cts = new();
+
+            TimeSpan duration = TimeSpan.Zero;
+
+            try
+            {
+                Debug.Assert(backtestingService != null);
+
+                backtestingService.WriteConfigInfo();
+
+                await backtestingService.ExecuteAsync();
+            }
+            catch (AggregateException ex)
+            {
+                cts.Cancel(true);
+
+                foreach (var e in ex.InnerExceptions)
+                {
+                    Communicate(e.ToString(), true, LogLevel.Error);
+                }
+            }
+            catch (ApiLimitReachedException)
+            {
+                Communicate("API credit limit reached; halting processing", false, LogLevel.Warning);
+            }
+            finally
+            {
+                cts.Dispose();
+            }
         }
     }
 
@@ -102,7 +128,7 @@ catch (Exception exc)
 }
 finally
 {
-    if (!(config?.ShowHelp ?? false))
+    if (config != null)
     {
         KLogger.LogEvent(EventIdRepository.GetAppFinishedEvent(config!), processId);
     }
@@ -140,8 +166,9 @@ void Communicate(string? message, bool force = false, LogLevel logLevel = LogLev
 void ShowHelp()
 {
     CliArg[] localArgs = [
-        new CliArg(["-f", "--file"], ["configuration file"], true, "JSON import configuration file to process.")
-    ];
+        new CliArg(["-f", "--file"], ["configuration file"], true, "JSON import configuration file to process."),
+        new CliArg(["-l", "--list"], [], false, "List process identifiers."),
+        new CliArg(["-d", "--delete"], ["process id"], false, "Delete backtest, results, and stats for specified process id.")    ];
 
     CliArg[] args = localArgs.Union(CliHelper.GetDefaultArgDescriptions()).ToArray();
 
@@ -168,6 +195,25 @@ void HandleArguments(string[] args)
 
         switch (argument)
         {
+            case "-d":
+            case "--delete":
+                if (a == args.Length - 1)
+                {
+                    throw new ArgumentException($"Expecting a process id after {args[a]}");
+                }
+                if (Guid.TryParse(args[++a], out Guid pid))
+                {
+                    config.ProcessIdsToDelete.Add(pid);
+                }
+                else
+                {
+                    throw new ArgumentException($"'{args[a]}' is not a valid process id.");
+                }
+                break;
+            case "-l":
+            case "--list":
+                config.ListProcessIds = true;
+                break;
             case "-f":
             case "--file":
                 if (a == args.Length - 1)
@@ -230,4 +276,6 @@ class Config(string appName, string appVersion, string? description)
     : CliConfigBase(appName, appVersion, description)
 {
     public FileInfo? ConfigFile { get; set; }
+    public bool ListProcessIds { get; set; }
+    public IList<Guid> ProcessIdsToDelete { get; set; } = new List<Guid>(10);
 }
