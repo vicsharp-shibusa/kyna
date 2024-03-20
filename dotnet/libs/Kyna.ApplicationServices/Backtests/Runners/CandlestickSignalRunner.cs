@@ -92,17 +92,17 @@ internal class CandlestickSignalRunner : RunnerBase, IBacktestRunner
                 }, (item) => ProcessCodesAndCounts(backtestId, configuration, item, market));
             }
 
-            while (!_queue.IsEmpty)
+            while (_queue.Count > 0)
             {
                 await Task.Delay(1_000, cancellationToken).ConfigureAwait(false);
             }
+
+            await WaitForQueueAsync().ConfigureAwait(false);
 
             await ProcessStatsAsync(configuration, backtestId, cancellationToken).ConfigureAwait(false);
         }
 
         _runQueue = false;
-
-        await WaitForQueueAsync().ConfigureAwait(false);
     }
 
     private void ProcessCodesAndCounts(Guid backtestId,
@@ -139,7 +139,7 @@ internal class CandlestickSignalRunner : RunnerBase, IBacktestRunner
 
         var backtestResults = await _backtestDbContext.QueryAsync<BacktestResultsInfo>(
             _backtestDbContext.Sql.Backtests.FetchBacktestResultInfo,
-            new { backtestId }, cancellationToken: cancellationToken);
+            new { backtestId }, cancellationToken: cancellationToken).ConfigureAwait(false);
 
         var signalNames = backtestResults.Select(b => b.SignalName).Distinct().ToArray();
 
@@ -180,7 +180,8 @@ internal class CandlestickSignalRunner : RunnerBase, IBacktestRunner
                     name, "Overall", "All", numberEntities, signalSubset.Length, ratio, criterion,
                     Convert.ToInt32(matchingResults.Average(r => r.ResultDurationTradingDays)),
                     Convert.ToInt32(matchingResults.Average(r => r.ResultDurationCalendarDays)),
-                    DateTime.UtcNow.Ticks, DateTime.UtcNow.Ticks, _processId), cancellationToken: cancellationToken);
+                    DateTime.UtcNow.Ticks, DateTime.UtcNow.Ticks, _processId), cancellationToken: cancellationToken)
+                .ConfigureAwait(false);
 
             var tickers = signalSubset.Select(b => b.Code).Distinct().ToArray();
 
@@ -273,7 +274,7 @@ internal class CandlestickSignalRunner : RunnerBase, IBacktestRunner
     {
         Task.Run(() =>
         {
-            while (_runQueue || !_queue.IsEmpty)
+            while (_runQueue || _queue.Count > 0)
             {
                 try
                 {

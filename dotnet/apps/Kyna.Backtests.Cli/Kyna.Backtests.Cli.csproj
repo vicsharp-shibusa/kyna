@@ -21,7 +21,10 @@
 		<None Update="appsettings.json">
 			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</None>
-		<None Update="configs\bullish-engulfing\bullish-engulfing.json">
+		<None Update="configs\bullish-engulfing\bullish-engulfing-1.json">
+		  <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</None>
+		<None Update="configs\bullish-engulfing\bullish-engulfing-2.json">
 		  <CopyToOutputDirectory>Always</CopyToOutputDirectory>
 		</None>
 		<None Update="configs\candlesticks.json">

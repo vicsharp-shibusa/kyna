@@ -95,14 +95,14 @@ internal class LoggerProvider : ILoggerProvider
 
                 int i = 0;
 
-                while (!_logQueue.IsEmpty && i++ < NumberOfCycles)
+                while (_logQueue.Count > 0 && i++ < NumberOfCycles)
                 {
                     Thread.Sleep(MsSleepTime);
                 }
 
                 i = 0;
 
-                while (!_appEventQueue.IsEmpty && i++ < NumberOfCycles)
+                while (_appEventQueue.Count > 0 && i++ < NumberOfCycles)
                 {
                     Thread.Sleep(MsSleepTime);
                 }

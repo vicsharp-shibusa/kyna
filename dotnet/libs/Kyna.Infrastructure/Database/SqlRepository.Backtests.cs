@@ -87,9 +87,11 @@ result_duration_calendar_days = EXCLUDED.result_duration_calendar_days,
 updated_ticks_utc = EXCLUDED.updated_ticks_utc",
             _ => ThrowSqlNotImplemented()
         };
+
         public string FetchBacktestResult => _dbDef.Engine switch
         {
-            DatabaseEngine.PostgreSql => @"SELECT id, backtest_id AS BacktestId, signal_name AS SignalName, code, industry, sector,
+            DatabaseEngine.PostgreSql => @"
+SELECT id, backtest_id AS BacktestId, signal_name AS SignalName, code, industry, sector,
 entry_date AS EntryDate, entry_price_point AS EntryPricePoint, entry_price AS EntryPrice,
 result_up_date AS ResultUpDate, result_up_price_point AS ResultUpPricePoint, result_up_price AS ResultUpPrice,
 result_down_date AS ResultDownDate, result_down_price_point AS ResultDownPricePoint, result_down_price AS ResultDownPrice,
@@ -101,22 +103,25 @@ updated_ticks_utc AS UpdatedTicksUtc
 FROM public.backtest_results",
             _ => ThrowSqlNotImplemented()
         };
+
         public string UpsertBacktestStats => _dbDef.Engine switch
         {
             DatabaseEngine.PostgreSql => @"
 INSERT INTO public.backtest_stats(
-backtest_id,
-source, signal_name, category, sub_category, 
+backtest_id, source, signal_name, category, sub_category, 
 number_entities, number_signals, 
 success_percentage, success_criterion, 
 success_duration_trading_days, success_duration_calendar_days, 
 process_id, created_ticks_utc, updated_ticks_utc)
-VALUES (@BacktestId, @Source, @SignalName, @Category, @SubCategory,
+VALUES (
+@BacktestId, @Source, @SignalName, @Category, @SubCategory,
 @NumberEntities, @NumberSignals,
 @SuccessPercentage, @SuccessCriterion,
 @SuccessDurationTradingDays, @SuccessDurationCalendarDays,
-@ProcessId, @CreatedTicksUtc, @UpdatedTicksUtc)
-ON CONFLICT (backtest_id, source, signal_name, category, sub_category) DO UPDATE SET
+@ProcessId, @CreatedTicksUtc, @UpdatedTicksUtc
+)
+ON CONFLICT (backtest_id, source, signal_name, category, sub_category)
+DO UPDATE SET
 number_entities = EXCLUDED.number_entities,
 number_signals = EXCLUDED.number_signals,
 success_percentage = EXCLUDED.success_percentage,
