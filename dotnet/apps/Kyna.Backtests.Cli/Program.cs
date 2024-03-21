@@ -130,7 +130,7 @@ catch (Exception exc)
 }
 finally
 {
-    if (config != null)
+    if (config?.ConfigDir != null || config?.ConfigFile != null)
     {
         KLogger.LogEvent(EventIdRepository.GetAppFinishedEvent(config!), processId);
     }
@@ -168,7 +168,8 @@ void Communicate(string? message, bool force = false, LogLevel logLevel = LogLev
 void ShowHelp()
 {
     CliArg[] localArgs = [
-        new CliArg(["-f", "--file"], ["configuration file"], true, "JSON import configuration file to process."),
+        new CliArg(["-i","--input-dir"], ["directory"], false, "Directory of JSON import configuration files to process."),
+        new CliArg(["-f", "--file"], ["configuration file"], false, "JSON import configuration file to process."),
         new CliArg(["-l", "--list"], [], false, "List process identifiers."),
         new CliArg(["-d", "--delete"], ["process id"], false, "Delete backtest, results, and stats for specified process id.")    ];
 
@@ -252,6 +253,15 @@ void ValidateArgsAndSetDefaults()
     if (config == null)
     {
         throw new Exception("Logic error; configuration was not created.");
+    }
+
+    if (!config.ShowHelp)
+    {
+        if (!config.ListProcessIds && config.ProcessIdsToDelete.Count == 0 &&
+            config.ConfigDir == null && config.ConfigFile == null)
+        {
+            throw new ArgumentException("Either a configuration file or directory is required.");
+        }
     }
 }
 
