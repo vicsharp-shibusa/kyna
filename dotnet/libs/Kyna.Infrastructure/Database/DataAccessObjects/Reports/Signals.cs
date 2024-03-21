@@ -2,6 +2,7 @@
 
 internal struct SignalCounts
 {
+    public Guid BacktestId;
     public string SignalName;
     public string? ResultDirection;
     public long Count;
@@ -9,6 +10,7 @@ internal struct SignalCounts
 
 internal struct SignalSummaryDetails
 {
+    public Guid BacktestId;
     public string Name;
     public string Category;
     public string SubCategory;
@@ -19,6 +21,7 @@ internal struct SignalSummaryDetails
 
 internal struct SignalDetails
 {
+    public Guid BacktestId;
     public string Name;
     public string Code;
     public string? Industry;

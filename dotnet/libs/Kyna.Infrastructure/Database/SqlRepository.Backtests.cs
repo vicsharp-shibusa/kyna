@@ -33,7 +33,8 @@ updated_ticks_utc = EXCLUDED.updated_ticks_utc",
         };
         public string FetchBacktest => _dbDef.Engine switch
         {
-            DatabaseEngine.PostgreSql => @"SELECT
+            DatabaseEngine.PostgreSql => @"
+SELECT
 id, name, type, source, description,
 entry_price_point AS EntryPricePoint,
 target_up_percentage AS TargetUpPercentage,
@@ -170,13 +171,14 @@ WHERE backtest_id = @BacktestId
         {
             DatabaseEngine.PostgreSql => @"
 SELECT
+R.backtest_id AS BacktestId,
 signal_name AS SignalName,
 result_direction AS ResultDirection,
 COUNT(*) AS Count
 FROM backtest_results R
 JOIN backtests B ON B.process_id = @ProcessId AND B.id = R.backtest_id
-GROUP BY process_id, signal_name, result_direction
-ORDER BY signal_name, result_direction
+GROUP BY R.backtest_id, process_id, signal_name, result_direction
+ORDER BY R.backtest_id, signal_name, result_direction
 ",
             _ => ThrowSqlNotImplemented()
         };
@@ -184,7 +186,7 @@ ORDER BY signal_name, result_direction
         public string FetchBacktestSignalSummary => _dbDef.Engine switch
         {
             DatabaseEngine.PostgreSql => @"
-SELECT signal_name AS Name, category, sub_category AS SubCategory,
+SELECT backtest_id AS BacktestId, signal_name AS Name, category, sub_category AS SubCategory,
 number_signals AS NumberSignals,
 success_percentage AS SuccessPercentage,
 success_duration_calendar_days AS SuccessDuration
@@ -200,6 +202,7 @@ ORDER BY success_percentage desc, success_duration_calendar_days ASC
         {
             DatabaseEngine.PostgreSql => @"
 SELECT
+R.backtest_id AS BacktestId,
 R.signal_name AS Name,
 R.code, R.industry, R.sector,
 R.entry_date AS EntryDate,

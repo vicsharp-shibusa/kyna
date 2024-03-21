@@ -2,7 +2,7 @@
   "profiles": {
     "Kyna.Report.Cli": {
       "commandName": "Project",
-      "commandLineArgs": "--list"
+      "commandLineArgs": "-v -p c2eb89d2-6b48-4762-8067-b58461e25230 -o /temp --stats"
     }
   }
 }

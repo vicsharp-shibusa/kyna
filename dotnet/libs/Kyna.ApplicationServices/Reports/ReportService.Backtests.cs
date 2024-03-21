@@ -10,19 +10,36 @@ public sealed partial class ReportService
         string sql = $@"{_backtestsCtx.Sql.Backtests.FetchBacktest}
 WHERE process_id = @ProcessId";
 
-        var backtest = _backtestsCtx.QueryFirstOrDefault<Infrastructure.Database.DataAccessObjects.Backtest>(
-            sql, new { processId });
+        var backtests = _backtestsCtx.Query<Infrastructure.Database.DataAccessObjects.Backtest>(
+            sql, new { processId }).ToArray();
 
-        Debug.Assert(backtest != null);
+        Debug.Assert(backtests != null);
 
-        var summaryReport = CreateReport("Report Details", "Detail", "Value");
-        summaryReport.AddRow("Process Id", processId);
-        summaryReport.AddRow("Time Generated", DateTime.Now);
-        summaryReport.AddRow("Name", backtest.Name);
-        summaryReport.AddRow("Type", backtest.Type);
-        summaryReport.AddRow("Source", backtest.Source);
-        summaryReport.AddRow("Description", backtest.Description);
-        summaryReport.AddRow("Backtest (local) Time", backtest.CreatedUtc.ToLocalTime());
+        List<string> headers = new List<string>(backtests.Length + 1) { "Details" };
+        headers.AddRange(backtests.Select(b => b.Id.ToString()).OrderBy(b => b));
+
+        var summaryReport = CreateReport("Report Details", headers.ToArray());
+
+        var names = backtests.OrderBy(b => b.Id.ToString()).Select(b => b.Name).ToList();
+        var types = backtests.OrderBy(b => b.Id.ToString()).Select(b => b.Type).ToList();
+        var sources = backtests.OrderBy(b => b.Id.ToString()).Select(b => b.Source).ToList();
+        var descriptions = backtests.OrderBy(b => b.Id.ToString()).Select(b => b.Description).ToList();
+        var timestamps = backtests.OrderBy(b => b.Id.ToString()).Select(b => b.CreatedUtc.ToLocalTime().ToString("yyyy-MM-dd HH:mm")).ToList();
+        var processIds = backtests.OrderBy(b => b.Id.ToString()).Select(b => b.ProcessId.ToString()).ToList();
+
+        names.Insert(0, "Name");
+        types.Insert(0, "Type");
+        sources.Insert(0, "Source");
+        descriptions.Insert(0, "Description");
+        timestamps.Insert(0, "Backtest (local) time");
+        processIds.Insert(0, "Process Id");
+
+        summaryReport.AddRow(names.ToArray());
+        summaryReport.AddRow(types.ToArray());
+        summaryReport.AddRow(sources.ToArray());
+        summaryReport.AddRow(descriptions.ToArray());
+        summaryReport.AddRow(timestamps.ToArray());
+        summaryReport.AddRow(processIds.ToArray());
 
         yield return summaryReport;
 
@@ -30,34 +47,42 @@ WHERE process_id = @ProcessId";
             _backtestsCtx.Sql.Backtests.FetchBacktestSignalCounts,
             new { processId });
 
-        var scReport = CreateReport("Signal Counts",
+        var scReport = CreateReport("Signal Counts", "Backtest Id",
             "Signal Name", "Result Direction", "Count", "Percentage");
 
+        var backtestIds = counts.Select(c => c.BacktestId).Distinct().ToArray();
         var signalNames = counts.Select(c => c.SignalName).Distinct().ToArray();
 
-        SignalNameCount[] snCounts = new SignalNameCount[signalNames.Length];
+        SignalNameCount[] snCounts = new SignalNameCount[signalNames.Length * backtestIds.Length];
 
-        for (int i = 0; i < signalNames.Length; i++)
+        int i = 0;
+        foreach (var backtestId in backtestIds)
         {
-            snCounts[i] = new SignalNameCount
+            foreach (var signalName in signalNames)
             {
-                Name = signalNames[i],
-                Count = counts.Where(c => c.SignalName.Equals(signalNames[i])).Sum(c => c.Count)
-            };
+                snCounts[i++] = new SignalNameCount
+                {
+                    BacktestId = backtestId,
+                    Name = signalName,
+                    Count = counts.Where(c => c.BacktestId.Equals(backtestId) &&
+                        c.SignalName.Equals(signalName)).Sum(c => c.Count)
+                };
+            }
         }
 
         foreach (var count in counts)
         {
-            var totalForSignal = snCounts.FirstOrDefault(s => s.Name.Equals(count.SignalName)).Count;
+            var totalForSignal = snCounts.FirstOrDefault(s => s.BacktestId.Equals(count.BacktestId) &&
+                s.Name.Equals(count.SignalName)).Count;
             var p = totalForSignal == 0 ? 0D : count.Count / (double)totalForSignal;
-            scReport.AddRow(count.SignalName, count.ResultDirection, count.Count, p);
+            scReport.AddRow(count.BacktestId, count.SignalName, count.ResultDirection, count.Count, p);
         }
 
         yield return scReport;
 
         foreach (var signalName in signalNames)
         {
-            var signalSummaryReport = CreateReport($"{signalName} Summary",
+            var signalSummaryReport = CreateReport($"{signalName} Summary", "Backtest Id",
                 "Name", "Category", "Sub Category", "Number Signals", "Success %", "Avg Duration");
 
             var summary = _backtestsCtx.Query<SignalSummaryDetails>(_backtestsCtx.Sql.Backtests.FetchBacktestSignalSummary,
@@ -65,13 +90,13 @@ WHERE process_id = @ProcessId";
 
             foreach (var item in summary.Where(d => d.NumberSignals >= (_reportOptions.Stats?.MinimumSignals ?? 0)))
             {
-                signalSummaryReport.AddRow(item.Name, item.Category, item.SubCategory,
+                signalSummaryReport.AddRow(item.BacktestId, item.Name, item.Category, item.SubCategory,
                     item.NumberSignals, item.SuccessPercentage, item.SuccessDuration);
             }
 
             yield return signalSummaryReport;
 
-            var signalDetailReport = CreateReport($"{signalName} Details",
+            var signalDetailReport = CreateReport($"{signalName} Details", "Backtest Id",
                 "Name", "Code", "Industry", "Sector",
                 "Entry Date", "Entry Price Point", "Entry Price",
                 "Result Up Date", "Result Up Price Point", "Result Up Price",
@@ -83,7 +108,7 @@ WHERE process_id = @ProcessId";
 
             foreach (var item in details)
             {
-                signalDetailReport.AddRow(item.Name, item.Code, item.Industry, item.Sector,
+                signalDetailReport.AddRow(item.BacktestId, item.Name, item.Code, item.Industry, item.Sector,
                     item.EntryDate, item.EntryPricePoint, item.EntryPrice,
                     item.ResultUpDate, item.ResultUpPricePoint, item.ResultUpPrice,
                     item.ResultDownDate, item.ResultDownPricePoint, item.ResultDownPrice,
@@ -123,6 +148,7 @@ WHERE process_id = @ProcessId";
 
 struct SignalNameCount
 {
+    public Guid BacktestId;
     public string Name;
     public long Count;
 }
