@@ -50,7 +50,9 @@ public abstract class OhlcSignalBase(
                 if (useMarket)
                 {
                     var index = market!.GetIndexOfDate(chart.PriceActions[i].Date);
-                    if (index.HasValue && market.TrendValues[index.Value].Sentiment != Sentiment)
+                    if (index.HasValue &&
+                        (market.TrendValues[index.Value].Sentiment is TrendSentiment.Bullish or TrendSentiment.Bearish) &&
+                        market.TrendValues[index.Value].Sentiment != Sentiment)
                     {
                         continue;
                     }
