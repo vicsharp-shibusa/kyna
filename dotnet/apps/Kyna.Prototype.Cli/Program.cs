@@ -51,6 +51,18 @@ try
         var options = JsonOptionsRepository.DefaultSerializerOptions;
         options.Converters.Add(new EnumDescriptionConverter<PricePoint>());
         options.Converters.Add(new EnumDescriptionConverter<BacktestType>());
+        options.WriteIndented = true;
+
+        MarketConfiguration marketConfiguration = new MarketConfiguration()
+        {
+            Codes = ["SPY.US", "QQQ.US", "DIA.US"],
+            Trends = [
+                new TrendConfiguration()
+                {
+                    Trend = "S50C"
+                }
+            ]
+        };
 
         foreach (var move in new double[] { .1, .2 })
         {
@@ -60,39 +72,45 @@ try
                 {
                     foreach (var trendDesc in new string[] { "S21C", "S50C", "S200C", "E21C", "E50C", "E200C" })
                     {
-                        ChartConfiguration chartConfig = new()
+                        foreach (var useMarket in new bool[] { true, false })
                         {
-                            Interval = "Daily",
-                            Trends = [new TrendConfiguration() { Trend = trendDesc }]
-                        };
+                            ChartConfiguration chartConfig = new()
+                            {
+                                Interval = "Daily",
+                                Trends = [new TrendConfiguration() { Trend = trendDesc }]
+                            };
 
-                        string[] descItems = [
-                            $"move: {move}",
-                            $"prologue len: {len}",
-                            $"trend desc: {trendDesc}",
-                            $"vol factor: {vol}"
-                        ];
+                            string[] descItems = [
+                                $"move: {move}",
+                                $"prologue len: {len}",
+                                $"trend desc: {trendDesc}",
+                                $"vol factor: {vol}",
+                                $"use market: {useMarket}"
+                            ];
 
-                        var backtestConfig = new BacktestingConfiguration(BacktestType.CandlestickPattern,
-                            "eodhd.com",
-                            $"Bullish Engulfing {num}",
-                            string.Join(';', descItems),
-                            PricePoint.Close,
-                            new TestTargetPercentage(PricePoint.High, move),
-                            new TestTargetPercentage(PricePoint.Low, move),
-                            [SignalName.BullishEngulfing.GetEnumDescription()],
-                            len,
-                            vol,
-                            10,
-                            onlySignalWithMarket,
-                            chartConfig, null);
+                            var backtestConfig = new BacktestingConfiguration(BacktestType.CandlestickPattern,
+                                "eodhd.com",
+                                $"Bullish Engulfing {num}",
+                                string.Join(';', descItems),
+                                PricePoint.Close,
+                                new TestTargetPercentage(PricePoint.High, move),
+                                new TestTargetPercentage(PricePoint.Low, move),
+                                [SignalName.BullishEngulfing.GetEnumDescription()],
+                                len,
+                                vol,
+                                10,
+                                onlySignalWithMarket,
+                                chartConfig,
+                                useMarket ? marketConfiguration : null);
 
-                        var btJson = JsonSerializer.Serialize(backtestConfig, options);
+                            var btJson = JsonSerializer.Serialize(backtestConfig, options);
 
-                        var fileName = Path.Combine("\\repos\\kyna-ins-and-outs\\configuration\\bullish-engulfing", $"bullish-engulfing-{num}.json");
-                        File.WriteAllText(fileName, btJson);
-                        Console.WriteLine(fileName);
-                        num++;
+                            var fileName = Path.Combine("\\repos\\kyna-ins-and-outs\\configuration\\bullish-engulfing", 
+                                $"bullish-engulfing-{num.ToString().PadLeft(4,'0')}.json");
+                            File.WriteAllText(fileName, btJson);
+                            Console.WriteLine(fileName);
+                            num++;
+                        }
                     }
                 }
             }
