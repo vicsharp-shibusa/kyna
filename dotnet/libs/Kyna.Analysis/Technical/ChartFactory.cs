@@ -67,7 +67,7 @@ internal static partial class ConvertMatch
 
 public static class ChartFactory
 {
-    public static Chart Create(string name, ChartConfiguration? configuration,
+    public static Chart Create(string name, ChartConfiguration? configuration, string? industry, string? sector,
         params Ohlc[][] ohlcs)
     {
         if (ohlcs.Length == 0)
@@ -101,23 +101,21 @@ public static class ChartFactory
             }
             if (sameDateOhlcs.Count != 0)
             {
-                combinedOhlc[i++] = CombineOhlcs(name, date, sameDateOhlcs);
+                combinedOhlc[i++] = CombineOhlcs(name, date, sameDateOhlcs.ToArray());
             }
         }
 
-        return Create(name, null, null, combinedOhlc, configuration);
+        return Create(name,industry, sector, combinedOhlc, configuration);
     }
 
-    private static Ohlc CombineOhlcs(string name, DateOnly date, IEnumerable<Ohlc> ohlcs)
+    private static Ohlc CombineOhlcs(string name, DateOnly date, Ohlc[] ohlcs)
     {
-        var arr = ohlcs.ToArray();
-
         return new Ohlc(name, date,
-            arr.Select(a => a.Open).Average(),
-            arr.Select(a => a.High).Average(),
-            arr.Select(a => a.Low).Average(),
-            arr.Select(a => a.Close).Average(),
-            Convert.ToInt64(Math.Ceiling(arr.Select(a => a.Volume).Average())));
+            ohlcs.Select(a => a.Open).Average(),
+            ohlcs.Select(a => a.High).Average(),
+            ohlcs.Select(a => a.Low).Average(),
+            ohlcs.Select(a => a.Close).Average(),
+            Convert.ToInt64(Math.Ceiling(ohlcs.Select(a => a.Volume).Average())));
     }
 
     public static Chart Create(string? code, string? industry, string? sector,

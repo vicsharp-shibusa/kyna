@@ -72,7 +72,7 @@ internal class CandlestickSignalRunner : RunnerBase, IBacktestRunner
                 {
                     Interval = "Daily",
                     Trends = configuration.MarketConfiguration.Trends
-                }, [.. ohlcsList]);
+                }, null, null, [.. ohlcsList]);
             }
 
             OnCommunicate(new CommunicationEventArgs("Fetching data to process ...", nameof(CandlestickSignalRunner)));

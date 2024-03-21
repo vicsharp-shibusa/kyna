@@ -147,6 +147,6 @@ public class ChartFactoryTests
         var ohlc2 = prices.Select(p => new Ohlc("TEST", p.Date, p.Open, p.High,
             p.Low, p.Close, p.Volume)).ToArray();
 
-        var chart = ChartFactory.Create("Market", null, ohlc1, ohlc2);
+        var chart = ChartFactory.Create("Market", null, null, null, ohlc1, ohlc2);
     }
 }
