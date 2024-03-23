@@ -1,8 +1,14 @@
 ﻿using System.ComponentModel;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Text;
 
 namespace Kyna.Common;
+
+public static class GuidExtensions
+{
+    public static string First8(this Guid guid) => guid.ToString()[..8];
+}
 
 public static class TimeSpanExtensions
 {
