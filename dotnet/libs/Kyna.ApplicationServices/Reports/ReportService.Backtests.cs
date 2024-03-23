@@ -1,4 +1,5 @@
-﻿using Kyna.Infrastructure.Database.DataAccessObjects.Reports;
+﻿using Kyna.Common;
+using Kyna.Infrastructure.Database.DataAccessObjects.Reports;
 using System.Diagnostics;
 
 namespace Kyna.ApplicationServices.Reports;
@@ -16,7 +17,7 @@ WHERE process_id = @ProcessId";
         Debug.Assert(backtests != null);
 
         List<string> headers = new List<string>(backtests.Length + 1) { "Details" };
-        headers.AddRange(backtests.Select(b => b.Id.ToString()).OrderBy(b => b));
+        headers.AddRange(backtests.Select(b => b.Id.First8()).OrderBy(b => b));
 
         var summaryReport = CreateReport("Report Details", headers.ToArray());
 
@@ -75,47 +76,54 @@ WHERE process_id = @ProcessId";
             var totalForSignal = snCounts.FirstOrDefault(s => s.BacktestId.Equals(count.BacktestId) &&
                 s.Name.Equals(count.SignalName)).Count;
             var p = totalForSignal == 0 ? 0D : count.Count / (double)totalForSignal;
-            scReport.AddRow(count.BacktestId, count.SignalName, count.ResultDirection, count.Count, p);
+            scReport.AddRow(count.BacktestId.First8(), count.SignalName, count.ResultDirection, count.Count, p);
         }
 
         yield return scReport;
 
         foreach (var signalName in signalNames)
         {
-            var signalSummaryReport = CreateReport($"{signalName} Summary", "Backtest Id",
-                "Name", "Category", "Sub Category", "Number Signals", "Success %", "Avg Duration");
-
-            var summary = _backtestsCtx.Query<SignalSummaryDetails>(_backtestsCtx.Sql.Backtests.FetchBacktestSignalSummary,
-                new { processId, signalName });
-
-            foreach (var item in summary.Where(d => d.NumberSignals >= (_reportOptions.Stats?.MinimumSignals ?? 0)))
+            foreach (var backtestId in backtestIds)
             {
-                signalSummaryReport.AddRow(item.BacktestId, item.Name, item.Category, item.SubCategory,
-                    item.NumberSignals, item.SuccessPercentage, item.SuccessDuration);
+                var signalSummaryReport = CreateReport(
+                    $"Summary {backtestId.First8()}",
+                    "Backtest Id", "Name", "Category", "Sub Category",
+                    "Number Signals", "Success %", "Avg Duration");
+
+                var summary = _backtestsCtx.Query<SignalSummaryDetails>(_backtestsCtx.Sql.Backtests.FetchBacktestSignalSummary,
+                    new { processId, signalName });
+
+                foreach (var item in summary.Where(d => d.NumberSignals >= (_reportOptions.Stats?.MinimumSignals ?? 0)))
+                {
+                    signalSummaryReport.AddRow(item.BacktestId.First8(),
+                        item.Name, item.Category, item.SubCategory,
+                        item.NumberSignals, item.SuccessPercentage, item.SuccessDuration);
+                }
+
+                yield return signalSummaryReport;
+
+                var signalDetailReport = CreateReport(
+                    $"Details {backtestId.First8()}", "Backtest Id",
+                    "Name", "Code", "Industry", "Sector",
+                    "Entry Date", "Entry Price Point", "Entry Price",
+                    "Result Up Date", "Result Up Price Point", "Result Up Price",
+                    "Result Down Date", "Result Down Price Point", "Result Down Price",
+                    "Result Direction", "Trading Days", "Calendar Days");
+
+                var details = _backtestsCtx.Query<SignalDetails>(_backtestsCtx.Sql.Backtests.FetchBacktestSignalDetails,
+                    new { processId, signalName });
+
+                foreach (var item in details)
+                {
+                    signalDetailReport.AddRow(item.BacktestId.First8(), item.Name, item.Code, item.Industry, item.Sector,
+                        item.EntryDate, item.EntryPricePoint, item.EntryPrice,
+                        item.ResultUpDate, item.ResultUpPricePoint, item.ResultUpPrice,
+                        item.ResultDownDate, item.ResultDownPricePoint, item.ResultDownPrice,
+                        item.ResultDirection, item.TradingDays, item.CalendarDays);
+                }
+
+                yield return signalDetailReport;
             }
-
-            yield return signalSummaryReport;
-
-            var signalDetailReport = CreateReport($"{signalName} Details", "Backtest Id",
-                "Name", "Code", "Industry", "Sector",
-                "Entry Date", "Entry Price Point", "Entry Price",
-                "Result Up Date", "Result Up Price Point", "Result Up Price",
-                "Result Down Date", "Result Down Price Point", "Result Down Price",
-                "Result Direction", "Trading Days", "Calendar Days");
-
-            var details = _backtestsCtx.Query<SignalDetails>(_backtestsCtx.Sql.Backtests.FetchBacktestSignalDetails,
-                new { processId, signalName });
-
-            foreach (var item in details)
-            {
-                signalDetailReport.AddRow(item.BacktestId, item.Name, item.Code, item.Industry, item.Sector,
-                    item.EntryDate, item.EntryPricePoint, item.EntryPrice,
-                    item.ResultUpDate, item.ResultUpPricePoint, item.ResultUpPrice,
-                    item.ResultDownDate, item.ResultDownPricePoint, item.ResultDownPrice,
-                    item.ResultDirection, item.TradingDays, item.CalendarDays);
-            }
-
-            yield return signalDetailReport;
         }
     }
 
