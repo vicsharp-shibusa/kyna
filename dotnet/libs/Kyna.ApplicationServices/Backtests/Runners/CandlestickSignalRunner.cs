@@ -116,7 +116,7 @@ internal class CandlestickSignalRunner : RunnerBase, IBacktestRunner
 
         Debug.Assert(!string.IsNullOrWhiteSpace(chart.Code));
 
-        _memoryCache.Set(chart.Code, chart, new MemoryCacheEntryOptions()
+        _memoryCache.Set(chart.Code, ohlc, new MemoryCacheEntryOptions()
         {
             AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(2)
         });
@@ -281,10 +281,13 @@ internal class CandlestickSignalRunner : RunnerBase, IBacktestRunner
                     if (_queue.TryDequeue(out (BacktestingConfiguration Configuration, Guid BacktestId,
                         SignalMatch SignalMatch) result))
                     {
-                        if (!_memoryCache.TryGetValue(result.SignalMatch.Code, out Chart? chart) || chart == null)
+                        if (!_memoryCache.TryGetValue(result.SignalMatch.Code, out Ohlc[]? ohlc))
                         {
                             throw new Exception($"Unable to pull chart for {result.SignalMatch.Code} out of cache.");
                         }
+
+                        var chart = ChartFactory.Create(result.SignalMatch.Code,
+                            null, null, ohlc!, configuration: result.Configuration.ChartConfiguration);
 
                         var price = chart.PriceActions[result.SignalMatch.Signal.End].GetPricePoint(result.Configuration.EntryPricePoint);
 

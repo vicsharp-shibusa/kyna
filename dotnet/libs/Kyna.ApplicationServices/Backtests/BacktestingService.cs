@@ -5,7 +5,6 @@ using Kyna.Common;
 using Kyna.Common.Events;
 using Kyna.Infrastructure.Database;
 using System.Diagnostics;
-using System.Text;
 using static Kyna.ApplicationServices.Reports.ReportService;
 
 namespace Kyna.ApplicationServices.Backtests;
