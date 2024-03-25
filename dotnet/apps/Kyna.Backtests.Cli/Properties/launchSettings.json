@@ -2,7 +2,7 @@
   "profiles": {
     "Kyna.Backtests.Cli": {
       "commandName": "Project",
-      "commandLineArgs": "-i configs/bullish-engulfing/"
+      "commandLineArgs": "-v -i configs/bullish-engulfing/"
     }
   }
 }
