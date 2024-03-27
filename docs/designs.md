@@ -2,11 +2,13 @@
 
 ## Data Import
 
-The following diagram represents an approximation of the `kyna-data-import` application's design and dependencies.
+The following diagram represents an approximation of the `kyna-importer` application's design and dependencies.
 
-![Data Import Diagram](./images/kyna-data-import.png)
+![Data Import Diagram](./images/kyna-importer.png)
 
-The CLI, `kyna-data-import`, instantiates an implementation of `IExternalDataImporter` based on the `-s <source name>` argument. Currently, the only supported implementation is the `EodHdImporter`, which has a source name of `eodhd.com`. The `<source name>` must correspond to the `Source` property in your `IExternalDataImporter` implementation (see below) for the connection to take place.
+The CLI, `kyna-importer`, instantiates an implementation of `IExternalDataImporter` based on the `-s <source name>` argument. Currently, there are two implementations of `IExternalDataImporter`. The first is `eodhd.com` and the second is `yahoo`, which interfaces with the Yahoo Finance API via a NuGet package. The `<source name>` must correspond to the `Source` property in your `IExternalDataImporter` implementation (see below) for the connection to take place.
+
+### New Implementations
 
 Each implementation of `IExternalDataImporter` must contain some sort of configuration data structure, represented in the diagram as `DataImportConfiguration`. I had hoped to have a generic import configuration, but it ultimately didn't make sense - the variations between the possible importers is too great to try to generify, so each importer will require it's own configuration structure, which may be housed inside the importer class.
 
@@ -53,7 +55,7 @@ An example of the `secret.json`:
 
 The name of the key, `eodhd.com` in the `ApiKeys` section above must correspond to the `Source` property of your `IExternalDataImport` implementation and, of course, the value must be a valid key.
 
-The `DataImportConfiguration` class is a deserialized implementation of a JSON file passed into the `kyna-data-import` application using the `-f <file name>` argument. For samples of possible configuration files, see the `configs` folder under the `Kyna.FinancialDataImport.Cli` project in the Kyna solution.
+The `DataImportConfiguration` class is a deserialized implementation of a JSON file passed into the `kyna-importer` application using the `-f <file name>` argument. For samples of possible configuration files, see the `configs` folder under the `Kyna.FinancialDataImport.Cli` project in the Kyna solution.
 
 The configuration file is passed on the command line, deserialized into the appropriate class, and then used in the instantiation of your `IExternalDataImporter` implementation. See the `ConfigureImporter` function in the `Program.cs` in the `Kyna.FinancialDataImport.Cli` project.
 
@@ -80,7 +82,7 @@ The reason for both `GetStringResponseAsync` and `InvokeApiCallAsync` is that so
 ## Data Migration
 
 Kyna data migration is the process of migrating data from the `imports.api_transactions` table to tables in the `financials` database.
-The process is controlled by the `Kyna.DataMigration.Cli` project and operates similarly to the import process.
+The process is controlled by the `Kyna.Migrator.Cli` project and operates similarly to the import process.
 Activities are controlled by a JSON configuration file passed to the CLI executable.
 
 The architecture for migration is simpler than import, as shown here:
