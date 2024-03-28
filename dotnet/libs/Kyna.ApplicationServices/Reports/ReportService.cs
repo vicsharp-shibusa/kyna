@@ -56,6 +56,7 @@ public sealed partial class ReportService(DbDef backtestsDbDef, ReportOptions re
         }
 
         workbook.SaveAs(fileInfo.FullName);
+        workbook.Dispose();
     }
 }
 

@@ -58,7 +58,7 @@ WHERE process_id = @ProcessId";
             _backtestsCtx.Sql.Backtests.FetchBacktestSignalCounts,
             new { processId });
 
-        var scReport = CreateReport("Signal Counts",
+        var scReport = CreateReport("Signal Counts", "Number",
             "Signal Name", "Result Direction", "Count", "Percentage");
 
         var backtestNums = counts.Select(c => map[c.BacktestId].ToString().PadLeft(3, '0')).Distinct().ToArray();
@@ -87,7 +87,7 @@ WHERE process_id = @ProcessId";
             var totalForSignal = snCounts.FirstOrDefault(s => s.BacktestNum.Equals(num) &&
                 s.Name.Equals(count.SignalName)).Count;
             var p = totalForSignal == 0 ? 0D : count.Count / (double)totalForSignal;
-            scReport.AddRow(count.SignalName, count.ResultDirection, count.Count, p);
+            scReport.AddRow(num, count.SignalName, count.ResultDirection, count.Count, p);
         }
 
         yield return scReport;
