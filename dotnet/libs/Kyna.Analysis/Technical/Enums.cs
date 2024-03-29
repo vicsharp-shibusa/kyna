@@ -29,7 +29,7 @@ public enum PricePoint
 
 public enum TrendSentiment
 {
-    Unknown = 0,
+    None = 0,
     Bullish,
     Bearish,
     Neutral
@@ -45,6 +45,8 @@ public enum ExtremeType
 public enum SignalName
 {
     None = 0,
+    [Description("Tall White Candle")]
+    TallWhiteCandle,
     [Description("Bullish Engulfing")]
     BullishEngulfing,
     [Description("Bearish Engulfing")]

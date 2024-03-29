@@ -36,7 +36,7 @@ public class CombinedTrend : TrendBase, ITrend
     {
         if (position < 0 || position > (_length - 1))
         {
-            return (TrendSentiment.Unknown, 0D);
+            return (TrendSentiment.None, 0D);
         }
 
         var value = 0D;

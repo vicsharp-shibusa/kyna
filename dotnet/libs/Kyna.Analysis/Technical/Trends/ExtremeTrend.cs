@@ -21,7 +21,7 @@ public class ExtremeTrend(Ohlc[] prices) : TrendBase(prices?.Length ?? 0), ITren
             {
                 if (previousExtreme == null)
                 {
-                    TrendValues[i] = new(TrendSentiment.Unknown, 0D);
+                    TrendValues[i] = new(TrendSentiment.None, 0D);
                 }
                 else
                 {
@@ -45,7 +45,7 @@ public class ExtremeTrend(Ohlc[] prices) : TrendBase(prices?.Length ?? 0), ITren
                 {
                     if (previousExtreme == null)
                     {
-                        TrendValues[i] = new(TrendSentiment.Unknown, 0D);
+                        TrendValues[i] = new(TrendSentiment.None, 0D);
                     }
                     else
                     {

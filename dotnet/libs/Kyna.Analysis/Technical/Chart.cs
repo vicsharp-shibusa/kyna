@@ -22,7 +22,7 @@ public class Chart
     public string? Sector { get; }
     private ITrend? Trend { get; set; } = null;
     public TrendValue[] TrendValues => Trend?.TrendValues ??
-        Enumerable.Repeat(new TrendValue(TrendSentiment.Unknown, 0D), PriceActions.Length).ToArray();
+        Enumerable.Repeat(new TrendValue(TrendSentiment.None, 0D), PriceActions.Length).ToArray();
     public Ohlc[] PriceActions { get; private set; } = [];
     public Candlestick[] Candlesticks { get; private set; } = [];
     public int Length => PriceActions.Length;

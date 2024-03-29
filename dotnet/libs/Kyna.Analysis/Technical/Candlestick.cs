@@ -26,6 +26,8 @@ public record class Candlestick : Ohlc
 
     public PriceRange LowerShadow => new(Body.Low, Low);
 
+    public bool IsTallBody => Length == 0 ? false : Body.Length / Length > .8M;
+
     protected decimal TotalShadowLength => UpperShadow.Length + LowerShadow.Length;
     protected decimal UpperShadowToTotalShadowRatio => TotalShadowLength == 0 ? 0 : UpperShadow.Length / TotalShadowLength;
     protected decimal LowerShadowToTotalShadowRatio => TotalShadowLength == 0 ? 0 : LowerShadow.Length / TotalShadowLength;
@@ -57,7 +59,7 @@ public record class Candlestick : Ohlc
 
     protected bool HasShavenHead => UpperShadow.Length == 0;
     protected bool HasShavenBottom => LowerShadow.Length == 0;
-
+    
     public bool IsBullishBelthold => !IsDojiBody
         && !IsMarubozu
         && High != 0
@@ -99,48 +101,4 @@ public record class Candlestick : Ohlc
         && !IsDojiBody
         && !IsUmbrella
         && !IsInvertedUmbrella;
-
-    public static string GetCsvHeader()
-    {
-        List<string> items = new(20)
-        {
-            "Symbol",
-            "Date",
-            "Open",
-            "High",
-            "Low",
-            "Close",
-            "Avg Price",
-            "Body Len",
-            "Upper Shadow Len",
-            "Lower Shadow Len",
-            "Total Shadow Len",
-            "Upper:Total",
-            "Lower:Total"
-        };
-
-        return string.Join(',', items);
-    }
-    public string ToCsv()
-    {
-        const string NumberFormat = "##0.000";
-        List<string> items = new(20)
-        {
-            Symbol,
-            Date.ToString("yyyy-MM-dd"),
-            Open.ToString(NumberFormat),
-            High.ToString(NumberFormat),
-            Low.ToString(NumberFormat),
-            Close.ToString(NumberFormat),
-            AveragePrice.ToString(NumberFormat),
-            Body.Length.ToString(NumberFormat),
-            UpperShadow.Length.ToString(NumberFormat),
-            LowerShadow.Length.ToString(NumberFormat),
-            TotalShadowLength.ToString(NumberFormat),
-            UpperShadowToTotalShadowRatio.ToString(NumberFormat),
-            LowerShadowToTotalShadowRatio.ToString(NumberFormat)
-        };
-
-        return string.Join(',', items);
-    }
 }

@@ -2,7 +2,7 @@
   "profiles": {
     "Kyna.Backtests.Cli": {
       "commandName": "Project",
-      "commandLineArgs": "-v -i configs/bullish-engulfing/"
+      "commandLineArgs": "-v -f configs/tall-white-candle.json"
     }
   }
 }
