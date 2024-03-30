@@ -2,7 +2,7 @@
 
 public sealed partial class CandlestickSignalRepository
 {
-    private static bool IsTallWhiteCandle(Chart chart,
+    private static int IsTallWhiteCandle(Chart chart,
         int position,
         int numberRequired,
         int lengthOfPrologue,
@@ -17,6 +17,6 @@ public sealed partial class CandlestickSignalRepository
         return second.IsLight &&
             second.IsTallBody &&
             chart.IsTall(position + 1) &&
-            second.Volume > first.Volume * volumeFactor;
+            second.Volume > first.Volume * volumeFactor ? position + 1 : -1;
     }
 }

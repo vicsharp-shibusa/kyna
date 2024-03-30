@@ -1,0 +1,33 @@
+{
+  "Type": "Candlestick Pattern",
+  "Name": "Bullish Engulfing With FollowThru",
+  "Source": "eodhd.com",
+  "Description": "move: 0.1;prologue len: 15;trend desc: S21C;vol factor: 1",
+  "Entry Price Point": "Close",
+  "Target Up": {
+    "Price Point": "High",
+    "Value": 0.1
+  },
+  "Target Down": {
+    "Price Point": "Low",
+    "Value": 0.1
+  },
+  "Signal Names": [
+    "Bullish Engulfing With FollowThru"
+  ],
+  "Length of Prologue": 15,
+  "Max Parallelization": 10,
+  "Only Signal With Market": false,
+  "Volume Factor": 1,
+  "Chart Configuration": {
+    "Interval": "Daily",
+    "Moving Averages": null,
+    "Trend Configuration": [
+      {
+        "Trend": "S21C",
+        "Weight": null
+      }
+    ]
+  },
+  "Market Configuration": null
+}

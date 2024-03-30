@@ -96,5 +96,7 @@ public enum SignalName
     [Description("Bullish Counterattack")]
     BullishCounterattack,
     [Description("Bearish Counterattack")]
-    BearishCounterattack
+    BearishCounterattack,
+    [Description("Bullish Engulfing With FollowThru")]
+    BullishEngulfingWithFollowThru,
 }

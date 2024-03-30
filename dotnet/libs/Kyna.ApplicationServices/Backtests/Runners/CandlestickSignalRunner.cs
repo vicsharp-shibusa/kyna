@@ -289,14 +289,14 @@ internal class CandlestickSignalRunner : RunnerBase, IBacktestRunner
                         var chart = ChartFactory.Create(result.SignalMatch.Code,
                             null, null, ohlc!, configuration: result.Configuration.ChartConfiguration);
 
-                        var price = chart.PriceActions[result.SignalMatch.Signal.End].GetPricePoint(result.Configuration.EntryPricePoint);
+                        var price = chart.PriceActions[result.SignalMatch.Position].GetPricePoint(result.Configuration.EntryPricePoint);
 
                         var targetUpPrice = price * (1M + (decimal)Math.Abs(result.Configuration.TargetUp.Value));
                         var targetDownPrice = price * (1M - (decimal)Math.Abs(result.Configuration.TargetDown.Value));
 
-                        var upAction = chart.PriceActions.Skip(result.SignalMatch.Signal.End + 1).FirstOrDefault(x => x.GetPricePoint(
+                        var upAction = chart.PriceActions.Skip(result.SignalMatch.Position + 1).FirstOrDefault(x => x.GetPricePoint(
                             result.Configuration.TargetUp.PricePoint) >= targetUpPrice);
-                        var downAction = chart.PriceActions.Skip(result.SignalMatch.Signal.End + 1).FirstOrDefault(x => x.GetPricePoint(
+                        var downAction = chart.PriceActions.Skip(result.SignalMatch.Position + 1).FirstOrDefault(x => x.GetPricePoint(
                             result.Configuration.TargetDown.PricePoint) <= targetDownPrice);
 
                         var detail = new BacktestResultDetail()
@@ -320,9 +320,9 @@ internal class CandlestickSignalRunner : RunnerBase, IBacktestRunner
                             },
                             Entry = new ResultDetail()
                             {
-                                Date = chart.PriceActions[result.SignalMatch.Signal.End].Date,
+                                Date = chart.PriceActions[result.SignalMatch.Position].Date,
                                 PricePoint = result.Configuration.EntryPricePoint,
-                                Price = chart.PriceActions[result.SignalMatch.Signal.End].GetPricePoint(result.Configuration.EntryPricePoint)
+                                Price = chart.PriceActions[result.SignalMatch.Position].GetPricePoint(result.Configuration.EntryPricePoint)
                             }
                         };
 

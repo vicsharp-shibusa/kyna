@@ -36,7 +36,7 @@ public abstract class OhlcSignalBase(
     /// length of prologue, and volume factor.
     /// Volume factor is the factor applied to volume on the key candle, when appropriate.
     /// </summary>
-    public abstract Func<Chart, int, int, int, double, bool> IsMatch { get; init; }
+    public abstract Func<Chart, int, int, int, double, int> IsMatch { get; init; }
 
     public virtual IEnumerable<SignalMatch> DiscoverMatches(Chart chart, Chart? market = null, bool signalOnlyWithMarket = false,
         double volumeFactor = 1D)
@@ -57,14 +57,16 @@ public abstract class OhlcSignalBase(
                         continue;
                     }
                 }
-                if (IsMatch(chart, i, NumberRequired, Options.LengthOfPrologue, volumeFactor))
+                int position = IsMatch(chart, i, NumberRequired, Options.LengthOfPrologue, volumeFactor);
+                if (position > -1)
                 {
                     yield return new SignalMatch()
                     {
                         SignalName = SignalName.GetEnumDescription(),
                         Code = chart.Code ?? "None",
                         Prologue = new ChartRange(i - Options.LengthOfPrologue, i - 1),
-                        Signal = new ChartRange(i, i + NumberRequired - 1)
+                        Signal = new ChartRange(i, i + NumberRequired - 1),
+                        Position = position
                     };
                 }
             }
@@ -72,12 +74,14 @@ public abstract class OhlcSignalBase(
     }
 }
 
-public struct SignalMatch(string signalName, string code, ChartRange prologue, ChartRange signal)
+public struct SignalMatch(string signalName, string code, ChartRange prologue, ChartRange signal,
+    int position)
 {
     public string SignalName = signalName;
     public string Code = code;
     public ChartRange Prologue = prologue;
     public ChartRange Signal = signal;
+    public int Position = position;
 }
 
 public struct ChartRange(int start, int end)
