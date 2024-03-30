@@ -45,13 +45,13 @@ try
 
         if (processInfo.Length == 0)
         {
-            Communicate("No processes found", true);
+            Communicate("No processes found");
         }
         else
         {
             foreach (var p in processInfo)
             {
-                Communicate(p.ToString(), true);
+                Communicate(p.ToString());
             }
         }
     }
@@ -66,12 +66,11 @@ try
         if (config.StatsReport)
         {
             Communicate($"Generating stats report for {processId}");
-            var reports = reportService.CreateBacktestingReports(processId).ToArray();
 
-            if (reports.Length > 0)
+            foreach (var filename in reportService.CreateBacktestingReports(processId, outputDir!.FullName))
+            foreach (var filename in reportService.CreateBacktestingReports(processId, outputDir!.FullName))
             {
-                var fileName = $"backtest_stats_{processId.ToString()[..8]}_{DateTime.Now:yyyyMMddHHmm}.xlsx";
-                ReportService.CreateSpreadsheet(Path.Combine(outputDir!.FullName, fileName), reports);
+                Communicate(filename);
             }
         }
     }

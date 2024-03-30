@@ -176,7 +176,8 @@ signal_name AS SignalName,
 result_direction AS ResultDirection,
 COUNT(*) AS Count
 FROM backtest_results R
-JOIN backtests B ON B.process_id = @ProcessId AND B.id = R.backtest_id
+JOIN backtests B ON B.id = R.backtest_id
+WHERE B.process_id = @ProcessId
 GROUP BY R.backtest_id, process_id, signal_name, result_direction
 ORDER BY R.backtest_id, signal_name, result_direction
 ",
@@ -191,7 +192,7 @@ number_signals AS NumberSignals,
 success_percentage AS SuccessPercentage,
 success_duration_calendar_days AS SuccessDuration
 FROM backtest_stats
-WHERE process_id = @ProcessId
+WHERE backtest_id = @BacktestId
 AND signal_name = @SignalName
 ORDER BY success_percentage desc, success_duration_calendar_days ASC
 ",
@@ -214,8 +215,8 @@ R.result_direction AS ResultDirection,
 R.result_duration_trading_days AS TradingDays,
 R.result_duration_calendar_days AS CalendarDays
 FROM backtest_results R
-JOIN backtests B ON B.process_id = @ProcessId AND B.id = R.backtest_id
-WHERE R.signal_name = @SignalName
+JOIN backtests B ON B.id = R.backtest_id
+WHERE B.process_id = @ProcessId AND R.signal_name = @SignalName AND R.backtest_id = @BacktestId
 ORDER BY R.code, R.entry_date
 ",
             _ => ThrowSqlNotImplemented()

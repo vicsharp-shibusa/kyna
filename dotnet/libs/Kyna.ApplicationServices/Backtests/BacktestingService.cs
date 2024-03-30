@@ -9,23 +9,14 @@ using static Kyna.ApplicationServices.Reports.ReportService;
 
 namespace Kyna.ApplicationServices.Backtests;
 
-public sealed class BacktestingService : IDisposable
+public sealed class BacktestingService(DbDef finDef, DbDef backtestDef) : IDisposable
 {
-    private readonly IDbContext _financialsCtx;
-    private readonly IDbContext _backtestsCtx;
+    private readonly IDbContext _backtestsCtx = DbContextFactory.Create(backtestDef);
     private IBacktestRunner? _backtestRunner;
     private bool _disposedValue;
-    private DbDef _finDef, _bckDef;
+    private DbDef _finDef = finDef, _bckDef = backtestDef;
 
     public event EventHandler<CommunicationEventArgs>? Communicate;
-
-    public BacktestingService(DbDef finDef, DbDef backtestDef)
-    {
-        _finDef = finDef;
-        _bckDef = backtestDef;
-        _financialsCtx = DbContextFactory.Create(finDef);
-        _backtestsCtx = DbContextFactory.Create(backtestDef);
-    }
 
     private void BacktestRunner_Communicate(object? sender, CommunicationEventArgs e)
     {

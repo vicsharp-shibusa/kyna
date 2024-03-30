@@ -92,7 +92,7 @@ internal class CandlestickSignalRunner : RunnerBase, IBacktestRunner
                 }, (item) => ProcessCodesAndCounts(backtestId, configuration, item, market));
             }
 
-            while (_queue.Count > 0)
+            while (!_queue.IsEmpty)
             {
                 await Task.Delay(1_000, cancellationToken).ConfigureAwait(false);
             }
@@ -274,7 +274,7 @@ internal class CandlestickSignalRunner : RunnerBase, IBacktestRunner
     {
         Task.Run(() =>
         {
-            while (_runQueue || _queue.Count > 0)
+            while (_runQueue || !_queue.IsEmpty)
             {
                 try
                 {

@@ -1,11 +1,12 @@
-﻿using Kyna.Infrastructure.Database.DataAccessObjects.Reports;
+﻿using Kyna.Common;
+using Kyna.Infrastructure.Database.DataAccessObjects.Reports;
 using System.Diagnostics;
 
 namespace Kyna.ApplicationServices.Reports;
 
 public sealed partial class ReportService
 {
-    public IEnumerable<Report> CreateBacktestingReports(Guid processId)
+    public IEnumerable<string> CreateBacktestingReports(Guid processId, string outputDir)
     {
         string sql = $@"{_backtestsCtx.Sql.Backtests.FetchBacktest}
 WHERE process_id = @ProcessId";
@@ -15,18 +16,21 @@ WHERE process_id = @ProcessId";
 
         Debug.Assert(backtests != null);
 
-        Dictionary<Guid, string> map = new(backtests.Length);
+        Dictionary<Guid, (string Num, string FileName)> map = new(backtests.Length);
 
         int i = 0;
-        foreach (var b in backtests)
+        foreach (var b in backtests.OrderBy(b => b.Id.ToString()))
         {
-            map.Add(b.Id, (++i).ToString().PadLeft(3,'0'));
+            var num = (++i).ToString().PadLeft(3, '0');
+            map.Add(b.Id, (num, $"backtest_stats_{processId.First8()}_{num}.xlsx"));
         }
 
-        List<string> headers = new List<string>(backtests.Length + 1) { "Details" };
-        headers.AddRange(backtests.Select(b => map[b.Id].ToString().PadLeft(3, '0')).OrderBy(b => b));
+        List<Report> reports = new(2);
 
-        var summaryReport = CreateReport("Report Details", headers.ToArray());
+        List<string> headers = new(backtests.Length + 1) { "Details" };
+        headers.AddRange(backtests.Select(b => map[b.Id].Num).OrderBy(b => b));
+
+        var summaryReport = CreateReport("Report Details", [.. headers]);
 
         var names = backtests.OrderBy(b => b.Id.ToString()).Select(b => b.Name).ToList();
         var types = backtests.OrderBy(b => b.Id.ToString()).Select(b => b.Type).ToList();
@@ -35,6 +39,7 @@ WHERE process_id = @ProcessId";
         var timestamps = backtests.OrderBy(b => b.Id.ToString()).Select(b => b.CreatedUtc.ToLocalTime().ToString("yyyy-MM-dd HH:mm")).ToList();
         var processIds = backtests.OrderBy(b => b.Id.ToString()).Select(b => b.ProcessId.ToString()).ToList();
         var backtestIds = backtests.OrderBy(b => b.Id.ToString()).Select(b => b.Id.ToString()).ToList();
+        var fileNames = backtests.OrderBy(b => b.Id.ToString()).Select(b => map[b.Id].FileName).ToList();
 
         names.Insert(0, "Name");
         types.Insert(0, "Type");
@@ -43,6 +48,7 @@ WHERE process_id = @ProcessId";
         timestamps.Insert(0, "Backtest (local) time");
         processIds.Insert(0, "Process Id");
         backtestIds.Insert(0, "Backtest Id");
+        fileNames.Insert(0, "File Names");
 
         summaryReport.AddRow(names.ToArray());
         summaryReport.AddRow(types.ToArray());
@@ -51,17 +57,18 @@ WHERE process_id = @ProcessId";
         summaryReport.AddRow(timestamps.ToArray());
         summaryReport.AddRow(processIds.ToArray());
         summaryReport.AddRow(backtestIds.ToArray());
+        summaryReport.AddRow(fileNames.ToArray());
 
-        yield return summaryReport;
+        reports.Add(summaryReport);
 
         var counts = _backtestsCtx.Query<SignalCounts>(
             _backtestsCtx.Sql.Backtests.FetchBacktestSignalCounts,
             new { processId });
 
         var scReport = CreateReport("Signal Counts", "Number",
-            "Signal Name", "Result Direction", "Count", "Percentage");
+            "Signal Name", "Result Direction", "Count", "Percentage", "Description");
 
-        var backtestNums = counts.Select(c => map[c.BacktestId].ToString().PadLeft(3, '0')).Distinct().ToArray();
+        var backtestNums = counts.Select(c => map[c.BacktestId].Num).Distinct().ToArray();
         var signalNames = counts.Select(c => c.SignalName).Distinct().ToArray();
 
         SignalNameCount[] snCounts = new SignalNameCount[signalNames.Length * backtestNums.Length];
@@ -75,7 +82,7 @@ WHERE process_id = @ProcessId";
                 {
                     BacktestNum = backtestNum,
                     Name = signalName,
-                    Count = counts.Where(c => map[c.BacktestId].Equals(backtestNum) &&
+                    Count = counts.Where(c => map[c.BacktestId].Num.Equals(backtestNum) &&
                         c.SignalName.Equals(signalName)).Sum(c => c.Count)
                 };
             }
@@ -83,26 +90,38 @@ WHERE process_id = @ProcessId";
 
         foreach (var count in counts)
         {
-            var num = map[count.BacktestId].ToString().PadLeft(3, '0');
+            var num = map[count.BacktestId].Num;
             var totalForSignal = snCounts.FirstOrDefault(s => s.BacktestNum.Equals(num) &&
                 s.Name.Equals(count.SignalName)).Count;
             var p = totalForSignal == 0 ? 0D : count.Count / (double)totalForSignal;
-            scReport.AddRow(num, count.SignalName, count.ResultDirection, count.Count, p);
+            var desc = backtests.FirstOrDefault(b => b.Id.Equals(count.BacktestId))?.Description;
+            scReport.AddRow(num, count.SignalName, count.ResultDirection, count.Count, p, desc);
         }
 
-        yield return scReport;
+        reports.Add(scReport);
+
+        var fn = Path.Combine(outputDir, $"backtest_stats_{processId.First8()}_summary.xlsx");
+
+        CreateSpreadsheet(fn, [.. reports]);
+
+        yield return fn;
+
+        summaryReport = null;
+        scReport = null;
+
+        reports.Clear();
 
         foreach (var signalName in signalNames)
         {
-            foreach (var backtestNum in backtestNums)
+            foreach (var backtestId in backtests.Select(b => b.Id))
             {
                 var signalSummaryReport = CreateReport(
-                    $"Summary {backtestNum}",
+                    $"Summary {map[backtestId].Num}",
                     "Name", "Category", "Sub Category",
                     "Number Signals", "Success %", "Avg Duration");
 
                 var summary = _backtestsCtx.Query<SignalSummaryDetails>(_backtestsCtx.Sql.Backtests.FetchBacktestSignalSummary,
-                    new { processId, signalName });
+                    new { backtestId, signalName });
 
                 foreach (var item in summary.Where(d => d.NumberSignals >= (_reportOptions.Stats?.MinimumSignals ?? 0)))
                 {
@@ -110,10 +129,10 @@ WHERE process_id = @ProcessId";
                         item.NumberSignals, item.SuccessPercentage, item.SuccessDuration);
                 }
 
-                yield return signalSummaryReport;
+                reports.Add(signalSummaryReport);
 
                 var signalDetailReport = CreateReport(
-                    $"Details {backtestNum}",
+                    $"Details {map[backtestId].Num}",
                     "Name", "Code", "Industry", "Sector",
                     "Entry Date", "Entry Price Point", "Entry Price",
                     "Result Up Date", "Result Up Price Point", "Result Up Price",
@@ -121,7 +140,7 @@ WHERE process_id = @ProcessId";
                     "Result Direction", "Trading Days", "Calendar Days");
 
                 var details = _backtestsCtx.Query<SignalDetails>(_backtestsCtx.Sql.Backtests.FetchBacktestSignalDetails,
-                    new { processId, signalName });
+                    new { backtestId, processId, signalName });
 
                 foreach (var item in details)
                 {
@@ -132,7 +151,12 @@ WHERE process_id = @ProcessId";
                         item.ResultDirection, item.TradingDays, item.CalendarDays);
                 }
 
-                yield return signalDetailReport;
+                reports.Add(signalDetailReport);
+
+                fn = Path.Combine(outputDir, $"backtest_stats_{processId.First8()}_{map[backtestId].Num}.xlsx");
+                CreateSpreadsheet(fn, [.. reports]);
+                yield return fn;
+                signalDetailReport = null;
             }
         }
     }

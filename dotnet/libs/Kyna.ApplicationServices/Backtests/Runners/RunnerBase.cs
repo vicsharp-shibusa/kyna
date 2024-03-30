@@ -117,7 +117,7 @@ internal abstract class RunnerBase
 
     protected virtual async Task WaitForQueueAsync(int milliseconds = 1_000)
     {
-        while (_resultDetails.Count > 0)
+        while (!_resultDetails.IsEmpty)
         {
             await Task.Delay(milliseconds).ConfigureAwait(false);
         }
@@ -132,7 +132,7 @@ internal abstract class RunnerBase
     {
         Task.Run(() =>
         {
-            while (_runQueue || _resultDetails.Count > 0)
+            while (_runQueue || !_resultDetails.IsEmpty)
             {
                 if (_resultDetails.TryDequeue(out BacktestResultDetail? resultDetail))
                 {

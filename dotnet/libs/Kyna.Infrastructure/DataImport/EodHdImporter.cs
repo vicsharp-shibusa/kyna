@@ -143,7 +143,7 @@ internal sealed class EodHdImporter : DataImporterBase, IExternalDataImporter
         await InvokeCalendarIposCallAsync(cancellationToken).ConfigureAwait(false);
         await InvokeCalendarSplitsCallAsync(cancellationToken).ConfigureAwait(false);
 
-        if (_concurrentBag.Count > 0)
+        if (!_concurrentBag.IsEmpty)
         {
             _maxParallelization = 0;
             Communicate?.Invoke(this, new CommunicationEventArgs($"Processing {_concurrentBag.Count} stragglers.", null));

@@ -56,7 +56,7 @@ internal sealed class RandomBaselineRunner : RunnerBase, IBacktestRunner
         }
 
         _runQueue = false;
-        while (_queue.Count > 0)
+        while (!_queue.IsEmpty)
         {
             await Task.Delay(1_000, cancellationToken).ConfigureAwait(false);
         }
@@ -85,7 +85,7 @@ internal sealed class RandomBaselineRunner : RunnerBase, IBacktestRunner
     {
         Task.Run(() =>
         {
-            while (_runQueue || _queue.Count > 0)
+            while (_runQueue || !_queue.IsEmpty)
             {
                 try
                 {

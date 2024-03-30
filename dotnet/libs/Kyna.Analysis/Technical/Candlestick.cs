@@ -26,7 +26,7 @@ public record class Candlestick : Ohlc
 
     public PriceRange LowerShadow => new(Body.Low, Low);
 
-    public bool IsTallBody => Length == 0 ? false : Body.Length / Length > .8M;
+    public bool IsTallBody => Length != 0 && Body.Length / Length > .8M;
 
     protected decimal TotalShadowLength => UpperShadow.Length + LowerShadow.Length;
     protected decimal UpperShadowToTotalShadowRatio => TotalShadowLength == 0 ? 0 : UpperShadow.Length / TotalShadowLength;

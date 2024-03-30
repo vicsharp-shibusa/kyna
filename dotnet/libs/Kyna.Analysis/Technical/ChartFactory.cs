@@ -101,7 +101,7 @@ public static class ChartFactory
             }
             if (sameDateOhlcs.Count != 0)
             {
-                combinedOhlc[i++] = CombineOhlcs(name, date, sameDateOhlcs.ToArray());
+                combinedOhlc[i++] = CombineOhlcs(name, date, [.. sameDateOhlcs]);
             }
         }
 

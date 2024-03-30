@@ -53,7 +53,7 @@ try
         options.Converters.Add(new EnumDescriptionConverter<BacktestType>());
         options.WriteIndented = true;
 
-        MarketConfiguration marketConfiguration = new MarketConfiguration()
+        MarketConfiguration marketConfiguration = new()
         {
             Codes = ["SPY.US", "QQQ.US", "DIA.US"],
             Trends = [
