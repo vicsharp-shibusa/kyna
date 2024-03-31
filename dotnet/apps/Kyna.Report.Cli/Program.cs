@@ -67,8 +67,7 @@ try
         {
             Communicate($"Generating stats report for {processId}");
 
-            foreach (var filename in reportService.CreateBacktestingReports(processId, outputDir!.FullName))
-            foreach (var filename in reportService.CreateBacktestingReports(processId, outputDir!.FullName))
+            foreach (var filename in reportService.CreateBacktestingCsvReports(processId, outputDir!.FullName))
             {
                 Communicate(filename);
             }

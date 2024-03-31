@@ -1,4 +1,5 @@
 ﻿using ClosedXML.Excel;
+using Kyna.Common;
 using Kyna.Infrastructure.Database;
 
 namespace Kyna.ApplicationServices.Reports;
@@ -9,6 +10,28 @@ public sealed partial class ReportService(DbDef backtestsDbDef, ReportOptions re
     private readonly ReportOptions _reportOptions = reportOptions;
 
     public static Report CreateReport(string name, params string[] headers) => new(name, headers);
+
+    public static void CreateCsv(string file, Report report, string delimiter = ",")
+    {
+        var fileInfo = new FileInfo(file);
+        if (fileInfo.Exists)
+        {
+            throw new ArgumentException($"File '{fileInfo.FullName}' already exists.");
+        }
+
+        using (var stream = File.Create(fileInfo.FullName))
+        {
+            stream.WriteLine(string.Join(delimiter, report.Headers));
+            foreach (var row in report.Rows)
+            {
+                if (row != null)
+                {
+                    stream.WriteLine(string.Join(delimiter, row.Select(r => r?.ToString() ?? "")));
+                }
+            }
+            stream.Flush();
+        }
+    }
 
     public static void CreateSpreadsheet(string file, params Report[] reports)
     {

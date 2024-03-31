@@ -1,4 +1,6 @@
-﻿using Kyna.Common;
+﻿using DocumentFormat.OpenXml.Bibliography;
+using Kyna.Common;
+using Kyna.Infrastructure.Database.DataAccessObjects;
 using Kyna.Infrastructure.Database.DataAccessObjects.Reports;
 using System.Diagnostics;
 
@@ -6,7 +8,112 @@ namespace Kyna.ApplicationServices.Reports;
 
 public sealed partial class ReportService
 {
-    public IEnumerable<string> CreateBacktestingReports(Guid processId, string outputDir)
+    public IEnumerable<string> CreateBacktestingCsvReports(Guid processId, string outputDir)
+    {
+        string sql = $@"{_backtestsCtx.Sql.Backtests.FetchBacktest}
+WHERE process_id = @ProcessId";
+
+        var backtestDaos = _backtestsCtx.Query<Infrastructure.Database.DataAccessObjects.Backtest>(
+            sql, new { processId }).ToArray();
+
+        Debug.Assert(backtestDaos != null);
+
+        var counts = _backtestsCtx.Query<SignalCounts>(
+            _backtestsCtx.Sql.Backtests.FetchBacktestSignalCounts, new { processId }).ToArray();
+
+        var signalNames = counts.Select(c => c.SignalName).Distinct().ToArray();
+
+        var scReport = CreateReport($"{processId.First8()}-summary", "Id",
+            "Signal Name", "Result Direction", "Count", "Percentage", "Description");
+
+        List<SignalNameCount> snCounts = new(counts.Length);
+
+        foreach (var backtestId in backtestDaos.Select(b => b.Id))
+        {
+            foreach (var signalName in signalNames)
+            {
+                snCounts.Add(new SignalNameCount
+                {
+                    BacktestNum = backtestId.First8(),
+                    Name = signalName,
+                    Count = counts.Where(c => c.BacktestId.Equals(backtestId) &&
+                        c.SignalName.Equals(signalName)).Sum(c => c.Count)
+                });
+            }
+        }
+
+        foreach (var count in counts)
+        {
+            var num = count.BacktestId.First8();
+            var totalForSignal = snCounts.FirstOrDefault(s => s.BacktestNum.Equals(num) &&
+                s.Name.Equals(count.SignalName)).Count;
+            var p = totalForSignal == 0 ? 0D : count.Count / (double)totalForSignal;
+            var desc = backtestDaos.FirstOrDefault(b => b.Id.Equals(count.BacktestId))?.Description;
+            scReport.AddRow(num, count.SignalName, count.ResultDirection, count.Count, p, desc);
+        }
+
+        var fn = Path.Combine(outputDir, $"{scReport.Name}.csv");
+        CreateCsv(fn, scReport);
+        yield return fn;
+
+        scReport = null;
+
+        foreach (var signalName in signalNames)
+        {
+            var snAbbrev = signalName.Replace(' ', '-').ToLower();
+
+            foreach (var btDao in backtestDaos)
+            {
+                var signalSummaryReport = CreateReport(
+    $"{snAbbrev}-{btDao.Id.First8()}-summary",
+    "Name", "Category", "Sub Category",
+    "Number Signals", "Success %", "Avg Duration");
+
+                var summary = _backtestsCtx.Query<SignalSummaryDetails>(_backtestsCtx.Sql.Backtests.FetchBacktestSignalSummary,
+                    new { BacktestId = btDao.Id, signalName });
+
+                foreach (var item in summary.Where(d => d.NumberSignals >= (_reportOptions.Stats?.MinimumSignals ?? 0)))
+                {
+                    signalSummaryReport.AddRow(item.Name, item.Category, item.SubCategory,
+                        item.NumberSignals, item.SuccessPercentage, item.SuccessDuration);
+                }
+
+                fn = Path.Combine(outputDir, $"{signalSummaryReport.Name}.csv");
+                CreateCsv(fn, signalSummaryReport);
+                yield return fn;
+
+                signalSummaryReport = null;
+
+                var details = _backtestsCtx.Query<SignalDetails>(
+                    _backtestsCtx.Sql.Backtests.FetchBacktestSignalDetails,
+                    new { BacktestId = btDao.Id, processId, signalName });
+
+                var signalDetailReport = CreateReport(
+    $"{snAbbrev}-{btDao.Id.First8()}-details",
+    "Name", "Code", "Industry", "Sector",
+    "Entry Date", "Entry Price Point", "Entry Price",
+    "Result Up Date", "Result Up Price Point", "Result Up Price",
+    "Result Down Date", "Result Down Price Point", "Result Down Price",
+    "Result Direction", "Trading Days", "Calendar Days");
+
+                foreach (var item in details)
+                {
+                    signalDetailReport.AddRow(item.Name, item.Code, item.Industry, item.Sector,
+                        item.EntryDate, item.EntryPricePoint, item.EntryPrice,
+                        item.ResultUpDate, item.ResultUpPricePoint, item.ResultUpPrice,
+                        item.ResultDownDate, item.ResultDownPricePoint, item.ResultDownPrice,
+                        item.ResultDirection, item.TradingDays, item.CalendarDays);
+                }
+
+                fn = Path.Combine(outputDir, $"{signalDetailReport.Name}.csv");
+                CreateCsv(fn, signalDetailReport);
+                yield return fn;
+                signalDetailReport = null;
+            }
+        }
+    }
+
+    public IEnumerable<string> CreateBacktestingXlsxReports(Guid processId, string outputDir)
     {
         string sql = $@"{_backtestsCtx.Sql.Backtests.FetchBacktest}
 WHERE process_id = @ProcessId";
