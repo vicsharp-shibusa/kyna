@@ -287,7 +287,8 @@ internal class CandlestickSignalRunner : RunnerBase, IBacktestRunner
                         }
 
                         var chart = ChartFactory.Create(result.SignalMatch.Code,
-                            null, null, ohlc!, configuration: result.Configuration.ChartConfiguration);
+                            result.SignalMatch.Industry, result.SignalMatch.Sector,
+                            ohlc!, configuration: result.Configuration.ChartConfiguration);
 
                         var price = chart.PriceActions[result.SignalMatch.Position].GetPricePoint(result.Configuration.EntryPricePoint);
 

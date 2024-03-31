@@ -64,6 +64,8 @@ public abstract class OhlcSignalBase(
                     {
                         SignalName = SignalName.GetEnumDescription(),
                         Code = chart.Code ?? "None",
+                        Industry = chart.Industry,
+                        Sector = chart.Sector,
                         Prologue = new ChartRange(i - Options.LengthOfPrologue, i - 1),
                         Signal = new ChartRange(i, i + NumberRequired - 1),
                         Position = position
@@ -74,11 +76,13 @@ public abstract class OhlcSignalBase(
     }
 }
 
-public struct SignalMatch(string signalName, string code, ChartRange prologue, ChartRange signal,
+public struct SignalMatch(string signalName, string code, string? industry, string? sector, ChartRange prologue, ChartRange signal,
     int position)
 {
     public string SignalName = signalName;
     public string Code = code;
+    public string? Industry = industry;
+    public string? Sector = sector;
     public ChartRange Prologue = prologue;
     public ChartRange Signal = signal;
     public int Position = position;
