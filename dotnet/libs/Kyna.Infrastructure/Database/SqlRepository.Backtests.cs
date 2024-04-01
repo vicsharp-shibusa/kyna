@@ -225,13 +225,11 @@ ORDER BY R.code, R.entry_date
         public string FetchProcessIdInfo => _dbDef.Engine switch
         {
             DatabaseEngine.PostgreSql => @"
-SELECT B.process_id AS ProcessId,
-B.name, B.type, B.source, B.description, B.created_utc AS CreatedUtc,
-COUNT(R.*) AS ResultCount
+SELECT B.process_id AS ProcessId, COUNT(B.id) AS BacktestCount,
+MIN(B.created_utc) AS MinDate, MAX(B.created_utc) AS MaxDate
 FROM backtests B
-LEFT JOIN backtest_results R ON B.id = R.backtest_id
-GROUP BY B.process_id, B.name, B.type, B.source, B.description, B.created_utc
-ORDER BY B.created_utc DESC
+GROUP BY B.process_id
+ORDER BY MIN(B.created_utc) DESC
 ",
             _ => ThrowSqlNotImplemented()
         };

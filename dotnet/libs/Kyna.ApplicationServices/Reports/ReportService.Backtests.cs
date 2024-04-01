@@ -283,15 +283,12 @@ WHERE process_id = @ProcessId";
     public struct ProcessIdInfo
     {
         public Guid ProcessId;
-        public string Name;
-        public string Type;
-        public string Source;
-        public string Description;
-        public DateTime CreatedUtc;
-        public int ResultCount;
+        public int BacktestCount;
+        public DateTime MinDate;
+        public DateTime MaxDate;
 
-        public override readonly string ToString() =>
-            $"{CreatedUtc:yyyy-MM-dd HH:mm} | {Source} | {Name} | {Type} | {ProcessId} | {Description} | {ResultCount:#,##0} results";
+        public override string ToString() =>
+            $"{ProcessId} | {BacktestCount,4} | {MinDate:yyyy-MM-dd HH:mm} | {MaxDate:yyyy-MM-dd HH:mm}";
     }
 }
 
