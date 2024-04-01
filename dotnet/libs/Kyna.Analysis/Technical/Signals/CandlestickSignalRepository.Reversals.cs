@@ -66,6 +66,40 @@ public sealed partial class CandlestickSignalRepository
         return -1;
     }
 
+    private static int IsBearishEngulfingWithFollowThru(Chart chart,
+        int position,
+        int numberRequired,
+        int lengthOfPrologue,
+        double volumeFactor = 1D)
+    {
+        CheckSignalArgs(chart, position, numberRequired, lengthOfPrologue);
+
+        var prologue = chart.Candlesticks[(position - lengthOfPrologue)..(position - 1)];
+        var first = chart.Candlesticks[position];
+        var second = chart.Candlesticks[position + 1];
+
+        if (first.IsLight &&
+            second.IsDark &&
+            second.Body.Low < first.Body.Low &&
+            second.Body.High > first.Body.High &&
+            PrologueIsBullish(first, prologue, chart.TrendValues[position].Sentiment))
+        {
+            for (int i = position + 2; i < (position + numberRequired); i++)
+            {
+                var candle = chart.Candlesticks[i];
+                if (candle.IsDark &&
+                    candle.IsTallBody &&
+                    chart.IsTall(i) &&
+                    candle.Volume > (chart.Candlesticks[i - 1].Volume * volumeFactor))
+                {
+                    return i;
+                }
+            }
+        }
+
+        return -1;
+    }
+
     private static int IsBearishEngulfing(Chart chart,
         int position,
         int numberRequired,

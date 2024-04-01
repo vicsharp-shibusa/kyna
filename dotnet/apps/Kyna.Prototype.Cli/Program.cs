@@ -90,12 +90,12 @@ try
 
                             var backtestConfig = new BacktestingConfiguration(BacktestType.CandlestickPattern,
                                 "eodhd.com",
-                                $"Bullish Engulfing {num}",
+                                $"Bearish Engulfing with Follow Thru {num}",
                                 string.Join(';', descItems),
                                 PricePoint.Close,
                                 new TestTargetPercentage(PricePoint.High, move),
                                 new TestTargetPercentage(PricePoint.Low, move),
-                                [SignalName.BullishEngulfing.GetEnumDescription()],
+                                [SignalName.BearishEngulfingWithFollowThru.GetEnumDescription()],
                                 len,
                                 vol,
                                 10,
@@ -105,8 +105,8 @@ try
 
                             var btJson = JsonSerializer.Serialize(backtestConfig, options);
 
-                            var fileName = Path.Combine("\\repos\\kyna-ins-and-outs\\configuration\\bullish-engulfing", 
-                                $"bullish-engulfing-{num.ToString().PadLeft(4,'0')}.json");
+                            var fileName = Path.Combine("\\repos\\kyna-ins-and-outs\\backtests\\candlesticks\\bearish-engulfing-with-follow-thru", 
+                                $"bearish-engulfing-with-follow-thru-{num.ToString().PadLeft(4,'0')}.json");
                             File.WriteAllText(fileName, btJson);
                             Console.WriteLine(fileName);
                             num++;
