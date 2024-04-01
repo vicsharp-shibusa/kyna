@@ -45,7 +45,6 @@ try
     }
     else
     {
-        int num = 1;
         bool onlySignalWithMarket = false;
 
         var options = JsonOptionsRepository.DefaultSerializerOptions;
@@ -64,52 +63,94 @@ try
             ]
         };
 
-        foreach (var move in new double[] { .1, .2 })
+        foreach (var signalName in new SignalName[]
         {
-            foreach (var len in new int[] { 15, 30 })
+            SignalName.BullishEngulfing,
+            SignalName.BearishEngulfing,
+            SignalName.BullishHammer,
+            SignalName.BearishHammer,
+            SignalName.DarkCloudCover,
+            SignalName.PiercingPattern,
+            SignalName.MorningStar,
+            SignalName.EveningStar,
+            SignalName.MorningDojiStar,
+            SignalName.EveningDojiStar,
+            SignalName.ShootingStar,
+            SignalName.InvertedHammer,
+            SignalName.BullishHarami,
+            SignalName.BearishHarami,
+            SignalName.BullishHaramiCross,
+            SignalName.BearishHaramiCross,
+            SignalName.TweezerTop,
+            SignalName.TweezerBottom,
+            SignalName.BullishBelthold,
+            SignalName.BearishBelthold,
+            SignalName.UpsideGapTwoCrows,
+            SignalName.ThreeBlackCrows,
+            SignalName.ThreeWhiteSoliders,
+            SignalName.BullishCounterattack,
+            SignalName.BearishCounterattack,
+            SignalName.BullishEngulfingWithFollowThru,
+            SignalName.BearishEngulfingWithFollowThru
+        })
+        {
+            int num = 1;
+
+            foreach (var move in new double[] { .1, .2 })
             {
-                foreach (var vol in new double[] { 1D, 1.5D, 2D })
+                foreach (var len in new int[] { 15, 30 })
                 {
-                    foreach (var trendDesc in new string[] { "S21C", "S50C", "S200C", "E21C", "E50C", "E200C" })
+                    foreach (var vol in new double[] { 1D, 1.5D, 2D })
                     {
-                        foreach (var useMarket in new bool[] { true, false })
+                        foreach (var trendDesc in new string[] { "S21C", "S50C", "S200C", "E21C", "E50C", "E200C" })
                         {
-                            ChartConfiguration chartConfig = new()
+                            foreach (var useMarket in new bool[] { true, false })
                             {
-                                Interval = "Daily",
-                                Trends = [new TrendConfiguration() { Trend = trendDesc }]
-                            };
+                                ChartConfiguration chartConfig = new()
+                                {
+                                    Interval = "Daily",
+                                    Trends = [new TrendConfiguration() { Trend = trendDesc }]
+                                };
 
-                            string[] descItems = [
-                                $"move: {move}",
-                                $"prologue len: {len}",
-                                $"trend desc: {trendDesc}",
-                                $"vol factor: {vol}",
-                                $"use market: {useMarket}"
-                            ];
+                                string[] descItems = [
+                                    $"move: {move}",
+                                    $"prologue len: {len}",
+                                    $"trend desc: {trendDesc}",
+                                    $"vol factor: {vol}",
+                                    $"use market: {useMarket}"
+                                ];
 
-                            var backtestConfig = new BacktestingConfiguration(BacktestType.CandlestickPattern,
-                                "eodhd.com",
-                                $"Bearish Engulfing with Follow Thru {num}",
-                                string.Join(';', descItems),
-                                PricePoint.Close,
-                                new TestTargetPercentage(PricePoint.High, move),
-                                new TestTargetPercentage(PricePoint.Low, move),
-                                [SignalName.BearishEngulfingWithFollowThru.GetEnumDescription()],
-                                len,
-                                vol,
-                                10,
-                                onlySignalWithMarket,
-                                chartConfig,
-                                useMarket ? marketConfiguration : null);
+                                var backtestConfig = new BacktestingConfiguration(BacktestType.CandlestickPattern,
+                                    "eodhd.com",
+                                    $"{signalName.GetEnumDescription()} {num}",
+                                    string.Join(';', descItems),
+                                    PricePoint.Close,
+                                    new TestTargetPercentage(PricePoint.High, move),
+                                    new TestTargetPercentage(PricePoint.Low, move),
+                                    [signalName.GetEnumDescription()],
+                                    len,
+                                    vol,
+                                    10,
+                                    onlySignalWithMarket,
+                                    chartConfig,
+                                    useMarket ? marketConfiguration : null);
 
-                            var btJson = JsonSerializer.Serialize(backtestConfig, options);
+                                var btJson = JsonSerializer.Serialize(backtestConfig, options);
 
-                            var fileName = Path.Combine("\\repos\\kyna-ins-and-outs\\backtests\\candlesticks\\bearish-engulfing-with-follow-thru", 
-                                $"bearish-engulfing-with-follow-thru-{num.ToString().PadLeft(4,'0')}.json");
-                            File.WriteAllText(fileName, btJson);
-                            Console.WriteLine(fileName);
-                            num++;
+                                var nameWithHyphens = signalName.GetEnumDescription().ToLower().Replace(" ", "-");
+                                var dirInfo = new DirectoryInfo(
+                                    Path.Combine($"\\repos\\kyna-ins-and-outs\\backtests\\candlesticks\\{nameWithHyphens}\\inputs"));
+
+                                if (!dirInfo.Exists)
+                                {
+                                    dirInfo.Create();
+                                }
+
+                                var fileName = Path.Combine(dirInfo.FullName, $"{nameWithHyphens}-{num.ToString().PadLeft(4, '0')}.json");
+                                File.WriteAllText(fileName, btJson);
+                                Console.WriteLine(fileName);
+                                num++;
+                            }
                         }
                     }
                 }
