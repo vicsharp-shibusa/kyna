@@ -35,6 +35,14 @@ public sealed partial class CandlestickSignalRepository
                 {
                     IsMatch = IsBullishEngulfingWithFollowThru
                 },
+            new CandlestickSignal(SignalName.BullishEngulfingWithFourBlackPredecessors,
+                numberRequired: 6,
+                sentiment: TrendSentiment.Bullish,
+                requiredSentiment: TrendSentiment.Bearish,
+                options: _signalOptions)
+                {
+                    IsMatch = IsBullishEngulfingWithFourBlackPredecessors
+                },
             new CandlestickSignal(SignalName.BearishEngulfing,
                 numberRequired: 2,
                 sentiment: TrendSentiment.Bearish,

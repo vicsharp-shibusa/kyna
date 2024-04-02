@@ -100,6 +100,36 @@ public sealed partial class CandlestickSignalRepository
         return -1;
     }
 
+    private static int IsBullishEngulfingWithFourBlackPredecessors(Chart chart,
+        int position,
+        int numberRequired,
+        int lengthOfPrologue,
+        double volumeFactor = 1D)
+    {
+        CheckSignalArgs(chart, position, numberRequired, lengthOfPrologue);
+
+        var prologue = chart.Candlesticks[(position - lengthOfPrologue)..(position - 1)];
+        var first = chart.Candlesticks[position];
+        var second = chart.Candlesticks[position + 1];
+        var third = chart.Candlesticks[position + 2];
+        var fourth = chart.Candlesticks[position + 3];
+        var fifth = chart.Candlesticks[position + 4];
+        var sixth = chart.Candlesticks[position + 5];
+
+        if (first.IsDark && second.IsDark && third.IsDark && fourth.IsDark &&
+            fifth.IsDark &&
+            sixth.IsLight &&
+            sixth.Body.Low < fifth.Body.Low &&
+            sixth.Body.High > fifth.Body.High &&
+            sixth.Volume > (fifth.Volume * volumeFactor) &&
+            PrologueIsBearish(fifth, prologue, chart.TrendValues[position + 4].Sentiment))
+        {
+            return position + 5;
+        }
+
+        return -1;
+    }
+
     private static int IsBearishEngulfing(Chart chart,
         int position,
         int numberRequired,

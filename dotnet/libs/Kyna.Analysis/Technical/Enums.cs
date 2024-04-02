@@ -49,8 +49,14 @@ public enum SignalName
     TallWhiteCandle,
     [Description("Bullish Engulfing")]
     BullishEngulfing,
+    [Description("Bullish Engulfing With FollowThru")]
+    BullishEngulfingWithFollowThru,
+    [Description("Bullish Engulfing With Four Black Predecessors")]
+    BullishEngulfingWithFourBlackPredecessors,
     [Description("Bearish Engulfing")]
     BearishEngulfing,
+    [Description("Bearish Engulfing With FollowThru")]
+    BearishEngulfingWithFollowThru,
     [Description("Bullish Hammer")]
     BullishHammer,
     [Description("Bearish Hammer")]
@@ -96,9 +102,5 @@ public enum SignalName
     [Description("Bullish Counterattack")]
     BullishCounterattack,
     [Description("Bearish Counterattack")]
-    BearishCounterattack,
-    [Description("Bullish Engulfing With FollowThru")]
-    BullishEngulfingWithFollowThru,
-    [Description("Bearish Engulfing With FollowThru")]
-    BearishEngulfingWithFollowThru
+    BearishCounterattack
 }
