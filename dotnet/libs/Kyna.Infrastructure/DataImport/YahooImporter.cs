@@ -124,10 +124,28 @@ internal sealed class YahooImporter : IExternalDataImporter
                 Volume = c.Volume,
                 Factor = 1D,
                 ProcessId = _processId
-            });
+            }).ToArray();
 
-            await _dbContext.ExecuteAsync(_dbContext.Sql.AdjustedEodPrices.Upsert, daos, cancellationToken: cancellationToken)
-                .ConfigureAwait(false);
+            if (daos.Length > 0)
+            {
+                await _dbContext.ExecuteAsync(_dbContext.Sql.AdjustedEodPrices.Upsert, daos, cancellationToken: cancellationToken)
+                    .ConfigureAwait(false);
+
+                var lastDao = daos.MaxBy(d => d.DateEod);
+
+                await _dbContext.ExecuteAsync(_dbContext.Sql.Fundamentals.UpsertEntity,
+                    new Database.DataAccessObjects.Entity(SourceName, symbol)
+                    {
+                        Code = lastDao!.Code,
+                        Country = "USA",
+                        Currency = "USD",
+                        HasPriceActions = true,
+                        HasFundamentals = false,
+                        ProcessId = _processId,
+                        LastPriceActionDate = lastDao.DateEod
+                    },
+                    cancellationToken: cancellationToken).ConfigureAwait(false);
+            }
         }
         catch (Exception exc)
         {
