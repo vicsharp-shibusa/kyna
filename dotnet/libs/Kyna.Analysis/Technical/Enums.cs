@@ -57,6 +57,10 @@ public enum SignalName
     BearishEngulfing,
     [Description("Bearish Engulfing With FollowThru")]
     BearishEngulfingWithFollowThru,
+    [Description("Bearish Engulfing With Tall Candles")]
+    BearishEngulfingWithTallCandles,
+    [Description("Bearish Engulfing With Four White Predecessors")]
+    BearishEngulfingWithFourWhitePredecessors,
     [Description("Bullish Hammer")]
     BullishHammer,
     [Description("Bearish Hammer")]

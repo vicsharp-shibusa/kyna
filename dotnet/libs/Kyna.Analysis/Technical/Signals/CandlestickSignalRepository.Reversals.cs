@@ -66,40 +66,6 @@ public sealed partial class CandlestickSignalRepository
         return -1;
     }
 
-    private static int IsBearishEngulfingWithFollowThru(Chart chart,
-        int position,
-        int numberRequired,
-        int lengthOfPrologue,
-        double volumeFactor = 1D)
-    {
-        CheckSignalArgs(chart, position, numberRequired, lengthOfPrologue);
-
-        var prologue = chart.Candlesticks[(position - lengthOfPrologue)..(position - 1)];
-        var first = chart.Candlesticks[position];
-        var second = chart.Candlesticks[position + 1];
-
-        if (first.IsLight &&
-            second.IsDark &&
-            second.Body.Low < first.Body.Low &&
-            second.Body.High > first.Body.High &&
-            PrologueIsBullish(first, prologue, chart.TrendValues[position].Sentiment))
-        {
-            for (int i = position + 2; i < (position + numberRequired); i++)
-            {
-                var candle = chart.Candlesticks[i];
-                if (candle.IsDark &&
-                    candle.IsTallBody &&
-                    chart.IsTall(i) &&
-                    candle.Volume > (chart.Candlesticks[i - 1].Volume * volumeFactor))
-                {
-                    return i;
-                }
-            }
-        }
-
-        return -1;
-    }
-
     private static int IsBullishEngulfingWithFourBlackPredecessors(Chart chart,
         int position,
         int numberRequired,
@@ -149,6 +115,88 @@ public sealed partial class CandlestickSignalRepository
             second.Volume > (first.Volume * volumeFactor) &&
             PrologueIsBullish(first, prologue, chart.TrendValues[position].Sentiment)
             ? position + 1 : -1;
+    }
+
+    private static int IsBearishEngulfingWithFollowThru(Chart chart,
+        int position,
+        int numberRequired,
+        int lengthOfPrologue,
+        double volumeFactor = 1D)
+    {
+        CheckSignalArgs(chart, position, numberRequired, lengthOfPrologue);
+
+        var prologue = chart.Candlesticks[(position - lengthOfPrologue)..(position - 1)];
+        var first = chart.Candlesticks[position];
+        var second = chart.Candlesticks[position + 1];
+
+        if (first.IsLight &&
+            second.IsDark &&
+            second.Body.Low < first.Body.Low &&
+            second.Body.High > first.Body.High &&
+            PrologueIsBullish(first, prologue, chart.TrendValues[position].Sentiment))
+        {
+            for (int i = position + 2; i < (position + numberRequired); i++)
+            {
+                var candle = chart.Candlesticks[i];
+                if (candle.IsDark &&
+                    candle.IsTallBody &&
+                    chart.IsTall(i) &&
+                    candle.Volume > (chart.Candlesticks[i - 1].Volume * volumeFactor))
+                {
+                    return i;
+                }
+            }
+        }
+
+        return -1;
+    }
+
+    private static int IsBearishEngulfingWithTallCandles(Chart chart,
+        int position,
+        int numberRequired,
+        int lengthOfPrologue,
+        double volumeFactor = 1D)
+    {
+        CheckSignalArgs(chart, position, numberRequired, lengthOfPrologue);
+
+        var prologue = chart.Candlesticks[(position - lengthOfPrologue)..(position - 1)];
+        var first = chart.Candlesticks[position];
+        var second = chart.Candlesticks[position + 1];
+
+        return first.IsLight &&
+            chart.IsTall(position) &&
+            second.IsDark &&
+            second.Body.Low < first.Body.Low &&
+            second.Body.High > first.Body.High &&
+            second.Volume > (first.Volume * volumeFactor) &&
+            PrologueIsBullish(first, prologue, chart.TrendValues[position].Sentiment)
+            ? position + 1 : -1;
+    }
+
+    private static int IsBearishEngulfingWithFourWhitePredecessors(Chart chart,
+        int position,
+        int numberRequired,
+        int lengthOfPrologue,
+        double volumeFactor = 1D)
+    {
+        CheckSignalArgs(chart, position, numberRequired, lengthOfPrologue);
+
+        var prologue = chart.Candlesticks[(position - lengthOfPrologue)..(position - 1)];
+        var first = chart.Candlesticks[position];
+        var second = chart.Candlesticks[position + 1];
+        var third = chart.Candlesticks[position + 2];
+        var fourth = chart.Candlesticks[position + 3];
+        var fifth = chart.Candlesticks[position + 4];
+        var sixth = chart.Candlesticks[position + 5];
+
+        return first.IsLight && second.IsLight && third.IsLight && fourth.IsLight &&
+            fifth.IsLight &&
+            sixth.IsDark &&
+            sixth.Body.Low < fifth.Body.Low &&
+            sixth.Body.High > fifth.Body.High &&
+            sixth.Volume > (fifth.Volume * volumeFactor) &&
+            PrologueIsBullish(fifth, prologue, chart.TrendValues[position + 4].Sentiment)
+            ? position + 5 : -1;
     }
 
     /*

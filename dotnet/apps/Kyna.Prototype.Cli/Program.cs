@@ -92,7 +92,9 @@ try
             //SignalName.BearishCounterattack,
             //SignalName.BullishEngulfingWithFollowThru,
             //SignalName.BearishEngulfingWithFollowThru,
-            SignalName.BullishEngulfingWithFourBlackPredecessors
+            //SignalName.BullishEngulfingWithFourBlackPredecessors,
+            SignalName.BearishEngulfingWithTallCandles,
+            SignalName.BearishEngulfingWithFourWhitePredecessors
         })
         {
             int num = 1;
