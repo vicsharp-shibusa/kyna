@@ -66,6 +66,28 @@ public sealed partial class CandlestickSignalRepository
         return -1;
     }
 
+    private static int IsBullishEngulfingWithTallCandles(Chart chart,
+        int position,
+        int numberRequired,
+        int lengthOfPrologue,
+        double volumeFactor = 1D)
+    {
+        CheckSignalArgs(chart, position, numberRequired, lengthOfPrologue);
+
+        var prologue = chart.Candlesticks[(position - lengthOfPrologue)..(position - 1)];
+        var first = chart.Candlesticks[position];
+        var second = chart.Candlesticks[position + 1];
+
+        return first.IsDark &&
+            chart.IsTall(position) &&
+            second.IsLight &&
+            second.Body.Low < first.Body.Low &&
+            second.Body.High > first.Body.High &&
+            second.Volume > (first.Volume * volumeFactor) &&
+            PrologueIsBearish(first, prologue, chart.TrendValues[position].Sentiment)
+            ? position + 1 : -1;
+    }
+
     private static int IsBullishEngulfingWithFourBlackPredecessors(Chart chart,
         int position,
         int numberRequired,
@@ -218,6 +240,25 @@ public sealed partial class CandlestickSignalRepository
            ? position : -1;
     }
 
+    private static int IsBullishHammerWithFollowThru(Chart chart,
+      int position,
+      int numberRequired,
+      int lengthOfPrologue,
+      double volumeFactor = 1D)
+    {
+        CheckSignalArgs(chart, position, numberRequired, lengthOfPrologue);
+
+        var prologue = chart.Candlesticks[(position - lengthOfPrologue)..(position - 1)];
+        var first = chart.Candlesticks[position];
+        var second = chart.Candlesticks[position + 1];
+
+        return first.IsUmbrella &&
+            second.Close > first.Close &&
+            second.Volume > (first.Volume * volumeFactor) &&
+           PrologueIsBearish(first, prologue, chart.TrendValues[position].Sentiment)
+           ? position + 1 : -1;
+    }
+
     private static int IsBearishHammer(Chart chart,
         int position,
         int numberRequired,
@@ -234,6 +275,25 @@ public sealed partial class CandlestickSignalRepository
             ? position : -1;
     }
 
+    private static int IsBearishHammerWithFollowThru(Chart chart,
+        int position,
+        int numberRequired,
+        int lengthOfPrologue,
+        double volumeFactor = 1D)
+    {
+        CheckSignalArgs(chart, position, numberRequired, lengthOfPrologue);
+
+        var prologue = chart.Candlesticks[(position - lengthOfPrologue)..(position - 1)];
+        var first = chart.Candlesticks[position];
+        var second = chart.Candlesticks[position + 1];
+
+        return first.IsUmbrella &&
+            second.Close > first.Close &&
+            second.Volume > (first.Volume * volumeFactor) &&
+            PrologueIsBullish(first, prologue, chart.TrendValues[position].Sentiment)
+            ? position + 1 : -1;
+    }
+
     private static int IsDarkCloudCover(Chart chart,
         int position,
         int numberRequired,
@@ -247,13 +307,37 @@ public sealed partial class CandlestickSignalRepository
         var second = chart.Candlesticks[position + 1];
 
         return first.IsLight &&
+            chart.IsTall(position) &&
             second.IsDark &&
             second.Body.High > first.High &&
             second.Body.Low < first.Body.MidPoint &&
             second.Body.Low >= first.Body.Low &&
-            first.Body.Length > prologue.Select(p => p.Body.Length).Average() &&
             PrologueIsBullish(first, prologue, chart.TrendValues[position].Sentiment)
             ? position + 1 : -1;
+    }
+
+    private static int IsDarkCloudCoverWithFollowThru(Chart chart,
+        int position,
+        int numberRequired,
+        int lengthOfPrologue,
+        double volumeFactor = 1D)
+    {
+        CheckSignalArgs(chart, position, numberRequired, lengthOfPrologue);
+
+        var prologue = chart.Candlesticks[(position - lengthOfPrologue)..(position - 1)];
+        var first = chart.Candlesticks[position];
+        var second = chart.Candlesticks[position + 1];
+        var third = chart.Candlesticks[position + 2];
+
+        return first.IsLight &&
+            chart.IsTall(position) &&
+            second.IsDark &&
+            second.Body.High > first.High &&
+            second.Body.Low < first.Body.MidPoint &&
+            second.Body.Low >= first.Body.Low &&
+            third.Close < second.Close &&
+            PrologueIsBullish(first, prologue, chart.TrendValues[position].Sentiment)
+            ? position + 2 : -1;
     }
 
     private static int IsPiercing(Chart chart,
@@ -269,13 +353,37 @@ public sealed partial class CandlestickSignalRepository
         var second = chart.Candlesticks[position + 1];
 
         return first.IsDark &&
+            chart.IsTall(position) &&
             second.IsLight &&
             second.Body.Low < first.Low &&
             second.Body.High > first.Body.MidPoint &&
             second.Body.High <= first.Body.High &&
-            first.Body.Length > prologue.Select(p => p.Body.Length).Average() &&
             PrologueIsBearish(first, prologue, chart.TrendValues[position].Sentiment)
             ? position + 1 : -1;
+    }
+
+    private static int IsPiercingWithFollowThru(Chart chart,
+        int position,
+        int numberRequired,
+        int lengthOfPrologue,
+        double volumeFactor = 1D)
+    {
+        CheckSignalArgs(chart, position, numberRequired, lengthOfPrologue);
+
+        var prologue = chart.Candlesticks[(position - lengthOfPrologue)..(position - 1)];
+        var first = chart.Candlesticks[position];
+        var second = chart.Candlesticks[position + 1];
+        var third = chart.Candlesticks[position + 2];
+
+        return first.IsDark &&
+            chart.IsTall(position) &&
+            second.IsLight &&
+            second.Body.Low < first.Low &&
+            second.Body.High > first.Body.MidPoint &&
+            second.Body.High <= first.Body.High &&
+            third.Close > second.Close &&
+            PrologueIsBearish(first, prologue, chart.TrendValues[position].Sentiment)
+            ? position + 2 : -1;
     }
 
     private static int IsMorningStar(Chart chart,
@@ -348,10 +456,10 @@ public sealed partial class CandlestickSignalRepository
         var third = chart.Candlesticks[position + 2];
 
         return first.IsDark &&
-            first.Body.Length > prologue.Select(p => p.Body.Length).Average() &&
-            second.Body.High < first.Body.Low &&
             chart.IsTall(position) &&
+            second.Body.High < first.Body.Low &&
             second.IsDoji &&
+            !second.IsFourPriceDoji &&
             third.IsLight &&
             third.Low > second.Low &&
             third.Close > first.Body.MidPoint &&
@@ -375,10 +483,10 @@ public sealed partial class CandlestickSignalRepository
         var third = chart.Candlesticks[position + 2];
 
         return first.IsLight &&
-            first.Body.Length > prologue.Select(p => p.Body.Length).Average() &&
             second.Body.Low > first.Body.High &&
             chart.IsTall(position) &&
             second.IsDoji &&
+            !second.IsFourPriceDoji &&
             third.IsDark &&
             third.High < second.High &&
             third.Close < first.Body.MidPoint &&

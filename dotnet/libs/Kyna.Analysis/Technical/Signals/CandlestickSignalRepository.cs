@@ -43,6 +43,14 @@ public sealed partial class CandlestickSignalRepository
                 {
                     IsMatch = IsBullishEngulfingWithFourBlackPredecessors
                 },
+            new CandlestickSignal(SignalName.BullishEngulfingWithTallCandles,
+                numberRequired: 2,
+                sentiment: TrendSentiment.Bullish,
+                requiredSentiment: TrendSentiment.Bearish,
+                options: _signalOptions)
+                {
+                    IsMatch = IsBullishEngulfingWithTallCandles
+                },
             new CandlestickSignal(SignalName.BearishEngulfing,
                 numberRequired: 2,
                 sentiment: TrendSentiment.Bearish,
@@ -83,6 +91,14 @@ public sealed partial class CandlestickSignalRepository
                 {
                     IsMatch = IsBullishHammer
                 },
+            new CandlestickSignal(SignalName.BullishHammerWithFollowThru,
+                numberRequired: 2,
+                sentiment: TrendSentiment.Bullish,
+                requiredSentiment: TrendSentiment.Bearish,
+                options: _signalOptions)
+                {
+                    IsMatch = IsBullishHammerWithFollowThru
+                },
             new CandlestickSignal(SignalName.BearishHammer,
                 numberRequired: 1,
                 sentiment: TrendSentiment.Bearish,
@@ -90,6 +106,14 @@ public sealed partial class CandlestickSignalRepository
                 options: _signalOptions)
                 {
                     IsMatch = IsBearishHammer
+                },
+            new CandlestickSignal(SignalName.BearishHammerWithFollowThru,
+                numberRequired: 2,
+                sentiment: TrendSentiment.Bearish,
+                requiredSentiment: TrendSentiment.Bullish,
+                options: _signalOptions)
+                {
+                    IsMatch = IsBearishHammerWithFollowThru
                 },
             new CandlestickSignal(SignalName.DarkCloudCover,
                 numberRequired: 2,
@@ -99,6 +123,14 @@ public sealed partial class CandlestickSignalRepository
                 {
                     IsMatch = IsDarkCloudCover
                 },
+            new CandlestickSignal(SignalName.DarkCloudCoverWithFollowThru,
+                numberRequired: 3,
+                sentiment: TrendSentiment.Bearish,
+                requiredSentiment: TrendSentiment.Bullish,
+                options: _signalOptions)
+                {
+                    IsMatch = IsDarkCloudCoverWithFollowThru
+                },
             new CandlestickSignal(SignalName.PiercingPattern,
                 numberRequired: 2,
                 sentiment: TrendSentiment.Bearish,
@@ -106,6 +138,14 @@ public sealed partial class CandlestickSignalRepository
                 options: _signalOptions)
                 {
                     IsMatch = IsPiercing
+                },
+            new CandlestickSignal(SignalName.PiercingPatternWithFollowThru,
+                numberRequired: 3,
+                sentiment: TrendSentiment.Bearish,
+                requiredSentiment: TrendSentiment.Bullish,
+                options: _signalOptions)
+                {
+                    IsMatch = IsPiercingWithFollowThru
                 },
             new CandlestickSignal(SignalName.MorningStar,
                 numberRequired: 3,

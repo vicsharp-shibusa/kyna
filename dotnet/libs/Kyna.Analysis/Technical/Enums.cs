@@ -53,6 +53,8 @@ public enum SignalName
     BullishEngulfingWithFollowThru,
     [Description("Bullish Engulfing With Four Black Predecessors")]
     BullishEngulfingWithFourBlackPredecessors,
+    [Description("Bullish Engulfing With Tall Candles")]
+    BullishEngulfingWithTallCandles,
     [Description("Bearish Engulfing")]
     BearishEngulfing,
     [Description("Bearish Engulfing With FollowThru")]
@@ -63,12 +65,20 @@ public enum SignalName
     BearishEngulfingWithFourWhitePredecessors,
     [Description("Bullish Hammer")]
     BullishHammer,
+    [Description("Bullish Hammer With FollowThru")]
+    BullishHammerWithFollowThru,
     [Description("Bearish Hammer")]
     BearishHammer,
+    [Description("Bearish Hammer With FollowThru")]
+    BearishHammerWithFollowThru,
     [Description("Dark Cloud Cover")]
     DarkCloudCover,
+    [Description("Dark Cloud Cover With FollowThru")]
+    DarkCloudCoverWithFollowThru,
     [Description("Piercing Pattern")]
     PiercingPattern,
+    [Description("Piercing Pattern With FollowThru")]
+    PiercingPatternWithFollowThru,
     [Description("Morning Star")]
     MorningStar,
     [Description("Evening Star")]

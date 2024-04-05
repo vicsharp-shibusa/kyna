@@ -66,11 +66,21 @@ try
         foreach (var signalName in new SignalName[]
         {
             //SignalName.BullishEngulfing,
+            //SignalName.BullishEngulfingWithTallCandles,
+            //SignalName.BullishEngulfingWithFollowThru,
+            //SignalName.BullishEngulfingWithFourBlackPredecessors,
             //SignalName.BearishEngulfing,
+            //SignalName.BearishEngulfingWithFollowThru,
+            //SignalName.BearishEngulfingWithTallCandles,
+            //SignalName.BearishEngulfingWithFourWhitePredecessors,
             //SignalName.BullishHammer,
+            //SignalName.BullishHammerWithFollowThru,
             //SignalName.BearishHammer,
+            //SignalName.BearishHammerWithFollowThru,
             //SignalName.DarkCloudCover,
+            //SignalName.DarkCloudCoverWithFollowThru,
             //SignalName.PiercingPattern,
+            //SignalName.PiercingPatternWithFollowThru
             //SignalName.MorningStar,
             //SignalName.EveningStar,
             //SignalName.MorningDojiStar,
@@ -90,11 +100,6 @@ try
             //SignalName.ThreeWhiteSoliders,
             //SignalName.BullishCounterattack,
             //SignalName.BearishCounterattack,
-            //SignalName.BullishEngulfingWithFollowThru,
-            //SignalName.BearishEngulfingWithFollowThru,
-            //SignalName.BullishEngulfingWithFourBlackPredecessors,
-            SignalName.BearishEngulfingWithTallCandles,
-            SignalName.BearishEngulfingWithFourWhitePredecessors
         })
         {
             int num = 1;
