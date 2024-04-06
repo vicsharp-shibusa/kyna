@@ -1,6 +1,4 @@
-﻿using DocumentFormat.OpenXml.Bibliography;
-using Kyna.Common;
-using Kyna.Infrastructure.Database.DataAccessObjects;
+﻿using Kyna.Common;
 using Kyna.Infrastructure.Database.DataAccessObjects.Reports;
 using System.Diagnostics;
 
@@ -53,7 +51,7 @@ WHERE process_id = @ProcessId";
         }
 
         var fn = Path.Combine(outputDir, $"{scReport.Name}.csv");
-        CreateCsv(fn, scReport);
+        CreateCsv(fn, scReport, "|");
         yield return fn;
 
         scReport = null;
@@ -65,9 +63,9 @@ WHERE process_id = @ProcessId";
             foreach (var btDao in backtestDaos)
             {
                 var signalSummaryReport = CreateReport(
-    $"{snAbbrev}-{btDao.Id.First8()}-summary",
-    "Name", "Category", "Sub Category",
-    "Number Signals", "Success %", "Avg Duration");
+                    $"{snAbbrev}-{btDao.Id.First8()}-summary",
+                    "Name", "Category", "Sub Category",
+                    "Number Signals", "Success %", "Avg Duration");
 
                 var summary = _backtestsCtx.Query<SignalSummaryDetails>(_backtestsCtx.Sql.Backtests.FetchBacktestSignalSummary,
                     new { BacktestId = btDao.Id, signalName });
@@ -79,7 +77,7 @@ WHERE process_id = @ProcessId";
                 }
 
                 fn = Path.Combine(outputDir, $"{signalSummaryReport.Name}.csv");
-                CreateCsv(fn, signalSummaryReport);
+                CreateCsv(fn, signalSummaryReport, "|");
                 yield return fn;
 
                 signalSummaryReport = null;
@@ -89,12 +87,12 @@ WHERE process_id = @ProcessId";
                     new { BacktestId = btDao.Id, processId, signalName });
 
                 var signalDetailReport = CreateReport(
-    $"{snAbbrev}-{btDao.Id.First8()}-details",
-    "Name", "Code", "Industry", "Sector",
-    "Entry Date", "Entry Price Point", "Entry Price",
-    "Result Up Date", "Result Up Price Point", "Result Up Price",
-    "Result Down Date", "Result Down Price Point", "Result Down Price",
-    "Result Direction", "Trading Days", "Calendar Days");
+                    $"{snAbbrev}-{btDao.Id.First8()}-details",
+                    "Name", "Code", "Industry", "Sector",
+                    "Entry Date", "Entry Price Point", "Entry Price",
+                    "Result Up Date", "Result Up Price Point", "Result Up Price",
+                    "Result Down Date", "Result Down Price Point", "Result Down Price",
+                    "Result Direction", "Trading Days", "Calendar Days");
 
                 foreach (var item in details)
                 {
@@ -106,7 +104,7 @@ WHERE process_id = @ProcessId";
                 }
 
                 fn = Path.Combine(outputDir, $"{signalDetailReport.Name}.csv");
-                CreateCsv(fn, signalDetailReport);
+                CreateCsv(fn, signalDetailReport, "|");
                 yield return fn;
                 signalDetailReport = null;
             }
