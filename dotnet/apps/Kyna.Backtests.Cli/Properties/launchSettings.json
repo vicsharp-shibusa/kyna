@@ -2,7 +2,7 @@
   "profiles": {
     "Kyna.Backtests.Cli": {
       "commandName": "Project",
-      "commandLineArgs": "-v -i \\repos\\kyna-ins-and-outs\\backtests\\candlesticks\\bullish-engulfing-with-four-black-predecessors\\inputs"
+      "commandLineArgs": "-v -f .\\configs\\bullish-engulfing\\bullish-engulfing-1.json"
     }
   }
 }

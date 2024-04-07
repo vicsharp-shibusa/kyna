@@ -285,7 +285,7 @@ WHERE process_id = @ProcessId";
         public DateTime MinDate;
         public DateTime MaxDate;
 
-        public override string ToString() =>
+        public override readonly string ToString() =>
             $"{ProcessId} | {BacktestCount,4} | {MinDate:yyyy-MM-dd HH:mm} | {MaxDate:yyyy-MM-dd HH:mm}";
     }
 }

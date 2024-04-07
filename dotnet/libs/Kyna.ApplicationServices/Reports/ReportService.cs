@@ -19,18 +19,16 @@ public sealed partial class ReportService(DbDef backtestsDbDef, ReportOptions re
             throw new ArgumentException($"File '{fileInfo.FullName}' already exists.");
         }
 
-        using (var stream = File.Create(fileInfo.FullName))
+        using var stream = File.Create(fileInfo.FullName);
+        stream.WriteLine(string.Join(delimiter, report.Headers));
+        foreach (var row in report.Rows)
         {
-            stream.WriteLine(string.Join(delimiter, report.Headers));
-            foreach (var row in report.Rows)
+            if (row != null)
             {
-                if (row != null)
-                {
-                    stream.WriteLine(string.Join(delimiter, row.Select(r => r?.ToString() ?? "")));
-                }
+                stream.WriteLine(string.Join(delimiter, row.Select(r => r?.ToString() ?? "")));
             }
-            stream.Flush();
         }
+        stream.Flush();
     }
 
     public static void CreateSpreadsheet(string file, params Report[] reports)

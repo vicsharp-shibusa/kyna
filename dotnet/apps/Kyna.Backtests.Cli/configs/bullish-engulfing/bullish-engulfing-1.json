@@ -16,7 +16,7 @@
         "Bullish Engulfing"
     ],
     "Length of Prologue": 15,
-    "Max Parallelization": 10,
+    "Max Parallelization": 1,
     "Only Signal With Market": false,
     "Volume Factor": 1,
     "Chart Configuration": {

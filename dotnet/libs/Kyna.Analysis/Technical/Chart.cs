@@ -2,18 +2,25 @@
 
 namespace Kyna.Analysis.Technical;
 
-public class Chart
+public class Chart : IEquatable<Chart?>
 {
     private readonly List<MovingAverage> _movingaverages = new(3);
     private readonly HashSet<MovingAverageKey> _movingAverageKeys = new(3);
+    private decimal[] _averageHeights = [];
+    private decimal[] _averageBodyHeights = [];
+    private long[] _averageVolumes = [];
+    private TrendSentiment[] _prologueSentiment = [];
+    private readonly int _prologueLength = 15;
 
     internal Chart(string? name, string? industry, string? sector,
-        ChartInterval interval = ChartInterval.Daily)
+        ChartInterval interval = ChartInterval.Daily,
+        int prologueLength = 15)
     {
         Code = name;
         Industry = industry;
         Sector = sector;
         Interval = interval;
+        _prologueLength = Math.Max(prologueLength, 0);
     }
 
     public ChartInterval Interval { get; }
@@ -46,15 +53,20 @@ public class Chart
         {
             return false;
         }
-        if (tolerance < 1M)
-        {
-            tolerance = 1M;
-        }
+
+        tolerance = Math.Max(1M, tolerance);
 
         var lookbackPosition = lookbackPeriod == 0 ? 0 : Math.Max(position - lookbackPeriod, 0);
 
-        var avg = Candlesticks[lookbackPosition..(position - 1)].Select(c => c.Body.Length).Average();
-        return Candlesticks[position].Body.Length > (tolerance * avg);
+        if (lookbackPosition == 0)
+        {
+            return Candlesticks[position].Body.Low > (tolerance * _averageBodyHeights[position - 1]);
+        }
+        else
+        {
+            var avg = Candlesticks[lookbackPosition..(position - 1)].Select(c => c.Body.Length).Average();
+            return Candlesticks[position].Body.Length > (tolerance * avg);
+        }
     }
 
     public bool IsShort(int position, int lookbackPeriod = 0, decimal tolerance = 1M)
@@ -63,16 +75,23 @@ public class Chart
         {
             return false;
         }
-        if (tolerance > 1M)
-        {
-            tolerance = 1M;
-        }
+
+        tolerance = Math.Min(1M, tolerance);
 
         var lookbackPosition = lookbackPeriod == 0 ? 0 : Math.Max(position - lookbackPeriod, 0);
 
-        var avg = Candlesticks[lookbackPosition..(position - 1)].Select(c => c.Body.Length).Average();
-        return Candlesticks[position].Body.Length < (tolerance * avg);
+        if (lookbackPeriod == 0)
+        {
+            return Candlesticks[position].Body.Low < (tolerance * _averageBodyHeights[position - 1]);
+        }
+        else
+        {
+            var avg = Candlesticks[lookbackPosition..(position - 1)].Select(c => c.Body.Length).Average();
+            return Candlesticks[position].Body.Length < (tolerance * avg);
+        }
     }
+
+    public TrendSentiment PrologueSentiment(int position) => _prologueSentiment[position];
 
     public Chart WithMovingAverage(MovingAverageKey key)
     {
@@ -129,6 +148,64 @@ public class Chart
 
         Trend?.Calculate();
 
+        _averageHeights = new decimal[PriceActions.Length];
+        _averageBodyHeights = new decimal[PriceActions.Length];
+        _averageVolumes = new long[PriceActions.Length];
+        _prologueSentiment = new TrendSentiment[PriceActions.Length];
+
+        for (int p = 0; p < PriceActions.Length; p++)
+        {
+            if (_prologueLength > 0 && p > _prologueLength)
+            {
+                var prologue = Candlesticks[(p - _prologueLength - 1)..(p - 1)];
+                _prologueSentiment[p] = prologue.All(pr => pr.High < Candlesticks[p].High)
+                    ? TrendSentiment.Bullish
+                    : prologue.All(pr => pr.Low > Candlesticks[p].Low)
+                    ? TrendSentiment.Bearish
+                    : TrendSentiment.Neutral;
+            }
+            else
+            {
+                _prologueSentiment[p] = TrendSentiment.None;
+            }
+
+            if (p == 0)
+            {
+                _averageHeights[p] = Candlesticks[p].Length;
+                _averageBodyHeights[p] = Candlesticks[p].Body.Length;
+                _averageVolumes[p] = Candlesticks[p].Volume;
+            }
+            else
+            {
+                _averageHeights[p] = _averageHeights[p - 1] + ((Candlesticks[p].Length - _averageHeights[p - 1]) / (p + 1));
+                _averageBodyHeights[p] = _averageBodyHeights[p - 1] + ((Candlesticks[p].Body.Length - _averageBodyHeights[p - 1]) / (p + 1));
+                _averageVolumes[p] = Convert.ToInt64(Math.Ceiling((decimal)_averageVolumes[p - 1] + ((Candlesticks[p].Volume - _averageVolumes[p - 1]) / (p + 1))));
+            }
+        }
+
         return this;
+    }
+
+    public override bool Equals(object? obj)
+    {
+        return Equals(obj as Chart);
+    }
+
+    public bool Equals(Chart? other)
+    {
+        return other is not null &&
+               _prologueLength == other._prologueLength &&
+               Interval == other.Interval &&
+               Code == other.Code &&
+               Industry == other.Industry &&
+               Sector == other.Sector &&
+               Length == other.Length &&
+               Start.Equals(other.Start) &&
+               End.Equals(other.End);
+    }
+
+    public override int GetHashCode()
+    {
+        return HashCode.Combine(Code, Industry, Sector, _prologueLength, Interval);
     }
 }
