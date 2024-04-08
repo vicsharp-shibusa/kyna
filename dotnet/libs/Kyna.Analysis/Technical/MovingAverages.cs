@@ -12,6 +12,9 @@ public struct MovingAverageKey(int period, PricePoint pricePoint = PricePoint.Cl
     public int Period = period;
     public MovingAverageType Type = type;
     public PricePoint PricePoint = pricePoint;
+
+    public override readonly string ToString() =>
+        $"{Type.ToString()[0]}{Period}{PricePoint.ToString()[0]}";
 }
 
 public struct MovingAverage

@@ -7,6 +7,8 @@ public class ExtremeTrend(Ohlc[] prices) : TrendBase(prices?.Length ?? 0), ITren
 {
     private readonly Ohlc[] _prices = prices!;
 
+    public string Name => "Extremes";
+
     public void Calculate()
     {
         var extremes = GetHighs().Union(GetLows()).OrderBy(x => x.Position).ToArray();

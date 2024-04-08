@@ -2,6 +2,7 @@
 using Kyna.Common;
 using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace Kyna.Analysis.Technical;
 
@@ -14,6 +15,8 @@ public sealed class ChartConfiguration
 
     [JsonPropertyName("Trend Configuration")]
     public TrendConfiguration[]? Trends { get; init; }
+    [JsonPropertyName("Length of Prologue")]
+    public int LengthOfPrologue { get; init; } = 15;
 }
 
 public sealed class MarketConfiguration
@@ -67,6 +70,11 @@ internal static partial class ConvertMatch
 
 public static class ChartFactory
 {
+    private readonly static MemoryCache _memoryCache = new(new MemoryCacheOptions()
+    {
+        ExpirationScanFrequency = TimeSpan.FromHours(2),
+    });
+
     public static Chart Create(string name, ChartConfiguration? configuration, string? industry, string? sector,
         params Ohlc[][] ohlcs)
     {
@@ -105,7 +113,7 @@ public static class ChartFactory
             }
         }
 
-        return Create(name,industry, sector, combinedOhlc, configuration);
+        return Create(name, industry, sector, combinedOhlc, configuration);
     }
 
     private static Ohlc CombineOhlcs(string name, DateOnly date, Ohlc[] ohlcs)
@@ -207,14 +215,20 @@ public static class ChartFactory
                 Interval = interval.GetEnumDescription(),
                 Trends = [
                     new TrendConfiguration(){
-                        Trend = "S21C"
+                        Trend = "S200C"
                     }
-                ]
+                ],
+                LengthOfPrologue = 15
             };
         }
 
-        var chart = new Chart(code, industry, sector, interval)
-            .WithCandles(ohlc);
+        if (_memoryCache.TryGetValue(Chart.GetCacheKey(code, industry, sector, trend?.Name,
+            configuration.LengthOfPrologue, interval), out Chart? chart) && chart != null)
+        {
+            return chart;
+        }
+
+        chart = new Chart(code, industry, sector, interval, configuration.LengthOfPrologue).WithCandles(ohlc);
 
         if (movingAverageKeys.Count != 0)
         {
@@ -226,7 +240,14 @@ public static class ChartFactory
             chart = chart.WithTrend(trend);
         }
 
-        return chart.Build();
+        chart = chart.Build();
+
+        _memoryCache.Set(chart.GetHashCode(), chart, new MemoryCacheEntryOptions()
+        {
+            AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(4)
+        });
+
+        return chart;
     }
 
     private static ChartInterval DetermineInterval(Ohlc ohlc)

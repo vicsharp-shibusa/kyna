@@ -1,9 +1,13 @@
-﻿namespace Kyna.Analysis.Technical.Trends;
+﻿using System.Text;
+
+namespace Kyna.Analysis.Technical.Trends;
 
 public class CombinedTrend : TrendBase, ITrend
 {
     private readonly WeightedTrend[] _trends;
     private readonly int _length;
+    private string? _name = null;
+
     public CombinedTrend(params WeightedTrend[] weightedTrends)
         : base((weightedTrends?.Length ?? 0) == 0
             ? 0 : (weightedTrends?[0].TrendValues.Length ?? 0))
@@ -21,6 +25,23 @@ public class CombinedTrend : TrendBase, ITrend
         }
 
         _trends = weightedTrends;
+    }
+
+    public string Name
+    {
+        get
+        {
+            if (_name == null )
+            {
+                StringBuilder sb = new();
+                foreach (var t in _trends)
+                {
+                    sb.Append(t.Name);
+                }
+                _name = sb.ToString();
+            }
+            return _name;
+        }
     }
 
     public void Calculate()

@@ -11,7 +11,6 @@ public class BacktestingConfiguration(BacktestType type,
     TestTargetPercentage targetUp,
     TestTargetPercentage targetDown,
     string[]? signalnames = null,
-    int lengthOfPrologue = 15,
     double volumeFactor = 1D,
     int? maxparallelization = null,
     bool onlySignalWithMarket = false,
@@ -37,9 +36,6 @@ public class BacktestingConfiguration(BacktestType type,
     
     [JsonPropertyName("Signal Names")]
     public string[]? SignalNames { get; init; } = signalnames;
-    
-    [JsonPropertyName("Length of Prologue")]
-    public int LengthOfPrologue { get; init; } = lengthOfPrologue;
     
     [JsonPropertyName("Max Parallelization")]
     public int? MaxParallelization { get; init; } = maxparallelization;

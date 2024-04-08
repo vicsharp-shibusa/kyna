@@ -31,4 +31,5 @@ public record class WeightedTrend
     }
 
     public TrendValue[] TrendValues { get; }
+    public string Name => $"{Trend.ToString}{Weight}";
 }

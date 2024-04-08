@@ -2,6 +2,7 @@
 
 public interface ITrend
 {
+    string Name { get; }
     TrendValue[] TrendValues { get; }
     void Calculate();
 }

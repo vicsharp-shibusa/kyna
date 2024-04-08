@@ -15,14 +15,14 @@ internal class CandlestickSignalRunner : RunnerBase, IBacktestRunner
 {
     private readonly FinancialsRepository _financialsRepository;
     private readonly ConcurrentQueue<(BacktestingConfiguration Configuration,
-        Guid BacktestId, SignalMatch SignalMatch)> _queue;
+        Guid BacktestId, SignalMatch SignalMatch, int ChartHashCode)> _queue;
     private bool _runQueue = true;
     private readonly CandlestickSignal[] _signals;
     private readonly Task<IEnumerable<CodesAndCounts>> _codesAndCountsTask;
 
     private readonly MemoryCache _memoryCache = new(new MemoryCacheOptions()
     {
-        ExpirationScanFrequency = TimeSpan.FromSeconds(30),
+        ExpirationScanFrequency = TimeSpan.FromHours(3)
     });
 
     public CandlestickSignalRunner(DbDef finDef, DbDef backtestsDef, string source,
@@ -116,9 +116,9 @@ internal class CandlestickSignalRunner : RunnerBase, IBacktestRunner
 
         Debug.Assert(!string.IsNullOrWhiteSpace(chart.Code));
 
-        _memoryCache.Set(chart.Code, ohlc, new MemoryCacheEntryOptions()
+        _memoryCache.Set(chart.GetHashCode(), ohlc, new MemoryCacheEntryOptions()
         {
-            AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(2)
+            AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(3)
         });
 
         foreach (var signal in _signals)
@@ -126,7 +126,7 @@ internal class CandlestickSignalRunner : RunnerBase, IBacktestRunner
             foreach (var match in signal.DiscoverMatches(chart, market, configuration.OnlySignalWithMarket,
                 configuration.VolumeFactor).ToArray())
             {
-                _queue.Enqueue((configuration, backtestId, match));
+                _queue.Enqueue((configuration, backtestId, match, chart.GetHashCode()));
             }
         }
     }
@@ -135,7 +135,8 @@ internal class CandlestickSignalRunner : RunnerBase, IBacktestRunner
         Guid backtestId,
         CancellationToken cancellationToken)
     {
-        var repo = new CandlestickSignalRepository(new SignalOptions(configuration.LengthOfPrologue));
+        var repo = new CandlestickSignalRepository(
+            new SignalOptions(configuration.ChartConfiguration?.LengthOfPrologue ?? 15));
 
         var backtestResults = await _backtestDbContext.QueryAsync<BacktestResultsInfo>(
             _backtestDbContext.Sql.Backtests.FetchBacktestResultInfo,
@@ -279,16 +280,16 @@ internal class CandlestickSignalRunner : RunnerBase, IBacktestRunner
                 try
                 {
                     if (_queue.TryDequeue(out (BacktestingConfiguration Configuration, Guid BacktestId,
-                        SignalMatch SignalMatch) result))
+                        SignalMatch SignalMatch, int ChartHashCode) result))
                     {
-                        if (!_memoryCache.TryGetValue(result.SignalMatch.Code, out Ohlc[]? ohlc))
+                        if (!_memoryCache.TryGetValue(result.ChartHashCode, out Ohlc[]? ohlc) || ohlc == null)
                         {
-                            throw new Exception($"Unable to pull chart for {result.SignalMatch.Code} out of cache.");
+                            throw new Exception($"Unable to pull OHLC for {result.SignalMatch.Code} out of cache.");
                         }
 
                         var chart = ChartFactory.Create(result.SignalMatch.Code,
-                            result.SignalMatch.Industry, result.SignalMatch.Sector,
-                            ohlc!, configuration: result.Configuration.ChartConfiguration);
+                            result.SignalMatch.Industry, result.SignalMatch.Sector, ohlc!,
+                            result.Configuration.ChartConfiguration);
 
                         var price = chart.PriceActions[result.SignalMatch.Position].GetPricePoint(result.Configuration.EntryPricePoint);
 

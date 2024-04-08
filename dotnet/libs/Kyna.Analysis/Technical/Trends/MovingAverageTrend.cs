@@ -7,6 +7,8 @@ public class MovingAverageTrend(MovingAverageKey movingAverageKey, Ohlc[] prices
             prices!.Select(p => p.GetPricePoint(movingAverageKey.PricePoint)).ToArray());
     private readonly Ohlc[] _prices = prices!;
 
+    public string Name => _movingAverage.Key.ToString();
+
     public void Calculate()
     {
         PricePoint pricePoint = movingAverageKey.PricePoint;

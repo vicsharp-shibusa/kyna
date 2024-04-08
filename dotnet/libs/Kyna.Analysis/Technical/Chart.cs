@@ -204,8 +204,14 @@ public class Chart : IEquatable<Chart?>
                End.Equals(other.End);
     }
 
+    public static int GetCacheKey(string? code, string? industry, string? sector,
+        string? trend = null, int prologueLength = 15, ChartInterval interval = ChartInterval.Daily)
+    {
+        return HashCode.Combine(code, industry, sector, trend, prologueLength, interval);
+    }
+
     public override int GetHashCode()
     {
-        return HashCode.Combine(Code, Industry, Sector, _prologueLength, Interval);
+        return GetCacheKey(Code, Industry, Sector, Trend?.Name, _prologueLength, Interval);
     }
 }
