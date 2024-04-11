@@ -92,7 +92,7 @@ public sealed partial class CandlestickSignalRepository
                     IsMatch = IsBullishHammer
                 },
             new CandlestickSignal(SignalName.BullishHammerWithFollowThru,
-                numberRequired: 2,
+                numberRequired: 8,
                 sentiment: TrendSentiment.Bullish,
                 requiredSentiment: TrendSentiment.Bearish,
                 options: _signalOptions)
@@ -108,7 +108,7 @@ public sealed partial class CandlestickSignalRepository
                     IsMatch = IsBearishHammer
                 },
             new CandlestickSignal(SignalName.BearishHammerWithFollowThru,
-                numberRequired: 2,
+                numberRequired: 8,
                 sentiment: TrendSentiment.Bearish,
                 requiredSentiment: TrendSentiment.Bullish,
                 options: _signalOptions)
