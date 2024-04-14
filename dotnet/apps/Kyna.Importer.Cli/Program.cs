@@ -302,9 +302,10 @@ void Configure()
     KLogger.SetLogger(logger);
 
     config.ApiKey = configuration.GetSection($"ApiKeys:{config.Source}").Value;
+    config.AccessKey = configuration.GetSection($"AccessKeys:{config.Source}").Value;
 
-    importer = ImporterFactory.Create(config!.Source?.ToLower() ?? "", importDef,
-        config.ConfigFile, config.ApiKey, processId, config.DryRun);
+    importer = ImporterFactory.Create(config.Source?.ToLower() ?? "", importDef,
+        config.ConfigFile, config.ApiKey, config.AccessKey, processId, config.DryRun);
 
     if (importer == null)
     {
@@ -331,4 +332,8 @@ class Config(string appName, string appVersion, string? description, bool showIn
     public string? Source { get; set; }
 
     public string? ApiKey { get; set; }
+
+    public string? AccessKey { get; set; }
+
+    public DirectoryInfo? DownloadDirectory { get; set; }
 }

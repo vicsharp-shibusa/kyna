@@ -146,6 +146,7 @@ void ShowHelp()
 {
     CliArg[] localArgs = [
         new CliArg(["-f", "--file"], ["configuration file"], true, "JSON import configuration file to process."),
+        new CliArg(["-s", "--source"], ["source name"], false, $"Source for migration. When excluded, defaults to {ImporterFactory.DefaultSource}"),
         new CliArg(["--dry-run"], [], false, "Executes a 'dry run' - reports only what the app would do with the specified configuration."),
         new CliArg(["--info","--show-info"], [], false, "Displays summary info from the provided configuration file.")
     ];

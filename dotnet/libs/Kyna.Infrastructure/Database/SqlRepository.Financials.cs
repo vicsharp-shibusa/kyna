@@ -28,6 +28,46 @@ process_id AS ProcessId
 FROM public.eod_prices",
             _ => ThrowSqlNotImplemented()
         };
+        public string FetchCodesWithSplits => _dbDef.Engine switch
+        {
+            DatabaseEngine.PostgreSql => @"SELECT DISTINCT P.code
+FROM public.eod_prices P
+JOIN public.splits S ON P.source = S.source AND P.code = S.code
+WHERE P.source = @Source",
+            _ => ThrowSqlNotImplemented()
+        };
+        public string CopyPricesWithoutSplitsToAdjustedPrices => _dbDef.Engine switch
+        {
+            DatabaseEngine.PostgreSql => @"INSERT INTO public.eod_adjusted_prices
+(
+source, code, date_eod, open, high, low, close, volume, factor,
+created_ticks_utc, updated_ticks_utc, process_id
+)
+SELECT P.source, P.code, P.date_eod, open, high, low, close, volume, 1, 
+EXTRACT(EPOCH FROM CURRENT_TIMESTAMP),
+EXTRACT(EPOCH FROM CURRENT_TIMESTAMP),
+P.process_id
+FROM public.eod_prices P
+LEFT JOIN public.splits S ON P.source = S.source AND P.code = S.code
+WHERE S.code IS NULL
+ON CONFLICT (source, code, date_eod) DO UPDATE SET
+open = EXCLUDED.open,
+high = EXCLUDED.high,
+low = EXCLUDED.low,
+close = EXCLUDED.close,
+volume = EXCLUDED.volume,
+factor = 1,
+updated_ticks_utc = EXTRACT(EPOCH FROM CURRENT_TIMESTAMP)",
+            _ => ThrowSqlNotImplemented()
+        };
+        public string FetchCodesWithoutSplits => _dbDef.Engine switch
+        {
+            DatabaseEngine.PostgreSql => @"SELECT DISTINCT P.code
+FROM public.eod_prices P
+LEFT JOIN public.splits S ON P.source = S.source AND P.code = S.code
+WHERE S.source IS NULL",
+            _ => ThrowSqlNotImplemented()
+        };
         public string Delete => _dbDef.Engine switch
         {
             DatabaseEngine.PostgreSql => @"DELETE FROM public.eod_prices",
@@ -150,6 +190,53 @@ FROM public.splits",
         };
     }
 
+    internal class DividendsInternal(DbDef dbDef) : SqlRepositoryBase(dbDef)
+    {
+        public string Upsert => _dbDef.Engine switch
+        {
+            DatabaseEngine.PostgreSql => @"INSERT INTO public.dividends
+(
+source, code, type, declaration_date, ex_dividend_date, pay_date,
+record_date, frequency, amount, created_ticks_utc, updated_ticks_utc, process_id
+)
+VALUES (
+@Source, @Code, @Type, @DeclarationDate, @ExDividendDate, @PayDate,
+@RecordDate, @Frequency, @Amount, @CreatedTicksUtc, @UpdatedTicksUtc, @ProcessId
+)
+ON CONFLICT (source, code, type, declaration_date) DO UPDATE
+SET
+source = EXCLUDED.source,
+code = EXCLUDED.code,
+type = EXCLUDED.type,
+declaration_date = EXCLUDED.declaration_date,
+ex_dividend_date = EXCLUDED.ex_dividend_date,
+pay_date = EXCLUDED.pay_date,
+record_date = EXCLUDED.record_date,
+frequency = EXCLUDED.frequency,
+amount = EXCLUDED.amount,
+updated_ticks_utc = EXCLUDED.updated_ticks_utc,
+process_id = EXCLUDED.process_id",
+            _ => ThrowSqlNotImplemented()
+        };
+        public string Fetch => _dbDef.Engine switch
+        {
+            DatabaseEngine.PostgreSql => @"
+SELECT source, code, type, declaration_date AS DeclarationDate,
+ex_dividend_date AS ExDividendDate,
+pay_date AS PayDate,
+record_date AS RecordDate,
+frequency, amount,
+created_ticks_utc AS CreatedTicksUtc, updated_ticks_utc AS UpdatedTicksUtc, process_id AS ProcessId
+FROM public.dividends",
+            _ => ThrowSqlNotImplemented()
+        };
+        public string DeleteForSource => _dbDef.Engine switch
+        {
+            DatabaseEngine.PostgreSql => @"DELETE FROM public.dividends WHERE source = @Source",
+            _ => ThrowSqlNotImplemented()
+        };
+    }
+
     internal class FundamentalsInternal(DbDef dbDef) : SqlRepositoryBase(dbDef)
     {
         public string InsertBasicEntity => _dbDef.Engine switch
@@ -236,6 +323,29 @@ UPDATE entities e
 SET last_price_action_date = cd.max_date
 FROM combined_data cd
 WHERE (e.source = cd.e_source OR e.source = cd.p_source) AND (e.code = cd.e_code OR e.code = cd.p_code);",
+            _ => ThrowSqlNotImplemented()
+        };
+
+        public string DeleteEntitiesWithoutTypesOrPriceActions => _dbDef.Engine switch
+        {
+            DatabaseEngine.PostgreSql => @"
+DELETE FROM splits
+WHERE source = @Source AND code in (SELECT code from entities
+WHERE type IS NULL AND source = @Source);
+DELETE FROM dividends
+WHERE source = @Source AND code in (SELECT code from entities
+WHERE type IS NULL AND source = @Source);
+DELETE FROM eod_prices
+WHERE source = @Source and code in (SELECT code from entities
+WHERE type IS NULL AND source = @Source);
+DELETE FROM eod_adjusted_prices
+WHERE source = @Source and code in (SELECT code from entities
+WHERE type IS NULL AND source = @Source);
+DELETE FROM entities WHERE type IS NULL AND source = @Source;
+DELETE FROM entities where (source, code) IN (
+SELECT E.source, E.code from entities E
+left join eod_prices P ON E.source = P.source AND E.code = P.code
+where E.source = @Source AND P.code is null);",
             _ => ThrowSqlNotImplemented()
         };
         public string UpsertEntity => _dbDef.Engine switch

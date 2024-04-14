@@ -41,7 +41,8 @@ CLI for importing financial data.
     "Imports": "PostgreSql"
   },
   "ApiKeys": {
-    "eodhd.com": "MY_KEY"
+    "eodhd.com": "MY_KEY",
+    "polygon.io": "MY_KEY"
   }
 }
 ```

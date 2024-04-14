@@ -45,6 +45,8 @@ try
     }
     else
     {
+        bool onlySignalWithMarket = false;
+
         var options = JsonOptionsRepository.DefaultSerializerOptions;
         options.Converters.Add(new EnumDescriptionConverter<PricePoint>());
         options.Converters.Add(new EnumDescriptionConverter<BacktestType>());
@@ -63,60 +65,59 @@ try
 
         foreach (var signalName in new SignalName[]
         {
-            SignalName.BullishEngulfing,
-            SignalName.BullishEngulfingWithTallCandles,
-            SignalName.BullishEngulfingWithFollowThru,
-            SignalName.BullishEngulfingWithFourBlackPredecessors,
-            SignalName.BearishEngulfing,
-            SignalName.BearishEngulfingWithFollowThru,
-            SignalName.BearishEngulfingWithTallCandles,
-            SignalName.BearishEngulfingWithFourWhitePredecessors,
-            SignalName.BullishHammer,
-            SignalName.BullishHammerWithFollowThru,
-            SignalName.BearishHammer,
-            SignalName.BearishHammerWithFollowThru,
-            SignalName.DarkCloudCover,
-            SignalName.DarkCloudCoverWithFollowThru,
-            SignalName.PiercingPattern,
-            SignalName.PiercingPatternWithFollowThru,
-            SignalName.MorningStar,
-            SignalName.EveningStar,
-            SignalName.MorningDojiStar,
-            SignalName.EveningDojiStar,
-            SignalName.ShootingStar,
-            SignalName.InvertedHammer,
-            SignalName.BullishHarami,
-            SignalName.BearishHarami,
-            SignalName.BullishHaramiCross,
-            SignalName.BearishHaramiCross,
-            SignalName.TweezerTop,
-            SignalName.TweezerBottom,
-            SignalName.BullishBelthold,
-            SignalName.BearishBelthold,
-            SignalName.UpsideGapTwoCrows,
-            SignalName.ThreeBlackCrows,
-            SignalName.ThreeWhiteSoliders,
-            SignalName.BullishCounterattack,
-            SignalName.BearishCounterattack
+            //SignalName.BullishEngulfing,
+            //SignalName.BullishEngulfingWithTallCandles,
+            //SignalName.BullishEngulfingWithFollowThru,
+            //SignalName.BullishEngulfingWithFourBlackPredecessors,
+            //SignalName.BearishEngulfing,
+            //SignalName.BearishEngulfingWithFollowThru,
+            //SignalName.BearishEngulfingWithTallCandles,
+            //SignalName.BearishEngulfingWithFourWhitePredecessors,
+            //SignalName.BullishHammer,
+            //SignalName.BullishHammerWithFollowThru,
+            //SignalName.BearishHammer,
+            //SignalName.BearishHammerWithFollowThru,
+            //SignalName.DarkCloudCover,
+            //SignalName.DarkCloudCoverWithFollowThru,
+            //SignalName.PiercingPattern,
+            //SignalName.PiercingPatternWithFollowThru
+            //SignalName.MorningStar,
+            //SignalName.EveningStar,
+            //SignalName.MorningDojiStar,
+            //SignalName.EveningDojiStar,
+            //SignalName.ShootingStar,
+            //SignalName.InvertedHammer,
+            //SignalName.BullishHarami,
+            //SignalName.BearishHarami,
+            //SignalName.BullishHaramiCross,
+            //SignalName.BearishHaramiCross,
+            //SignalName.TweezerTop,
+            //SignalName.TweezerBottom,
+            //SignalName.BullishBelthold,
+            //SignalName.BearishBelthold,
+            //SignalName.UpsideGapTwoCrows,
+            //SignalName.ThreeBlackCrows,
+            //SignalName.ThreeWhiteSoliders,
+            //SignalName.BullishCounterattack,
+            //SignalName.BearishCounterattack,
         })
         {
             int num = 1;
 
-            foreach (var move in new double[] { .1 })
+            foreach (var move in new double[] { .1, .2 })
             {
                 foreach (var len in new int[] { 15, 30 })
                 {
                     foreach (var vol in new double[] { 1D, 1.5D, 2D })
                     {
-                        foreach (var trendDesc in new string[] { "S21C", "S50C", "S200C" })
+                        foreach (var trendDesc in new string[] { "S21C", "S50C", "S200C", "E21C", "E50C", "E200C" })
                         {
                             foreach (var useMarket in new bool[] { true, false })
                             {
                                 ChartConfiguration chartConfig = new()
                                 {
                                     Interval = "Daily",
-                                    Trends = [new TrendConfiguration() { Trend = trendDesc }],
-                                    LengthOfPrologue = len
+                                    Trends = [new TrendConfiguration() { Trend = trendDesc }]
                                 };
 
                                 string[] descItems = [
@@ -135,9 +136,10 @@ try
                                     new TestTargetPercentage(PricePoint.High, move),
                                     new TestTargetPercentage(PricePoint.Low, move),
                                     [signalName.GetEnumDescription()],
+                                    len,
                                     vol,
                                     10,
-                                    useMarket,
+                                    onlySignalWithMarket,
                                     chartConfig,
                                     useMarket ? marketConfiguration : null);
 

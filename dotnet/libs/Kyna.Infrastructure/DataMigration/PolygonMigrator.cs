@@ -1,27 +1,26 @@
 ﻿using Kyna.Common;
 using Kyna.Common.Events;
-using Kyna.Common.Logging;
-using Kyna.EodHistoricalData.Models;
 using Kyna.Infrastructure.Database;
 using Kyna.Infrastructure.Database.DataAccessObjects;
 using Kyna.Infrastructure.DataImport;
 using System.ComponentModel;
 using System.Diagnostics;
+using System.IO.Compression;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
 namespace Kyna.Infrastructure.DataMigration;
 
-internal sealed class EodHdMigrator(DbDef sourceDef, DbDef targetDef,
-    EodHdMigrator.MigrationConfiguration configuration, Guid? processId = null, bool dryRun = false)
+internal sealed class PolygonMigrator(DbDef sourceDef, DbDef targetDef,
+    PolygonMigrator.MigrationConfiguration configuration, Guid? processId = null, bool dryRun = false)
     : ImportsMigratorBase(sourceDef, targetDef, processId, dryRun), IImportsMigrator
 {
     public override string Source => SourceName;
 
     public event EventHandler<CommunicationEventArgs>? Communicate;
 
-    public const string SourceName = "eodhd.com";
+    public const string SourceName = "polygon.io";
 
     private readonly MigrationConfiguration _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
 
@@ -54,7 +53,8 @@ internal sealed class EodHdMigrator(DbDef sourceDef, DbDef targetDef,
                 }
 
                 if (_configuration.SourceDeletionMode == SourceDeletionMode.All ||
-                    (_configuration.SourceDeletionMode == SourceDeletionMode.AllExceptLatest && !item.Equals(last)))
+                    (_configuration.SourceDeletionMode == SourceDeletionMode.AllExceptLatest &&
+                        !item.Equals(last)))
                 {
                     item.DeleteFromSource = true;
                 }
@@ -64,9 +64,9 @@ internal sealed class EodHdMigrator(DbDef sourceDef, DbDef targetDef,
         }
 
         foreach (var actionType in new[] {
-            EodHdImporter.Constants.Actions.Fundamentals,
-            EodHdImporter.Constants.Actions.Splits,
-            EodHdImporter.Constants.Actions.EndOfDayPrices
+            PolygonImporter.Constants.Actions.TickerDetails,
+            PolygonImporter.Constants.Actions.Splits,
+            PolygonImporter.Constants.Actions.Dividends
         })
         {
             if (_configuration.MaxParallelization > 1)
@@ -82,7 +82,7 @@ internal sealed class EodHdMigrator(DbDef sourceDef, DbDef targetDef,
                         string msg =
                             $"Migrate {item.Id,12}\t{item.Category,15}\t{item.SubCategory,10}\tDelete from source: {item.DeleteFromSource}";
 
-                        Communicate?.Invoke(this, new CommunicationEventArgs(msg, nameof(EodHdMigrator)));
+                        Communicate?.Invoke(this, new CommunicationEventArgs(msg, nameof(PolygonMigrator)));
 
                         if (!_dryRun)
                         {
@@ -97,7 +97,7 @@ internal sealed class EodHdMigrator(DbDef sourceDef, DbDef targetDef,
                     string msg =
                         $"Migrate {item.Id,12}\t{item.Category,15}\t{item.SubCategory,10}\tDelete from source: {item.DeleteFromSource}";
 
-                    Communicate?.Invoke(this, new CommunicationEventArgs(msg, nameof(EodHdMigrator)));
+                    Communicate?.Invoke(this, new CommunicationEventArgs(msg, nameof(PolygonMigrator)));
 
                     if (!_dryRun)
                     {
@@ -113,7 +113,7 @@ internal sealed class EodHdMigrator(DbDef sourceDef, DbDef targetDef,
                     string msg =
                         $"Delete {item.Id,12}\t{item.Category,15}\t{item.SubCategory,10}";
 
-                    Communicate?.Invoke(this, new CommunicationEventArgs(msg, nameof(EodHdMigrator)));
+                    Communicate?.Invoke(this, new CommunicationEventArgs(msg, nameof(PolygonMigrator)));
 
                     if (!_dryRun)
                     {
@@ -125,24 +125,37 @@ internal sealed class EodHdMigrator(DbDef sourceDef, DbDef targetDef,
             }
         }
 
+        if (_configuration.Categories.Contains(PolygonImporter.Constants.Actions.FlatFiles.ToString(),
+            StringComparer.OrdinalIgnoreCase))
+        {
+            await MigrateFlatFilesAsync(cancellationToken);
+        }
+
         Communicate?.Invoke(this, new CommunicationEventArgs(timer.Elapsed.ConvertToText(), null));
-        Communicate?.Invoke(this, new CommunicationEventArgs("Hydrating missing entities", nameof(EodHdMigrator)));
+        Communicate?.Invoke(this, new CommunicationEventArgs("Hydrating missing entities", nameof(PolygonMigrator)));
         await _targetContext.ExecuteAsync(_targetContext.Sql.Fundamentals.HydrateMissingEntities, commandTimeout: 0,
             cancellationToken: cancellationToken).ConfigureAwait(false);
 
         Communicate?.Invoke(this, new CommunicationEventArgs(timer.Elapsed.ConvertToText(), null));
-        Communicate?.Invoke(this, new CommunicationEventArgs("Setting split indicator for entities", nameof(EodHdMigrator)));
+        Communicate?.Invoke(this, new CommunicationEventArgs("Setting split indicator for entities", nameof(PolygonMigrator)));
         await _targetContext.ExecuteAsync(_targetContext.Sql.Fundamentals.SetSplitIndicatorForEntities, commandTimeout: 0,
             cancellationToken: cancellationToken).ConfigureAwait(false);
 
         Communicate?.Invoke(this, new CommunicationEventArgs(timer.Elapsed.ConvertToText(), null));
-        Communicate?.Invoke(this, new CommunicationEventArgs("Setting price action indicator for entities", nameof(EodHdMigrator)));
+        Communicate?.Invoke(this, new CommunicationEventArgs("Setting price action indicator for entities", nameof(PolygonMigrator)));
         await _targetContext.ExecuteAsync(_targetContext.Sql.Fundamentals.SetPriceActionIndicatorForEntities, commandTimeout: 0,
             cancellationToken: cancellationToken).ConfigureAwait(false);
 
         Communicate?.Invoke(this, new CommunicationEventArgs(timer.Elapsed.ConvertToText(), null));
-        Communicate?.Invoke(this, new CommunicationEventArgs("Setting last price actions for entities", nameof(EodHdMigrator)));
+        Communicate?.Invoke(this, new CommunicationEventArgs("Setting last price actions for entities", nameof(PolygonMigrator)));
         await _targetContext.ExecuteAsync(_targetContext.Sql.Fundamentals.SetLastPriceActionForEntities, commandTimeout: 0,
+            cancellationToken: cancellationToken).ConfigureAwait(false);
+
+        Communicate?.Invoke(this, new CommunicationEventArgs(timer.Elapsed.ConvertToText(), null));
+        Communicate?.Invoke(this, new CommunicationEventArgs("Cleaning up entities", nameof(PolygonMigrator)));
+        await _targetContext.ExecuteAsync(_targetContext.Sql.Fundamentals.DeleteEntitiesWithoutTypesOrPriceActions,
+            new { Source },
+            commandTimeout: 0,
             cancellationToken: cancellationToken).ConfigureAwait(false);
 
         timer.Stop();
@@ -155,7 +168,6 @@ internal sealed class EodHdMigrator(DbDef sourceDef, DbDef targetDef,
 
         result.AppendLine($"Mode                 : {_configuration.Mode.GetEnumDescription()}");
         result.AppendLine($"Source               : {_configuration.Source}");
-        result.AppendLine($"Price Migration Mode : {_configuration.PriceMigrationMode.GetEnumDescription()}");
         result.AppendLine($"Source Deletion Mode : {_configuration.SourceDeletionMode.GetEnumDescription()}");
         result.AppendLine($"Max Parallelization  : {_configuration.MaxParallelization}");
 
@@ -173,28 +185,19 @@ internal sealed class EodHdMigrator(DbDef sourceDef, DbDef targetDef,
         if (!string.IsNullOrWhiteSpace(responseBody) &&
             responseBody != "[]" && responseBody != "{}")
         {
-            if (item.Category.Equals(EodHdImporter.Constants.Actions.EndOfDayPrices))
-            {
-                await MigrateEodPricesAsync(item, responseBody).ConfigureAwait(false);
-            }
-
-            if (item.Category.Equals(EodHdImporter.Constants.Actions.Splits))
+            if (item.Category.Equals(PolygonImporter.Constants.Actions.Splits))
             {
                 await MigrateSplitsAsync(item, responseBody).ConfigureAwait(false);
             }
 
-            if (item.Category.Equals(EodHdImporter.Constants.Actions.Fundamentals))
+            if (item.Category.Equals(PolygonImporter.Constants.Actions.Dividends))
             {
-                if (!(responseBody == "{}" || responseBody == "[]"))
-                {
-                    if (!await TryMigrateFundamentalsForCommonStock(item, responseBody).ConfigureAwait(false))
-                    {
-                        if (!await TryMigrateFundamentalsForEtf(item, responseBody).ConfigureAwait(false))
-                        {
-                            KLogger.LogError($"Unable to process {item.Category} for {item.SubCategory}");
-                        }
-                    }
-                }
+                await MigrateDividendsAsync(item, responseBody).ConfigureAwait(false);
+            }
+
+            if (item.Category.Equals(PolygonImporter.Constants.Actions.TickerDetails))
+            {
+                await MigrateTickerDetailsAsync(item, responseBody).ConfigureAwait(false);
             }
         }
     }
@@ -217,61 +220,158 @@ internal sealed class EodHdMigrator(DbDef sourceDef, DbDef targetDef,
         return sb.ToString();
     }
 
-    private async Task MigrateEodPricesAsync(ApiTransactionForMigration item, string responseBody)
+    private async Task MigrateFlatFilesAsync(CancellationToken cancellationToken)
     {
-        if (_configuration.PriceMigrationMode != PriceMigrationMode.None)
+        cancellationToken.ThrowIfCancellationRequested();
+
+        if (!string.IsNullOrWhiteSpace(_configuration.ImportFileLocation))
         {
-            var eodPriceActions = JsonSerializer.Deserialize<PriceAction[]>(
-                responseBody, JsonOptionsRepository.DefaultSerializerOptions);
+            DirectoryInfo importDirectory = new(_configuration.ImportFileLocation);
 
-            if ((eodPriceActions?.Length ?? 0) > 0)
+            if (!importDirectory.Exists)
             {
-                var eodPrices = eodPriceActions!.Select(p => new EodPrice(item.Source,
-                        item.SubCategory,
-                        p.Date, p.Open, p.High, p.Low, p.Close, p.Volume,
-                        DateTime.UtcNow.Ticks,
-                        DateTime.UtcNow.Ticks,
-                        _processId)).ToArray();
+                Communicate?.Invoke(this, new CommunicationEventArgs("No files found to import.", nameof(PolygonMigrator)));
+                return;
+            }
 
-                if (_configuration.PriceMigrationMode.HasFlag(PriceMigrationMode.Raw))
+            var zippedFiles = importDirectory.GetFiles("*.gz", SearchOption.AllDirectories);
+
+            if (zippedFiles.Length > 0)
+            {
+                foreach (var file in zippedFiles)
                 {
-                    await _targetContext.ExecuteAsync(_targetContext.Sql.EodPrices.Upsert, eodPrices).ConfigureAwait(false);
+                    Communicate?.Invoke(this, new CommunicationEventArgs(file.FullName, nameof(PolygonMigrator)));
+                    var newFileName = file.FullName[0..^3];
+                    using var fs = file.OpenRead();
+                    using var newFile = File.Create(newFileName);
+                    using GZipStream zs = new(fs, CompressionMode.Decompress);
+                    Communicate?.Invoke(this, new CommunicationEventArgs(newFileName, nameof(PolygonMigrator)));
+                    zs.CopyTo(newFile);
                 }
+            }
 
-                var adjPrices = Array.Empty<AdjustedEodPrice>();
-                if (_configuration.PriceMigrationMode.HasFlag(PriceMigrationMode.Adjusted))
+            var csvFiles = importDirectory.GetFiles("*.csv", SearchOption.AllDirectories);
+
+            if (csvFiles.Length > 0)
+            {
+                foreach (var file in csvFiles)
                 {
-                    string splitSql = $"{_targetContext.Sql.Splits.Fetch} WHERE source = @Source AND code = @Code";
-                    var splits = _targetContext.Query<Database.DataAccessObjects.Split>(splitSql, new
-                    {
-                        item.Source,
-                        Code = item.SubCategory
-                    }).ToArray();
+                    Communicate?.Invoke(this, new CommunicationEventArgs(file.FullName, nameof(PolygonMigrator)));
+                    var lines = File.ReadAllLines(file.FullName);
 
-                    adjPrices = SplitAdjustedPriceCalculator.Calculate(eodPrices, splits).ToArray();
-
-                    if (adjPrices.Length > 0)
+                    if (lines.Length > 1)
                     {
-                        await _targetContext.ExecuteAsync(_targetContext.Sql.AdjustedEodPrices.Upsert, adjPrices)
-                            .ConfigureAwait(false);
+                        Polygon.Models.FlatFile[] flatFileLines = new Polygon.Models.FlatFile[lines.Length - 1];
+                        for (int i = 1; i < lines.Length; i++)
+                        {
+                            flatFileLines[i - 1] = new Polygon.Models.FlatFile(lines[i]);
+                        }
+                        await _targetContext.ExecuteAsync(_targetContext.Sql.EodPrices.Upsert, flatFileLines.Select(f => new EodPrice(SourceName, f.Code, _processId)
+                        {
+                            Open = f.Open,
+                            High = f.High,
+                            Low = f.Low,
+                            Close = f.Close,
+                            Volume = f.Volume,
+                            DateEod = f.Date,
+                            CreatedTicksUtc = DateTime.UtcNow.Ticks,
+                            UpdatedTicksUtc = DateTime.UtcNow.Ticks
+                        }), cancellationToken: cancellationToken).ConfigureAwait(false);
                     }
                 }
+            }
+
+            await _targetContext.ExecuteAsync(_targetContext.Sql.EodPrices.CopyPricesWithoutSplitsToAdjustedPrices,
+                commandTimeout: 0, cancellationToken: cancellationToken).ConfigureAwait(false);
+
+            Communicate?.Invoke(this, new CommunicationEventArgs($"Adjusting prices for tickers without splits.", nameof(PolygonMigrator)));
+            var codesWithSplits = (await _targetContext.QueryAsync<string>(
+                _targetContext.Sql.EodPrices.FetchCodesWithSplits, new { Source },
+                cancellationToken: cancellationToken).ConfigureAwait(false)).ToArray();
+
+            foreach (var code in codesWithSplits)
+            {
+                Communicate?.Invoke(this, new CommunicationEventArgs($"Adjusting prices for {code}.", nameof(PolygonMigrator)));
+                var chartSql = @$"{_targetContext.Sql.EodPrices.Fetch}
+WHERE source = @Source AND code = @Code";
+                var splitSql = @$"{_targetContext.Sql.Splits.Fetch}
+WHERE source = @Source and code = @Code";
+                var splits = await _targetContext.QueryAsync<Split>(splitSql,
+                    new { Source, code }, cancellationToken: cancellationToken).ConfigureAwait(false);
+
+                var chart = await _targetContext.QueryAsync<EodPrice>(chartSql,
+                    new { Source, code }, cancellationToken: cancellationToken).ConfigureAwait(false);
+
+                var adjustedChart = SplitAdjustedPriceCalculator.Calculate(chart, splits).ToArray();
+
+                await _targetContext.ExecuteAsync(_targetContext.Sql.AdjustedEodPrices.Upsert,
+                    adjustedChart, cancellationToken: cancellationToken).ConfigureAwait(false);
             }
         }
     }
 
     private Task MigrateSplitsAsync(ApiTransactionForMigration item, string responseBody)
     {
-        var splits = JsonSerializer.Deserialize<EodHistoricalData.Models.Split[]>(
+        var splitResponse = JsonSerializer.Deserialize<Polygon.Models.SplitResponse>(
             responseBody, JsonOptionsRepository.DefaultSerializerOptions);
 
-        if ((splits?.Length ?? 0) > 0)
+        if (splitResponse.Results.Length > 0)
         {
             return _targetContext.ExecuteAsync(_targetContext.Sql.Splits.Upsert,
-                splits!.Select(s => new Database.DataAccessObjects.Split(item.Source, item.SubCategory,
-                s.Date, s.SplitText, _processId)));
+                splitResponse.Results.Select(s => new Split(item.Source, item.SubCategory,
+                s.ExecutionDate, s.SplitFrom, s.SplitTo, DateTime.UtcNow.Ticks, DateTime.UtcNow.Ticks, _processId)));
         }
 
+        return Task.CompletedTask;
+    }
+
+    private Task MigrateDividendsAsync(ApiTransactionForMigration item, string responseBody)
+    {
+        var dividendResponse = JsonSerializer.Deserialize<Polygon.Models.DividendResponse>(
+            responseBody, JsonOptionsRepository.DefaultSerializerOptions);
+
+        if (dividendResponse.Results.Length > 0)
+        {
+            return _targetContext.ExecuteAsync(_targetContext.Sql.Dividends.Upsert,
+                dividendResponse.Results.Select(d => new Dividend(item.Source, item.SubCategory,
+                d.Type, d.DeclarationDate, d.ExDividendDate, d.PayDate, d.RecordDate, d.Frequency,
+                d.CashAmount, DateTime.UtcNow.Ticks, DateTime.UtcNow.Ticks, item.ProcessId)));
+        }
+
+        return Task.CompletedTask;
+    }
+
+    private Task MigrateTickerDetailsAsync(ApiTransactionForMigration item, string responseBody)
+    {
+        var detailResponse = JsonSerializer.Deserialize<Polygon.Models.TickerDetailResponse>(responseBody,
+            JsonOptionsRepository.DefaultSerializerOptions);
+
+        if ("OK".Equals(detailResponse.Status, StringComparison.OrdinalIgnoreCase))
+        {
+            return _targetContext.ExecuteAsync(_targetContext.Sql.Fundamentals.UpsertEntity,
+                new
+                {
+                    item.Source,
+                    Code = item.SubCategory,
+                    Country = detailResponse.Results.Locale,
+                    Currency = detailResponse.Results.CurrencyName,
+                    Phone = detailResponse.Results.PhoneNumber,
+                    Delisted = !detailResponse.Results.Active,
+                    Exchange = detailResponse.Results.PrimaryExchange,
+                    Industry = detailResponse.Results.SicDescription,
+                    detailResponse.Results.Name,
+                    ProcessId = _processId,
+                    WebUrl = detailResponse.Results.HomepageUrl,
+                    detailResponse.Results.Type,
+                    Sector = (string?)null,
+                    GicSector = (string?)null,
+                    GicGroup = (string?)null,
+                    GicIndustry = (string?)null,
+                    GicSubIndustry = (string?)null,
+                    CreatedTicksUtc = DateTime.UtcNow.Ticks,
+                    UpdatedTicksUtc = DateTime.UtcNow.Ticks
+                });
+        }
         return Task.CompletedTask;
     }
 
@@ -358,11 +458,12 @@ internal sealed class EodHdMigrator(DbDef sourceDef, DbDef targetDef,
         [JsonPropertyName("Source Deletion Mode")]
         public SourceDeletionMode SourceDeletionMode { get; init; } = SourceDeletionMode.None;
 
-        [JsonPropertyName("Price Migration Mode")]
-        public PriceMigrationMode PriceMigrationMode { get; init; } = PriceMigrationMode.None;
-
         [JsonPropertyName("Max Parallelization")]
         public int MaxParallelization { get; init; }
+        [JsonPropertyName("Import File Location")]
+        public string? ImportFileLocation { get; init; } = null;
+        [JsonPropertyName("Import File Prefixes")]
+        public string[] ImportFilePrefixes { get; init; } = [];
     }
 
     /// <summary>
@@ -398,16 +499,5 @@ internal sealed class EodHdMigrator(DbDef sourceDef, DbDef targetDef,
         /// </summary>
         [Description("All Except Latest")]
         AllExceptLatest
-    }
-
-    /// <summary>
-    /// Represents whether we should preserve raw data, adjusted data, or both.
-    /// </summary>
-    [Flags]
-    public enum PriceMigrationMode
-    {
-        None = 0,
-        Raw = 1 << 0,
-        Adjusted = 1 << 1
     }
 }

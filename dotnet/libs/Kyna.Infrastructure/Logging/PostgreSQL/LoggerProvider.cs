@@ -16,12 +16,10 @@ internal class LoggerProvider : ILoggerProvider
     private readonly Func<string, LogLevel, bool>? _filter;
 
     private readonly PostgreSqlContext _dbContext;
-    private readonly SqlRepository _sqlRepo;
 
     public LoggerProvider(string connectionString, Func<string, LogLevel, bool>? filter = null)
     {
         _dbContext = new PostgreSqlContext(new DbDef("Logs", DatabaseEngine.PostgreSql, connectionString));
-        _sqlRepo = new SqlRepository(DatabaseEngine.PostgreSql);
 
         _filter = filter;
 
@@ -61,7 +59,7 @@ internal class LoggerProvider : ILoggerProvider
                 {
                     if (logItem is not null)
                     {
-                        _dbContext.Execute(_sqlRepo.Logs.Insert, logItem);
+                        _dbContext.Execute(_dbContext.Sql.Logs.Insert, logItem);
                     }
                 }
             }
@@ -75,7 +73,7 @@ internal class LoggerProvider : ILoggerProvider
                 {
                     if (appEvent is not null)
                     {
-                        _dbContext.Execute(_sqlRepo.AppEvents.Insert, appEvent);
+                        _dbContext.Execute(_dbContext.Sql.AppEvents.Insert, appEvent);
                     }
                 }
             }

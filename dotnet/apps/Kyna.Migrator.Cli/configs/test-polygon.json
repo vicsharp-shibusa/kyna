@@ -1,0 +1,16 @@
+{
+  "Source": "polygon.io",
+  "Categories": [
+    "Ticker Details",
+    "Splits",
+    "Dividends",
+    "Flat Files"
+  ],
+  "Mode": "Latest",
+  "Source Deletion Mode": "All Except Latest",
+  "Max Parallelization": 1,
+  "Import File Location": "C:\\temp",
+  "Import File Prefixes": [
+    "us_stocks_sip/day_aggs_v1"
+  ]
+}

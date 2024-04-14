@@ -81,10 +81,25 @@ source = @Source AND code = @Code AND date_eod = @DateEod";
 
         string sql = $"{_context.Sql.Splits.Fetch} WHERE process_id = @ProcessId";
 
-        var actual = _context.QueryFirstOrDefault<Split>(
-            sql, new { splitDao.ProcessId });
-
+        var actual = _context.QueryFirstOrDefault<Split>(sql, new { splitDao.ProcessId });
+        Assert.NotNull(actual);
         Assert.Equal(splitDao, actual);
+    }
+
+    [Fact]
+    public void InsertAndFetch_Dividends()
+    {
+        Guid processId = Guid.NewGuid();
+        var dividendDao = CreateDividendDao(processId);
+
+        _context!.Execute(_context.Sql.Dividends.DeleteForSource, dividendDao);
+        _context.Execute(_context.Sql.Dividends.Upsert, dividendDao);
+
+        string sql = $"{_context.Sql.Dividends.Fetch} WHERE process_id = @ProcessId";
+
+        var actual = _context.QueryFirstOrDefault<Dividend>(sql, new { dividendDao.ProcessId });
+        Assert.NotNull(actual);
+        Assert.Equal(dividendDao, actual);
     }
 
     [Fact]
@@ -110,7 +125,7 @@ source = @Source AND code = @Code AND date_eod = @DateEod";
         var entity = CreateEntity();
 
         _context!.Execute(_context.Sql.Fundamentals.DeleteEntityForSourceAndCode,
-            new { entity.Source, entity.Code});
+            new { entity.Source, entity.Code });
 
         _context.Execute(_context.Sql.Fundamentals.UpsertEntity, entity);
 
@@ -126,7 +141,7 @@ source = @Source AND code = @Code AND date_eod = @DateEod";
         return new Entity("Test", "TEST.US")
         {
             Type = "Common Stock",
-            Name  = "Test Company",
+            Name = "Test Company",
             Exchange = "NYSE",
             Country = "USA",
             Currency = "USD",
@@ -182,6 +197,22 @@ source = @Source AND code = @Code AND date_eod = @DateEod";
             After = 1,
             Before = 2,
             SplitDate = DateOnly.FromDateTime(DateTime.UtcNow),
+            CreatedTicksUtc = DateTime.UtcNow.Ticks,
+            UpdatedTicksUtc = DateTime.UtcNow.Ticks,
+        };
+    }
+
+    private static Dividend CreateDividendDao(Guid? processId = null)
+    {
+        DateOnly dt = DateOnly.FromDateTime(DateTime.UtcNow);
+        return new Dividend("TEST", "TEST.US", "TEST", processId ?? Guid.NewGuid())
+        {
+            DeclarationDate = dt,
+            ExDividendDate = dt,
+            PayDate = dt,
+            RecordDate = dt,
+            Amount = 10M,
+            Frequency = 4,
             CreatedTicksUtc = DateTime.UtcNow.Ticks,
             UpdatedTicksUtc = DateTime.UtcNow.Ticks,
         };

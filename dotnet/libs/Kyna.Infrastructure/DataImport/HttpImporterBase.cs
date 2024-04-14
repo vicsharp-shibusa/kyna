@@ -9,7 +9,7 @@ using System.Text.Json;
 
 namespace Kyna.Infrastructure.DataImport;
 
-internal abstract class DataImporterBase : IDisposable
+internal abstract class HttpImporterBase : IDisposable
 {
     protected bool _disposedValue;
     protected Guid? _processId;
@@ -21,7 +21,7 @@ internal abstract class DataImporterBase : IDisposable
 
     protected readonly ConcurrentBag<(string Uri, string Category, string? SubCategory)> _concurrentBag;
 
-    protected DataImporterBase(DbDef dbDef, string baseUri, string? apiKey = null, Guid? processId = null)
+    protected HttpImporterBase(DbDef dbDef, string baseUri, string? apiKey = null, Guid? processId = null)
     {
         _processId = processId;
         _transactionService = new ApiTransactionService(dbDef);

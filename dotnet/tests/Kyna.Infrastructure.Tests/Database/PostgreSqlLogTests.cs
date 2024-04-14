@@ -6,7 +6,6 @@ namespace Kyna.Infrastructure.Tests.Database;
 
 public class PostgreSqlLogTests
 {
-    private readonly SqlRepository _postgreSqlRepo = new(DatabaseEngine.PostgreSql);
     private const string DbName = "Logs";
 
     private PostgreSqlContext? _context;
@@ -36,9 +35,9 @@ public class PostgreSqlLogTests
     {
         var logDao = CreateLog();
 
-        _context!.Execute(_postgreSqlRepo.Logs.Insert, logDao);
+        _context!.Execute(_context.Sql.Logs.Insert, logDao);
 
-        string sql = $"{_postgreSqlRepo.Logs.Fetch} WHERE message = @Message";
+        string sql = $"{_context.Sql.Logs.Fetch} WHERE message = @Message";
 
         var actual = _context.QueryFirstOrDefault<Infrastructure.Database.DataAccessObjects.Log>(sql, new { logDao.Message });
 
@@ -51,9 +50,9 @@ public class PostgreSqlLogTests
     {
         var logDao = CreateLog();
 
-        await _context!.ExecuteAsync(_postgreSqlRepo.Logs.Insert, logDao);
+        await _context!.ExecuteAsync(_context.Sql.Logs.Insert, logDao);
 
-        string sql = $"{_postgreSqlRepo.Logs.Fetch} WHERE message = @Message";
+        string sql = $"{_context.Sql.Logs.Fetch} WHERE message = @Message";
 
         var actual = await _context.QueryFirstOrDefaultAsync<Infrastructure.Database.DataAccessObjects.Log>(sql, new { logDao.Message });
 
@@ -69,14 +68,14 @@ public class PostgreSqlLogTests
 
         var t = _context!.GetOpenConnection().BeginTransaction();
 
-        _context.Execute(_postgreSqlRepo.Logs.Insert, logDao1, t);
-        _context.Execute(_postgreSqlRepo.Logs.Insert, logDao2, t);
+        _context.Execute(_context.Sql.Logs.Insert, logDao1, t);
+        _context.Execute(_context.Sql.Logs.Insert, logDao2, t);
 
         t.Commit();
         t.Connection?.Close();
 
         var actuals = _context.Query<Infrastructure.Database.DataAccessObjects.Log>(
-            _postgreSqlRepo.Logs.Fetch);
+            _context.Sql.Logs.Fetch);
 
         var match1 = actuals.FirstOrDefault(a => a.ProcessId.Equals(logDao1.ProcessId));
         var match2 = actuals.FirstOrDefault(a => a.ProcessId.Equals(logDao2.ProcessId));
@@ -93,14 +92,14 @@ public class PostgreSqlLogTests
 
         var t = (await _context!.GetOpenConnectionAsync()).BeginTransaction();
 
-        await _context.ExecuteAsync(_postgreSqlRepo.Logs.Insert, logDao1, t);
-        await _context.ExecuteAsync(_postgreSqlRepo.Logs.Insert, logDao2, t);
+        await _context.ExecuteAsync(_context.Sql.Logs.Insert, logDao1, t);
+        await _context.ExecuteAsync(_context.Sql.Logs.Insert, logDao2, t);
 
         t.Commit();
         t.Connection?.Close();
 
         var actuals = await _context.QueryAsync<Infrastructure.Database.DataAccessObjects.Log>(
-            _postgreSqlRepo.Logs.Fetch);
+            _context.Sql.Logs.Fetch);
 
         var match1 = actuals.FirstOrDefault(a => a.ProcessId.Equals(logDao1.ProcessId));
         var match2 = actuals.FirstOrDefault(a => a.ProcessId.Equals(logDao2.ProcessId));
@@ -114,9 +113,9 @@ public class PostgreSqlLogTests
     {
         var eventDao = CreateAppEvent();
 
-        _context!.Execute(_postgreSqlRepo.AppEvents.Insert, eventDao);
+        _context!.Execute(_context.Sql.AppEvents.Insert, eventDao);
 
-        string sql = $"{_postgreSqlRepo.AppEvents.Fetch} WHERE event_name = @EventName";
+        string sql = $"{_context.Sql.AppEvents.Fetch} WHERE event_name = @EventName";
 
         var actual = _context.QueryFirstOrDefault<Infrastructure.Database.DataAccessObjects.AppEvent>(sql, new { eventDao.EventName });
 
@@ -129,9 +128,9 @@ public class PostgreSqlLogTests
     {
         var eventDao = CreateAppEvent();
 
-        await _context!.ExecuteAsync(_postgreSqlRepo.AppEvents.Insert, eventDao);
+        await _context!.ExecuteAsync(_context.Sql.AppEvents.Insert, eventDao);
 
-        string sql = $"{_postgreSqlRepo.AppEvents.Fetch} WHERE event_name = @EventName";
+        string sql = $"{_context.Sql.AppEvents.Fetch} WHERE event_name = @EventName";
 
         var actual = await _context.QueryFirstOrDefaultAsync<Infrastructure.Database.DataAccessObjects.AppEvent>(sql, new { eventDao.EventName });
 
@@ -147,14 +146,14 @@ public class PostgreSqlLogTests
 
         var t = _context!.GetOpenConnection().BeginTransaction();
 
-        _context.Execute(_postgreSqlRepo.AppEvents.Insert, eventDao1, t);
-        _context.Execute(_postgreSqlRepo.AppEvents.Insert, eventDao2, t);
+        _context.Execute(_context.Sql.AppEvents.Insert, eventDao1, t);
+        _context.Execute(_context.Sql.AppEvents.Insert, eventDao2, t);
 
         t.Commit();
         t.Connection?.Close();
 
         var actuals = _context.Query<Infrastructure.Database.DataAccessObjects.AppEvent>(
-            _postgreSqlRepo.AppEvents.Fetch, new { eventDao1.EventName });
+            _context.Sql.AppEvents.Fetch, new { eventDao1.EventName });
 
         var match1 = actuals.FirstOrDefault(a => a.ProcessId.Equals(eventDao1.ProcessId));
         var match2 = actuals.FirstOrDefault(a => a.ProcessId.Equals(eventDao2.ProcessId));
@@ -171,14 +170,14 @@ public class PostgreSqlLogTests
 
         var t = (await _context!.GetOpenConnectionAsync()).BeginTransaction();
 
-        await _context.ExecuteAsync(_postgreSqlRepo.AppEvents.Insert, eventDao1, t);
-        await _context.ExecuteAsync(_postgreSqlRepo.AppEvents.Insert, eventDao2, t);
+        await _context.ExecuteAsync(_context.Sql.AppEvents.Insert, eventDao1, t);
+        await _context.ExecuteAsync(_context.Sql.AppEvents.Insert, eventDao2, t);
 
         t.Commit();
         t.Connection?.Close();
 
         var actuals = await _context.QueryAsync<Infrastructure.Database.DataAccessObjects.AppEvent>(
-            _postgreSqlRepo.AppEvents.Fetch, new { eventDao1.EventName });
+            _context.Sql.AppEvents.Fetch, new { eventDao1.EventName });
 
         var match1 = actuals.FirstOrDefault(a => a.ProcessId.Equals(eventDao1.ProcessId));
         var match2 = actuals.FirstOrDefault(a => a.ProcessId.Equals(eventDao2.ProcessId));

@@ -8,11 +8,12 @@ namespace Kyna.ApplicationServices.DataManagement;
 
 public static class ImporterFactory
 {
-    public const string DefaultSource = EodHdImporter.SourceName;
+    public const string DefaultSource = PolygonImporter.SourceName;
 
     public static IExternalDataImporter Create(string source, DbDef dbDef,
         FileInfo? configFileInfo = null,
         string? apiKey = null,
+        string? accessKey = null,
         Guid? processId = null,
         bool dryRun = false)
     {
@@ -53,6 +54,37 @@ public static class ImporterFactory
                     eodHdImportConfig.SymbolTypes,
                     eodHdImportConfig.Options,
                     eodHdImportConfig.DateRanges),
+                processId, dryRun);
+        }
+
+        if (source.Equals(PolygonImporter.SourceName, StringComparison.OrdinalIgnoreCase))
+        {
+            if (string.IsNullOrWhiteSpace(apiKey))
+            {
+                throw new ArgumentException($"{nameof(apiKey)} is required to instantiate an importer for {source}");
+            }
+
+            if (string.IsNullOrWhiteSpace(accessKey))
+            {
+                throw new ArgumentException($"{nameof(accessKey)} is required to instantiate an importer for {source}");
+            }
+
+            if (configFileInfo == null)
+            {
+                throw new Exception($"A configuration file is required when instantiating {nameof(PolygonImporter)}");
+            }
+
+            var polygonImportConfig = JsonSerializer.Deserialize<PolygonImporter.ImportConfigfile>(
+                File.ReadAllText(configFileInfo.FullName),
+                JsonOptionsRepository.DefaultSerializerOptions);
+
+            Debug.Assert(polygonImportConfig != null);
+
+            return new PolygonImporter(dbDef,
+                new PolygonImporter.DataImportConfiguration(PolygonImporter.SourceName,
+                    apiKey, accessKey,
+                    polygonImportConfig.ImportActions,
+                    polygonImportConfig.Options),
                 processId, dryRun);
         }
 

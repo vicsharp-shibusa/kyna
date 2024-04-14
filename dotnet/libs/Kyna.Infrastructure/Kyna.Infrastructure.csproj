@@ -8,16 +8,18 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-	  <PackageReference Include="Dapper" Version="2.1.35" />
-	  <PackageReference Include="Npgsql" Version="8.0.2" />
-	  <PackageReference Include="Polly" Version="8.3.1" />
-	  <PackageReference Include="Polly.Contrib.WaitAndRetry" Version="1.1.1" />
-	  <PackageReference Include="YahooFinanceApi" Version="2.3.3" />
+		<PackageReference Include="Dapper" Version="2.1.35" />
+		<PackageReference Include="Npgsql" Version="8.0.2" />
+		<PackageReference Include="Polly" Version="8.3.1" />
+		<PackageReference Include="Polly.Contrib.WaitAndRetry" Version="1.1.1" />
+		<PackageReference Include="YahooFinanceApi" Version="2.3.3" />
+		<PackageReference Include="AWSSDK.S3" Version="3.7.307.11" />
 	</ItemGroup>
 
 	<ItemGroup>
-	  <ProjectReference Include="..\Kyna.Backtests\Kyna.Backtests.csproj" />
-	  <ProjectReference Include="..\Kyna.EodHistoricalData\Kyna.EodHistoricalData.csproj" />
+		<ProjectReference Include="..\Kyna.Backtests\Kyna.Backtests.csproj" />
+		<ProjectReference Include="..\Kyna.EodHistoricalData\Kyna.EodHistoricalData.csproj" />
+		<ProjectReference Include="..\Kyna.Polygon\Kyna.Polygon.csproj" />
 	</ItemGroup>
 
 </Project>

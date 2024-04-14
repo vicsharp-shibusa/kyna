@@ -13,7 +13,7 @@ using System.Text.Json.Serialization;
 
 namespace Kyna.Infrastructure.DataImport;
 
-internal sealed class EodHdImporter : DataImporterBase, IExternalDataImporter
+internal sealed class EodHdImporter : HttpImporterBase, IExternalDataImporter
 {
     private readonly IDbContext _dbContext;
 

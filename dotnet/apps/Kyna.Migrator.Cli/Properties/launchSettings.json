@@ -2,7 +2,7 @@
   "profiles": {
     "Kyna.Migrator.Cli": {
       "commandName": "Project",
-      "commandLineArgs": "--help"
+      "commandLineArgs": "-f configs\\test-polygon.json -v -s polygon.io"
     }
   }
 }
