@@ -133,16 +133,16 @@ public sealed partial class CandlestickSignalRepository
                 },
             new CandlestickSignal(SignalName.PiercingPattern,
                 numberRequired: 2,
-                sentiment: TrendSentiment.Bearish,
-                requiredSentiment: TrendSentiment.Bullish,
+                sentiment: TrendSentiment.Bullish,
+                requiredSentiment: TrendSentiment.Bearish,
                 options: _signalOptions)
                 {
                     IsMatch = IsPiercing
                 },
             new CandlestickSignal(SignalName.PiercingPatternWithFollowThru,
                 numberRequired: 3,
-                sentiment: TrendSentiment.Bearish,
-                requiredSentiment: TrendSentiment.Bullish,
+                sentiment: TrendSentiment.Bullish,
+                requiredSentiment: TrendSentiment.Bearish,
                 options: _signalOptions)
                 {
                     IsMatch = IsPiercingWithFollowThru

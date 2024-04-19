@@ -733,10 +733,15 @@ public sealed partial class CandlestickSignalRepository
             first.IsDark &&
             second.IsDark &&
             third.IsDark &&
+            chart.IsTall(position) &&
+            chart.IsTall(position + 1) &&
+            chart.IsTall(position + 2) &&
             second.Body.High < first.Body.High &&
             second.Body.High > first.Body.Low &&
+            second.Close < first.Low &&
             third.Body.High < second.Body.High &&
-            third.Body.High > second.Body.Low
+            third.Body.High > second.Body.Low &&
+            third.Close < second.Low
             ? position + 2 : -1;
     }
 
@@ -757,10 +762,15 @@ public sealed partial class CandlestickSignalRepository
             first.IsLight &&
             second.IsLight &&
             third.IsLight &&
+            chart.IsTall(position) &&
+            chart.IsTall(position +1 ) &&
+            chart.IsTall(position + 2) &&
             second.Body.Low > first.Body.Low &&
             second.Body.Low < first.Body.High &&
+            second.Close > first.High &&
             third.Body.Low > second.Body.Low &&
-            third.Body.Low < second.Body.High
+            third.Body.Low < second.Body.High &&
+            third.Close > second.High
             ? position + 2 : -1;
     }
 
