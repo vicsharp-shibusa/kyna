@@ -73,8 +73,7 @@ internal static class SplitAdjustedPriceCalculator
         return (1, 1);
     }
 
-    public static IEnumerable<AdjustedEodPrice> Calculate(
-        IEnumerable<EodPrice> prices, IEnumerable<Split> splits)
+    public static IEnumerable<AdjustedEodPrice> Calculate(IEnumerable<EodPrice> prices, IEnumerable<Split> splits)
     {
         var orderedPrices = prices.OrderBy(s => s.DateEod).ToArray();
 
@@ -124,7 +123,7 @@ internal static class SplitAdjustedPriceCalculator
                 }
             }
 
-            // Resize this array because it's possible that some values were remove along the way (see comment above).
+            // Resize this array because it's possible that some values were removed along the way (see comment above).
             factors = factors[..j];
 
             int f = 0;
