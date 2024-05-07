@@ -188,6 +188,14 @@ void HandleArguments(string[] args)
                     throw new ArgumentException("The specified configuration file does not exist.");
                 }
                 break;
+            case "-s":
+            case "--source":
+                if (a == args.Length - 1)
+                {
+                    throw new ArgumentException($"A source name is required after {args[a]}");
+                }
+                config.Source = args[++a];
+                break;
             case "--dry-run":
                 config.DryRun = true;
                 break;
