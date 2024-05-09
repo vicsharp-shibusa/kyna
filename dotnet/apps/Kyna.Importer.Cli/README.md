@@ -43,6 +43,9 @@ CLI for importing financial data.
   "ApiKeys": {
     "eodhd.com": "MY_KEY",
     "polygon.io": "MY_KEY"
+  },
+  "AccessKeys": {
+    "polygon.io": "MY_ACCESS_KEY"
   }
 }
 ```
@@ -134,6 +137,26 @@ An example for collecting price, splits, and dividends across major US exchanges
   "Options": {
     "Bulk": "false",
     "Max Parallelization": "10"
+  }
+}
+```
+
+Import configuration files for `polygon.io` are a little different.
+
+```json
+{
+  "Import Actions": {
+    "Tickers": "stocks,indices,options,crypto",
+    "Ticker Details": "stocks",
+    "Splits": "stocks",
+    "Dividends": "stocks",
+    "Flat Files": "true"
+  },
+  "Options": {
+    "Import File Location": "C:\\temp",
+    "Max Parallelization": "10",
+    "Import File Prefixes": "us_stocks_sip/day_aggs_v1",
+    "Years of Data": "10"
   }
 }
 ```

@@ -30,9 +30,9 @@ Kyna is intended to be a suite of software tools that
 
 ### Current Project Phase
 
-The current phase is [Phase 1.5](https://github.com/vicsharp-shibusa/kyna/milestone/8), in which we are building signal capturing logic for all of the primary "candlestick reversal patterns."
-Also in this phase, we added an alternative data importer using the Yahoo Finance API.
-This importer, `YahooImporter` follows a simpler path than the `EodHdImporter` in that it does not separate the data collection from the migration - it combines the process and writes directly to the `financials` database; this is because we're not making direct API calls, but rather using a NuGet package. Plus, the Yahoo Finance API is free.
+The current phase is [Phase 1.7](https://github.com/vicsharp-shibusa/kyna/milestone/11), in which we are adding [polygon.io](https://polygon.io/) support. Polygon.io is a data provider for historical and real-time stock, options, indices, and crypto data.
+
+
 
 ### Project History
 
@@ -66,6 +66,12 @@ A model for "trends" was constructed, the `Kyna.Backtests.Cli` was built, and an
 The `Kyna.Cli` was constructed in this phase; this app is an orchestration app that calls the other CLI executables.
 With this tool, instead of having to call the different apps separately, a user can call the core `kyna` app, as in `kyna import ...` or `kyna backtest ...`.
 [Phase 1.4](https://github.com/vicsharp-shibusa/kyna/milestone/7) was completed on March 1, 2024.
+
+[Phase 1.5](https://github.com/vicsharp-shibusa/kyna/milestone/8) was the phase in which we built signal capturing logic for all of the primary "candlestick reversal patterns."
+Also in this phase, we added an alternative data importer using the Yahoo Finance API.
+This importer, `YahooImporter` follows a simpler path than the `EodHdImporter` in that it does not separate the data collection from the migration - it combines the process and writes directly to the `financials` database; this is because we're not making direct API calls, but rather using a NuGet package. Plus, the Yahoo Finance API is free.
+
+[Phase 1.6](https://github.com/vicsharp-shibusa/kyna/milestone/10) was a short phase in which we updated the Yahoo importer to hydrate our `entities` table.
 
 ### YouTube
 

@@ -39,6 +39,25 @@ CLI for migrating from the imports database to the financials database.
 }
 ```
 
+```json
+{
+  "Source": "polygon.io",
+  "Categories": [
+    "Ticker Details",
+    "Splits",
+    "Dividends",
+    "Flat Files"
+  ],
+  "Mode": "Latest",
+  "Source Deletion Mode": "All Except Latest",
+  "Max Parallelization": 1,
+  "Import File Location": "C:\\temp",
+  "Import File Prefixes": [
+    "us_stocks_sip/day_aggs_v1"
+  ]
+}
+```
+
 In the above example, `Categories` correspond to the categories of the relevant source and the `category` column in the `imports.api_transactions` table.
 
 `Mode` can be either `Rolling` or `Latest`.
