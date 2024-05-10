@@ -9,7 +9,7 @@ namespace Kyna.ApplicationServices.DataManagement;
 public static class MigratorFactory
 {
     public const string DefaultSource = PolygonMigrator.SourceName;
-
+    
     public static IImportsMigrator Create(string source,
         DbDef sourceDbDef, DbDef targetDbDef,
         FileInfo configFileInfo,
