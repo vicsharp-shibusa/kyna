@@ -80,7 +80,7 @@ For more information about the thought processes behind various choices, please 
 
 ### Backtesting Approach
 
-The backtesting approach will be as scientific as possible. Take an established hypothesis (there are many to choose from), construct a test, run the test, and measure the results. Refine and repeat. Abandon the ideal or integrate the information into your trading strategy. 
+The backtesting approach will be as scientific as possible. Take an established hypothesis (there are many to choose from), construct a test, run the test, and measure the results. Refine and repeat. Abandon the idea or integrate it into your trading strategy. 
 
 The backtesting engine must never be allowed to look forward. Given any pattern or criterion, the backtesting engine must make all decisions based only on information available at the time of the event analyzed. Even data such as the average height of a candle or average move per day must always be constrained to the information preceding the event being analyzed.
 
