@@ -72,6 +72,17 @@ try
                 Communicate(filename);
             }
         }
+
+        if (config.SplitsCompare)
+        {
+            Communicate($"Generating splits report");
+
+            foreach (var filename in reportService.CreateSplitsComparisonCsvReport(outputDir!.FullName))
+            {
+                Communicate(filename);
+            }
+
+        }
     }
 
     exitCode = 0;
@@ -127,6 +138,7 @@ void ShowHelp()
 {
     CliArg[] localArgs = [
         new CliArg(["--stats"], [], false, "Generate the backtesting stats report."),
+        new CliArg(["--splits"], [], false, "Generate a report comparing splits between data providers."),
         new CliArg(["-o", "--output", "--output-dir"], ["output directory"], true, "Set (or create) output directory."),
         new CliArg(["-p", "--process", "--process-id"], ["process id"], true, "Filter report by specified process id."),
         new CliArg(["-l", "--list"], [], false, "List process identifiers."),
@@ -180,6 +192,9 @@ void HandleArguments(string[] args)
             case "--stats":
                 config.StatsReport = true;
                 break;
+            case "--splits":
+                config.SplitsCompare = true;
+                break;
             case "-p":
             case "--process":
             case "--process-id":
@@ -216,7 +231,7 @@ void ValidateArgsAndSetDefaults()
 
     if (!config.ShowHelp && !config.ListProcessIds && config.ProcessIdsToDelete.Count == 0)
     {
-        if (!config.StatsReport)
+        if (!config.StatsReport && !config.SplitsCompare)
         {
             throw new ArgumentException("There are no reports specified");
         }
@@ -254,12 +269,13 @@ void Configure()
     logger = Kyna.ApplicationServices.Logging.LoggerFactory.Create<Program>(logDef);
     KLogger.SetLogger(logger);
 
-    reportService = new ReportService(bckDef, reportOptions);
+    reportService = new ReportService(bckDef, finDef, reportOptions);
 }
 
 class Config(string appName, string appVersion, string? description)
     : CliConfigBase(appName, appVersion, description)
 {
+    public bool SplitsCompare { get; set; }
     public bool StatsReport { get; set; }
     public bool ListProcessIds { get; set; }
     public IList<Guid> ProcessIdsToDelete { get; set; } = new List<Guid>(10);

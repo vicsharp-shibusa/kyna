@@ -4,9 +4,11 @@ using Kyna.Infrastructure.Database;
 
 namespace Kyna.ApplicationServices.Reports;
 
-public sealed partial class ReportService(DbDef backtestsDbDef, ReportOptions reportOptions)
+public sealed partial class ReportService(DbDef backtestsDbDef, DbDef financialsDbDef,
+    ReportOptions reportOptions)
 {
     private readonly IDbContext _backtestsCtx = DbContextFactory.Create(backtestsDbDef);
+    private readonly IDbContext _financialsCtx = DbContextFactory.Create(financialsDbDef);
     private readonly ReportOptions _reportOptions = reportOptions;
 
     public static Report CreateReport(string name, params string[] headers) => new(name, headers);
