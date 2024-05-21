@@ -2,7 +2,7 @@
   "profiles": {
     "Kyna.Importer.Cli": {
       "commandName": "Project",
-      "commandLineArgs": "-v -s eodhd.com -f \\repos\\kyna-ins-and-outs\\imports\\price-eodhd.json -y"
+      "commandLineArgs": "-v -s polygon.io -f ./configs/price-polygon.json"
     }
   }
 }

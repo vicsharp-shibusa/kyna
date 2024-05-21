@@ -23,6 +23,9 @@
 		<None Update="configs\bulk-eodhd.json">
 			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
 		</None>
+		<None Update="configs\price-polygon.json">
+		  <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</None>
 		<None Update="configs\splits-polygon.json">
 		  <CopyToOutputDirectory>Always</CopyToOutputDirectory>
 		</None>

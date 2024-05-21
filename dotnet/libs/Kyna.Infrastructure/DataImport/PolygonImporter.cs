@@ -146,7 +146,6 @@ internal sealed class PolygonImporter : HttpImporterBase, IExternalDataImporter
                         BucketName = BucketName
                     };
 
-
                     ListObjectsV2Response response;
                     do
                     {
@@ -173,118 +172,57 @@ WHERE source = @Source AND provider = @Provider";
                             new { Source = SourceName, Provider = "AWS" },
                             cancellationToken: cancellationToken).ConfigureAwait(false)).ToArray();
 
-                        if (_maxParallelization.GetValueOrDefault() > 1)
+                        foreach (var obj in s3Objects)
                         {
-                            await Parallel.ForEachAsync(s3Objects, new ParallelOptions()
-                            {
-                                MaxDegreeOfParallelism = _maxParallelization.GetValueOrDefault()
-                            }, async (obj, ct) =>
-                            {
-                                var rfMatch = remoteFiles.FirstOrDefault(r => r.Name != null &&
-                                    r.HashCode != null &&
-                                    r.Size.HasValue &&
-                                    r.Name.Equals(obj.Key) &&
-                                    r.HashCode.Equals(obj.ETag[1..^1]) &&
-                                    r.Size.Equals(obj.Size));
+                            var rfMatch = remoteFiles.FirstOrDefault(r => r.Name != null &&
+                                r.HashCode != null &&
+                                r.Size.HasValue &&
+                                r.Name.Equals(obj.Key) &&
+                                r.HashCode.Equals(obj.ETag[1..^1]) &&
+                                r.Size.Equals(obj.Size));
 
-                                if (rfMatch == null)
+                            if (rfMatch == null)
+                            {
+                                GetObjectRequest getRequest = new()
                                 {
-                                    GetObjectRequest getRequest = new()
-                                    {
-                                        BucketName = BucketName,
-                                        Key = obj.Key
-                                    };
+                                    BucketName = BucketName,
+                                    Key = obj.Key
+                                };
 
-                                    var splitName = obj.Key.Split('/');
+                                var splitName = obj.Key.Split('/');
 
-                                    var targetFileName = Path.Combine(_downloadDirectory.FullName,
-                                        $"{splitName[1]}_{splitName.Last()}");
+                                var targetFileName = Path.Combine(_downloadDirectory.FullName,
+                                    $"{splitName[1]}_{splitName.Last()}");
 
-                                    if (File.Exists(targetFileName))
-                                    {
-                                        File.Delete(targetFileName);
-                                    }
-
-                                    using (GetObjectResponse getResponse = await s3Client.GetObjectAsync(getRequest.BucketName,
-                                        getRequest.Key, cancellationToken).ConfigureAwait(false))
-                                    {
-                                        using Stream responseStream = getResponse.ResponseStream;
-                                        using FileStream fileStream = File.Create(targetFileName);
-                                        await responseStream.CopyToAsync(fileStream, cancellationToken).ConfigureAwait(false);
-                                    }
-
-                                    Communicate?.Invoke(this, new CommunicationEventArgs(
-                                        $"{targetFileName} downloaded successfully.", nameof(PolygonImporter)));
-
-                                    await _dbContext.ExecuteAsync(_dbContext.Sql.RemoteFiles.Upsert, new RemoteFile()
-                                    {
-                                        Source = SourceName,
-                                        Provider = "AWS",
-                                        HashCode = obj.ETag[1..^1],
-                                        Location = BucketName,
-                                        Name = obj.Key,
-                                        ProcessId = _processId,
-                                        Size = obj.Size,
-                                        UpdateDate = DateOnly.FromDateTime(obj.LastModified)
-                                    }, cancellationToken: cancellationToken).ConfigureAwait(false);
-                                }
-                            }).ConfigureAwait(false);
-                        }
-                        else
-                        {
-                            foreach (var obj in s3Objects)
-                            {
-                                var rfMatch = remoteFiles.FirstOrDefault(r => r.Name != null &&
-                                    r.HashCode != null &&
-                                    r.Size.HasValue &&
-                                    r.Name.Equals(obj.Key) &&
-                                    r.HashCode.Equals(obj.ETag[1..^1]) &&
-                                    r.Size.Equals(obj.Size));
-
-                                if (rfMatch == null)
+                                if (File.Exists(targetFileName))
                                 {
-                                    GetObjectRequest getRequest = new()
-                                    {
-                                        BucketName = BucketName,
-                                        Key = obj.Key
-                                    };
-
-                                    var splitName = obj.Key.Split('/');
-
-                                    var targetFileName = Path.Combine(_downloadDirectory.FullName,
-                                        $"{splitName[1]}_{splitName.Last()}");
-
-                                    if (File.Exists(targetFileName))
-                                    {
-                                        File.Delete(targetFileName);
-                                    }
-
-                                    using (GetObjectResponse getResponse = await s3Client.GetObjectAsync(getRequest.BucketName,
-                                        getRequest.Key, cancellationToken).ConfigureAwait(false))
-                                    {
-                                        using Stream responseStream = getResponse.ResponseStream;
-                                        using FileStream fileStream = File.Create(targetFileName);
-                                        await responseStream.CopyToAsync(fileStream, cancellationToken).ConfigureAwait(false);
-                                    }
-
-                                    Communicate?.Invoke(this, new CommunicationEventArgs(
-                                        $"{targetFileName} downloaded successfully.", nameof(PolygonImporter)));
-
-                                    await _dbContext.ExecuteAsync(_dbContext.Sql.RemoteFiles.Upsert, new RemoteFile()
-                                    {
-                                        Source = SourceName,
-                                        Provider = "AWS",
-                                        HashCode = obj.ETag[1..^1],
-                                        Location = BucketName,
-                                        Name = obj.Key,
-                                        ProcessId = _processId,
-                                        Size = obj.Size,
-                                        UpdateDate = DateOnly.FromDateTime(obj.LastModified)
-                                    }, cancellationToken: cancellationToken).ConfigureAwait(false);
+                                    File.Delete(targetFileName);
                                 }
+
+                                using (GetObjectResponse getResponse = await s3Client.GetObjectAsync(getRequest.BucketName,
+                                    getRequest.Key, cancellationToken).ConfigureAwait(false))
+                                {
+                                    using Stream responseStream = getResponse.ResponseStream;
+                                    using FileStream fileStream = File.Create(targetFileName);
+                                    await responseStream.CopyToAsync(fileStream, cancellationToken).ConfigureAwait(false);
+                                }
+
+                                Communicate?.Invoke(this, new CommunicationEventArgs(
+                                    $"{targetFileName} downloaded successfully.", nameof(PolygonImporter)));
+
+                                await _dbContext.ExecuteAsync(_dbContext.Sql.RemoteFiles.Upsert, new RemoteFile()
+                                {
+                                    Source = SourceName,
+                                    Provider = "AWS",
+                                    HashCode = obj.ETag[1..^1],
+                                    Location = BucketName,
+                                    Name = obj.Key,
+                                    ProcessId = _processId,
+                                    Size = obj.Size,
+                                    UpdateDate = DateOnly.FromDateTime(obj.LastModified)
+                                }, cancellationToken: cancellationToken).ConfigureAwait(false);
                             }
                         }
-                        
                     }
                 }
                 catch (AmazonS3Exception e)
@@ -479,7 +417,8 @@ WHERE source = @Source AND provider = @Provider";
 
                 if (_tickers.Count > 0)
                 {
-                    string prefix = tickerTypes switch { 
+                    string prefix = tickerTypes switch
+                    {
                         Constants.TickerTypes t when t.HasFlag(Constants.TickerTypes.Indexes) => "I:",
                         Constants.TickerTypes t when t.HasFlag(Constants.TickerTypes.Currencies) => "C:",
                         Constants.TickerTypes t when t.HasFlag(Constants.TickerTypes.Crypto) => "X:",
