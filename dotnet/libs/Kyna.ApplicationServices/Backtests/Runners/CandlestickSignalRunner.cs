@@ -68,7 +68,7 @@ internal class CandlestickSignalRunner : RunnerBase, IBacktestRunner
                             configuration.Source, code)).ToArray());
                     }
                 }
-                market = ChartFactory.Create("Market", new ChartConfiguration()
+                market = ChartFactory.Create(configuration.Source, "Market", new ChartConfiguration()
                 {
                     Interval = "Daily",
                     Trends = configuration.MarketConfiguration.Trends
@@ -111,7 +111,7 @@ internal class CandlestickSignalRunner : RunnerBase, IBacktestRunner
         var ohlc = _financialsRepository.GetOhlcForSourceAndCodeAsync(
             configuration.Source, item.Code).GetAwaiter().GetResult().ToArray();
 
-        var chart = ChartFactory.Create(item.Code, item.Industry, item.Sector,
+        var chart = ChartFactory.Create(configuration.Source, item.Code, item.Industry, item.Sector,
             ohlc, configuration.ChartConfiguration);
 
         Debug.Assert(!string.IsNullOrWhiteSpace(chart.Code));
@@ -286,7 +286,8 @@ internal class CandlestickSignalRunner : RunnerBase, IBacktestRunner
                             throw new Exception($"Unable to pull chart for {result.SignalMatch.Code} out of cache.");
                         }
 
-                        var chart = ChartFactory.Create(result.SignalMatch.Code,
+                        var chart = ChartFactory.Create(result.Configuration.Source,
+                            result.SignalMatch.Code,
                             result.SignalMatch.Industry, result.SignalMatch.Sector,
                             ohlc!, configuration: result.Configuration.ChartConfiguration);
 

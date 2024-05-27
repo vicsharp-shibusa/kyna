@@ -12,10 +12,11 @@ public class Chart : IEquatable<Chart?>
     private TrendSentiment[] _prologueSentiment = [];
     private readonly int _prologueLength = 15;
 
-    internal Chart(string? name, string? industry, string? sector,
+    internal Chart(string? source, string? name, string? industry, string? sector,
         ChartInterval interval = ChartInterval.Daily,
         int prologueLength = 15)
     {
+        Source = source;
         Code = name;
         Industry = industry;
         Sector = sector;
@@ -24,6 +25,7 @@ public class Chart : IEquatable<Chart?>
     }
 
     public ChartInterval Interval { get; }
+    public string? Source { get; }
     public string? Code { get; }
     public string? Industry { get; }
     public string? Sector { get; }
@@ -196,6 +198,7 @@ public class Chart : IEquatable<Chart?>
         return other is not null &&
                _prologueLength == other._prologueLength &&
                Interval == other.Interval &&
+               Source == other.Source &&
                Code == other.Code &&
                Industry == other.Industry &&
                Sector == other.Sector &&
@@ -204,14 +207,14 @@ public class Chart : IEquatable<Chart?>
                End.Equals(other.End);
     }
 
-    public static int GetCacheKey(string? code, string? industry, string? sector,
+    public static int GetCacheKey(string? source, string? code, string? industry, string? sector,
         string? trend = null, int prologueLength = 15, ChartInterval interval = ChartInterval.Daily)
     {
-        return HashCode.Combine(code, industry, sector, trend, prologueLength, interval);
+        return HashCode.Combine(source, code, industry, sector, trend, prologueLength, interval);
     }
 
     public override int GetHashCode()
     {
-        return GetCacheKey(Code, Industry, Sector, Trend?.Name, _prologueLength, Interval);
+        return GetCacheKey(Source, Code, Industry, Sector, Trend?.Name, _prologueLength, Interval);
     }
 }

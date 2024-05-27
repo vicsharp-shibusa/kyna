@@ -75,7 +75,7 @@ public static class ChartFactory
         ExpirationScanFrequency = TimeSpan.FromHours(2),
     });
 
-    public static Chart Create(string name, ChartConfiguration? configuration, string? industry, string? sector,
+    public static Chart Create(string source, string name, ChartConfiguration? configuration, string? industry, string? sector,
         params Ohlc[][] ohlcs)
     {
         if (ohlcs.Length == 0)
@@ -113,7 +113,7 @@ public static class ChartFactory
             }
         }
 
-        return Create(name, industry, sector, combinedOhlc, configuration);
+        return Create(source, name, industry, sector, combinedOhlc, configuration);
     }
 
     private static Ohlc CombineOhlcs(string name, DateOnly date, Ohlc[] ohlcs)
@@ -126,7 +126,7 @@ public static class ChartFactory
             Convert.ToInt64(Math.Ceiling(ohlcs.Select(a => a.Volume).Average())));
     }
 
-    public static Chart Create(string? code, string? industry, string? sector,
+    public static Chart Create(string? source, string? code, string? industry, string? sector,
         Ohlc[] ohlc, ChartConfiguration? configuration)
     {
         if (ohlc.Length == 0)
@@ -222,13 +222,13 @@ public static class ChartFactory
             };
         }
 
-        if (_memoryCache.TryGetValue(Chart.GetCacheKey(code, industry, sector, trend?.Name,
+        if (_memoryCache.TryGetValue(Chart.GetCacheKey(source, code, industry, sector, trend?.Name,
             configuration.LengthOfPrologue, interval), out Chart? chart) && chart != null)
         {
             return chart;
         }
 
-        chart = new Chart(code, industry, sector, interval, configuration.LengthOfPrologue).WithCandles(ohlc);
+        chart = new Chart(source, code, industry, sector, interval, configuration.LengthOfPrologue).WithCandles(ohlc);
 
         if (movingAverageKeys.Count != 0)
         {

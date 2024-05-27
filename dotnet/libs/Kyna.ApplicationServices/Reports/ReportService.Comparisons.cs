@@ -126,7 +126,7 @@ public sealed partial class ReportService
                     skip = true;
                     break;
                 }
-                charts[chartIndex++] = ChartFactory.Create($"{commonCode}",
+                charts[chartIndex++] = ChartFactory.Create(source, $"{commonCode}",
                     new ChartConfiguration()
                     {
                         Interval = ChartInterval.Daily.ToString(),
@@ -141,7 +141,7 @@ public sealed partial class ReportService
             {
                 continue;
             }
-
+            
             foreach (var date in charts[0].PriceActions.Select(p => p.Date))
             {
                 decimal[] closes = new decimal[chartIndex];

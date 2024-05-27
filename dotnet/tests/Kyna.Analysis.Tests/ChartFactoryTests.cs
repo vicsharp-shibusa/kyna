@@ -23,7 +23,7 @@ public class ChartFactoryTests
         var ohlc = prices.Select(p => new Ohlc("AAPL", p.Date, p.Open, p.High,
             p.Low, p.Close, p.Volume)).ToArray();
 
-        var weeklyChart = ChartFactory.Create("AAPL", null, null, ohlc,
+        var weeklyChart = ChartFactory.Create("TEST", "AAPL", null, null, ohlc,
             new ChartConfiguration()
             {
                 Interval = "Weekly"
@@ -52,7 +52,7 @@ public class ChartFactoryTests
         var ohlc = prices.Select(p => new Ohlc("AAPL", p.Date, p.Open, p.High,
             p.Low, p.Close, p.Volume)).ToArray();
 
-        var monthlyChart = ChartFactory.Create("AAPL", null, null, ohlc,
+        var monthlyChart = ChartFactory.Create("TEST", "AAPL", null, null, ohlc,
             new ChartConfiguration()
             {
                 Interval = "Monthly"
@@ -83,7 +83,7 @@ public class ChartFactoryTests
         var ohlc = prices.Select(p => new Ohlc("AAPL", p.Date, p.Open, p.High,
             p.Low, p.Close, p.Volume)).ToArray();
 
-        var quarterlyChart = ChartFactory.Create("AAPL", null, null, ohlc,
+        var quarterlyChart = ChartFactory.Create("TEST", "AAPL", null, null, ohlc,
             new ChartConfiguration()
             {
                 Interval = "Quarterly"
@@ -114,7 +114,7 @@ public class ChartFactoryTests
         var ohlc = prices.Select(p => new Ohlc("AAPL", p.Date, p.Open, p.High,
             p.Low, p.Close, p.Volume)).ToArray();
 
-        var annualChart = ChartFactory.Create("AAPL", null, null, ohlc,
+        var annualChart = ChartFactory.Create("TEST", "AAPL", null, null, ohlc,
             new ChartConfiguration()
             {
                 Interval = "Annually"
@@ -147,6 +147,6 @@ public class ChartFactoryTests
         var ohlc2 = prices.Select(p => new Ohlc("TEST", p.Date, p.Open, p.High,
             p.Low, p.Close, p.Volume)).ToArray();
 
-        var chart = ChartFactory.Create("Market", null, null, null, ohlc1, ohlc2);
+        var chart = ChartFactory.Create("TEST", "Market", null, null, null, ohlc1, ohlc2);
     }
 }
