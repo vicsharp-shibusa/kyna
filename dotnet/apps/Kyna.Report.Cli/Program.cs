@@ -81,7 +81,16 @@ try
             {
                 Communicate(filename);
             }
+        }
 
+        if (config.ChartsCompare)
+        {
+            Communicate($"Generating chart comparison report");
+
+            foreach (var filename in await reportService.CreateChartComparisonCsvReportAsync(outputDir!.FullName))
+            {
+                Communicate(filename);
+            }
         }
     }
 
@@ -139,6 +148,7 @@ void ShowHelp()
     CliArg[] localArgs = [
         new CliArg(["--stats"], [], false, "Generate the backtesting stats report."),
         new CliArg(["--splits"], [], false, "Generate a report comparing splits between data providers."),
+        new CliArg(["--compare-charts"], [], false, "Generate a report that compares adjusted charts between data sources."),
         new CliArg(["-o", "--output", "--output-dir"], ["output directory"], true, "Set (or create) output directory."),
         new CliArg(["-p", "--process", "--process-id"], ["process id"], true, "Filter report by specified process id."),
         new CliArg(["-l", "--list"], [], false, "List process identifiers."),
@@ -192,6 +202,9 @@ void HandleArguments(string[] args)
             case "--stats":
                 config.StatsReport = true;
                 break;
+            case "--compare-charts":
+                config.ChartsCompare = true;
+                break;
             case "--splits":
                 config.SplitsCompare = true;
                 break;
@@ -231,7 +244,7 @@ void ValidateArgsAndSetDefaults()
 
     if (!config.ShowHelp && !config.ListProcessIds && config.ProcessIdsToDelete.Count == 0)
     {
-        if (!config.StatsReport && !config.SplitsCompare)
+        if (!config.StatsReport && !config.SplitsCompare && !config.ChartsCompare)
         {
             throw new ArgumentException("There are no reports specified");
         }
@@ -277,6 +290,7 @@ class Config(string appName, string appVersion, string? description)
 {
     public bool SplitsCompare { get; set; }
     public bool StatsReport { get; set; }
+    public bool ChartsCompare { get; set; }
     public bool ListProcessIds { get; set; }
     public IList<Guid> ProcessIdsToDelete { get; set; } = new List<Guid>(10);
 }

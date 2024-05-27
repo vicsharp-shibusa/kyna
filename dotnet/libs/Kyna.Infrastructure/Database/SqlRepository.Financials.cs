@@ -157,6 +157,14 @@ HAVING COUNT(P.*) > 500 AND
 AVG(P.close) > 15",
             _ => ThrowSqlNotImplemented()
         };
+        public string FetchCodesAndDates => _dbDef.Engine switch
+        {
+            DatabaseEngine.PostgreSql => @"
+SELECT DISTINCT source, code, MIN(date_eod) AS start, MAX(date_eod) AS finish
+FROM eod_adjusted_prices
+GROUP BY source, code",
+            _ => ThrowSqlNotImplemented()
+        };
     }
 
     internal class SplitsInternal(DbDef dbDef) : SqlRepositoryBase(dbDef)

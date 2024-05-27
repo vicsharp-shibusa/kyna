@@ -1,4 +1,5 @@
 ﻿using ClosedXML.Excel;
+using Kyna.ApplicationServices.Analysis;
 using Kyna.Common;
 using Kyna.Infrastructure.Database;
 
@@ -10,6 +11,7 @@ public sealed partial class ReportService(DbDef backtestsDbDef, DbDef financials
     private readonly IDbContext _backtestsCtx = DbContextFactory.Create(backtestsDbDef);
     private readonly IDbContext _financialsCtx = DbContextFactory.Create(financialsDbDef);
     private readonly ReportOptions _reportOptions = reportOptions;
+    private readonly FinancialsRepository _financialsRepository = new(financialsDbDef);
 
     public static Report CreateReport(string name, params string[] headers) => new(name, headers);
 

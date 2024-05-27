@@ -1,5 +1,4 @@
 ﻿using Kyna.Analysis.Technical;
-using Kyna.ApplicationServices.Analysis;
 using Kyna.ApplicationServices.Cli;
 using Kyna.ApplicationServices.Configuration;
 using Kyna.ApplicationServices.Logging;
@@ -15,8 +14,6 @@ using System.Text.Json;
 
 ILogger<Program>? logger = null;
 IConfiguration? configuration;
-
-FinancialsRepository financialsRepository;
 
 int exitCode = -1;
 
@@ -250,7 +247,6 @@ void Configure()
     KLogger.SetLogger(logger);
 
     dbLogService = new(logDef);
-    financialsRepository = new(finDef);
 }
 
 class Config(string appName, string appVersion, string? description = null) : CliConfigBase(appName, appVersion, description)

@@ -2,7 +2,7 @@
   "profiles": {
     "Kyna.Report.Cli": {
       "commandName": "Project",
-      "commandLineArgs": "-v  -o /temp --splits"
+      "commandLineArgs": "-v  -o /temp --compare-charts"
     }
   }
 }
