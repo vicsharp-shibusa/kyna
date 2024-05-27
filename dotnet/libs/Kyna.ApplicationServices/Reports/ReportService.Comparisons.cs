@@ -84,7 +84,7 @@ public sealed partial class ReportService
                 .Select(c => c.CommonCode).Distinct().ToArray());
         }
 
-        List<string> headers = new(5) { "Date" };
+        List<string> headers = new(5) { "Code", "Date" };
         headers.AddRange(codesAndDates.Select(c => c.Source).Distinct());
 
         var comparisonReport = CreateReport($"chart-comparison", headers.ToArray());
@@ -154,11 +154,12 @@ public sealed partial class ReportService
 
                 if ((closes.Average() - closes[0]) > .01M)
                 {
-                    object[] data = new object[chartIndex + 1];
+                    object[] data = new object[chartIndex + 2];
                     data[0] = charts[0].Code!;
+                    data[1] = date;
                     for (int i = 0; i < closes.Length; i++)
                     {
-                        data[i + 1] = closes[i];
+                        data[i + 2] = closes[i];
                     }
                     comparisonReport.AddRow(data);
                 }
