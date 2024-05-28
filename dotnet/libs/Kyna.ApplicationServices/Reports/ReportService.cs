@@ -1,6 +1,7 @@
 ﻿using ClosedXML.Excel;
 using Kyna.ApplicationServices.Analysis;
 using Kyna.Common;
+using Kyna.Common.Events;
 using Kyna.Infrastructure.Database;
 
 namespace Kyna.ApplicationServices.Reports;
@@ -12,6 +13,13 @@ public sealed partial class ReportService(DbDef backtestsDbDef, DbDef financials
     private readonly IDbContext _financialsCtx = DbContextFactory.Create(financialsDbDef);
     private readonly ReportOptions _reportOptions = reportOptions;
     private readonly FinancialsRepository _financialsRepository = new(financialsDbDef);
+
+    public event EventHandler<CommunicationEventArgs>? Communicate;
+    
+    private void ReportService_Communicate(object? sender, CommunicationEventArgs e)
+    {
+        Communicate?.Invoke(sender, e);
+    }
 
     public static Report CreateReport(string name, params string[] headers) => new(name, headers);
 

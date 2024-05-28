@@ -283,6 +283,12 @@ void Configure()
     KLogger.SetLogger(logger);
 
     reportService = new ReportService(bckDef, finDef, reportOptions);
+    reportService.Communicate += ReportService_Communicate;
+}
+
+void ReportService_Communicate(object? sender, Kyna.Common.Events.CommunicationEventArgs e)
+{
+    Communicate(e.Message, scope: e.Scope);
 }
 
 class Config(string appName, string appVersion, string? description)

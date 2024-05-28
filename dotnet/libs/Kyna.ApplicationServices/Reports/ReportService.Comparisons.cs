@@ -76,7 +76,7 @@ public sealed partial class ReportService
             _financialsCtx.Sql.AdjustedEodPrices.FetchCodesAndDates,
             commandTimeout: 0);
 
-        Dictionary<string, string[]> codesBySourceDictionary = new();
+        Dictionary<string, string[]> codesBySourceDictionary = [];
 
         foreach (var source in codesAndDates.Select(c => c.Source).Distinct())
         {
@@ -86,8 +86,9 @@ public sealed partial class ReportService
 
         List<string> headers = new(5) { "Code", "Date" };
         headers.AddRange(codesAndDates.Select(c => c.Source).Distinct());
+        headers.Add("Source");
 
-        var comparisonReport = CreateReport($"chart-comparison", headers.ToArray());
+        var comparisonReport = CreateReport($"chart-comparison", [.. headers]);
 
         List<string> commonCodes = new(4_000);
         foreach (var key in codesBySourceDictionary.Keys)
@@ -101,6 +102,10 @@ public sealed partial class ReportService
                 commonCodes = commonCodes.Intersect(codesBySourceDictionary[key]).ToList();
             }
         }
+
+        int totalReviewed = 0;
+        int totalTrouble = 0;
+        int totalSkipped = 0;
 
         foreach (var commonCode in commonCodes)
         {
@@ -139,11 +144,15 @@ public sealed partial class ReportService
 
             if (skip)
             {
+                totalSkipped++;
+                //Communicate?.Invoke(this, new Common.Events.CommunicationEventArgs(
+                //    $"Skipping {commonCode}", nameof(ReportService)));
                 continue;
             }
-            
+
             foreach (var date in charts[0].PriceActions.Select(p => p.Date))
             {
+                totalReviewed++;
                 decimal[] closes = new decimal[chartIndex];
 
                 for (int c = 0; c < chartIndex; c++)
@@ -154,13 +163,16 @@ public sealed partial class ReportService
 
                 if ((closes.Average() - closes[0]) > .01M)
                 {
-                    object[] data = new object[chartIndex + 2];
+                    totalTrouble++;
+                    object[] data = new object[chartIndex + 3];
                     data[0] = charts[0].Code!;
                     data[1] = date;
                     for (int i = 0; i < closes.Length; i++)
                     {
                         data[i + 2] = closes[i];
                     }
+                    data[^1] = DetermineInconsistentSource(
+                        [.. codesBySourceDictionary.Keys], closes);
                     comparisonReport.AddRow(data);
                 }
             }
@@ -168,7 +180,40 @@ public sealed partial class ReportService
 
         var fn = Path.Combine(outputDir, $"{comparisonReport.Name}.csv");
         CreateCsv(fn, comparisonReport, "|");
+
+        Communicate?.Invoke(this, new Common.Events.CommunicationEventArgs(
+            $"Total Reviewed : {totalReviewed:#,##0}", nameof(ReportService)));
+        Communicate?.Invoke(this, new Common.Events.CommunicationEventArgs(
+            $"Total Skipped  : {totalSkipped:#,##0}", nameof(ReportService)));
+        Communicate?.Invoke(this, new Common.Events.CommunicationEventArgs(
+            $"Total Trouble  : {totalTrouble:#,##0}", nameof(ReportService)));
+
         return [fn];
+    }
+
+    private static string DetermineInconsistentSource(string[] sources, decimal[] closes)
+    {
+        decimal[] roundedCloses = closes.Select(c => Math.Round(c, 2, MidpointRounding.ToZero))
+            .ToArray();
+
+        var distinctCloses = roundedCloses.Distinct().ToArray();
+
+        if (distinctCloses.Length == roundedCloses.Length)
+        {
+            return "All";
+        }
+
+        foreach (var distinctClose in roundedCloses)
+        {
+            var count = roundedCloses.Count(c => Math.Abs(c - distinctClose) < .03M);
+            if (count == 1)
+            {
+                var index = Array.IndexOf(roundedCloses, distinctClose);
+                return sources[index];
+            }
+        }
+
+        return "Varied";
     }
 }
 
@@ -178,7 +223,7 @@ public struct CodeAndDates
     public string Code;
     public DateOnly Start;
     public DateOnly Finish;
-    public string CommonCode => Source.Equals("eodhd.com", StringComparison.OrdinalIgnoreCase)
+    public readonly string CommonCode => Source.Equals("eodhd.com", StringComparison.OrdinalIgnoreCase)
         ? Code.Replace(".US", "")
         : Code;
 }
