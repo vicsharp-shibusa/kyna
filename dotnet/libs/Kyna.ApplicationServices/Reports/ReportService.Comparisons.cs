@@ -161,7 +161,7 @@ public sealed partial class ReportService
                         .Select(p => p.Close).FirstOrDefault();
                 }
 
-                if ((closes.Average() - closes[0]) > .01M)
+                if (Math.Abs(closes.Average() - closes[0]) > .01M)
                 {
                     totalTrouble++;
                     object[] data = new object[chartIndex + 3];
@@ -205,7 +205,7 @@ public sealed partial class ReportService
 
         foreach (var distinctClose in roundedCloses)
         {
-            var count = roundedCloses.Count(c => Math.Abs(c - distinctClose) < .03M);
+            var count = roundedCloses.Count(c => Math.Abs(c - distinctClose) < .02M);
             if (count == 1)
             {
                 var index = Array.IndexOf(roundedCloses, distinctClose);
