@@ -1,4 +1,5 @@
 {
+  "Source": "eodhd.com",
   "Import Actions": {
     "Exchange Symbol List": "US",
     "Fundamentals": "US",

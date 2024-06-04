@@ -1,4 +1,5 @@
 {
+  "Source": "polygon.io",
   "Import Actions": {
     "Tickers": "stocks, currencies, indexes, crypto",
     "Splits": "stocks"

@@ -1,4 +1,5 @@
 {
+  "Source": "yahoo",
   "Options": {
     "Max Parallelization": "10"
   }

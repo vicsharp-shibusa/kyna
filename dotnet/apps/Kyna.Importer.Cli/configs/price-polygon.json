@@ -1,12 +1,13 @@
 {
-    "Import Actions": {
-      "Tickers": "stocks",
-      "Flat Files": "true"
-    },
-    "Options": {
-      "Import File Location": "c:\\temp",
-      "Max Parallelization": "10",
-      "Import File Prefixes": "us_stocks_sip/day_aggs_v1",
-      "Years of Data": "10"
-    }
+  "Source": "polygon.io",
+  "Import Actions": {
+    "Tickers": "stocks",
+    "Flat Files": "true"
+  },
+  "Options": {
+    "Import File Location": "c:\\temp",
+    "Max Parallelization": "10",
+    "Import File Prefixes": "us_stocks_sip/day_aggs_v1",
+    "Years of Data": "10"
   }
+}

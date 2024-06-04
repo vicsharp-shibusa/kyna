@@ -10,13 +10,14 @@ public static class ImporterFactory
 {
     public const string DefaultSource = PolygonImporter.SourceName;
 
-    public static IExternalDataImporter Create(string source, DbDef dbDef,
+    public static IExternalDataImporter Create(DbDef dbDef,
         FileInfo? configFileInfo = null,
         string? apiKey = null,
         string? accessKey = null,
         Guid? processId = null,
         bool dryRun = false)
     {
+        var source = SourceUtility.GetSource(configFileInfo);
         if (source.Equals(YahooImporter.SourceName, StringComparison.OrdinalIgnoreCase))
         {
             ArgumentNullException.ThrowIfNull(configFileInfo);

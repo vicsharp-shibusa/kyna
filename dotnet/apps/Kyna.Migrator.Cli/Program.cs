@@ -68,7 +68,7 @@ try
 #if DEBUG
                     Communicate(e.ToString(), true, LogLevel.Error);
 #else
-                Communicate(e.Message, true, LogLevel.Error);
+                    Communicate(e.Message, true, LogLevel.Error);
 #endif
                 }
             }
@@ -146,7 +146,6 @@ void ShowHelp()
 {
     CliArg[] localArgs = [
         new CliArg(["-f", "--file"], ["configuration file"], true, "JSON import configuration file to process."),
-        new CliArg(["-s", "--source"], ["source name"], false, $"Source for migration. When excluded, defaults to {MigratorFactory.DefaultSource}"),
         new CliArg(["--dry-run"], [], false, "Executes a 'dry run' - reports only what the app would do with the specified configuration."),
         new CliArg(["--info","--show-info"], [], false, "Displays summary info from the provided configuration file.")
     ];
@@ -189,14 +188,6 @@ void HandleArguments(string[] args)
                     throw new ArgumentException("The specified configuration file does not exist.");
                 }
                 break;
-            case "-s":
-            case "--source":
-                if (a == args.Length - 1)
-                {
-                    throw new ArgumentException($"A source name is required after {args[a]}");
-                }
-                config.Source = args[++a];
-                break;
             case "--dry-run":
                 config.DryRun = true;
                 break;
@@ -220,11 +211,6 @@ void ValidateArgsAndSetDefaults()
     if (config.ConfigFile == null)
     {
         throw new ArgumentException($"A configuration file is required; use -f <file name>.");
-    }
-
-    if (string.IsNullOrWhiteSpace(config.Source))
-    {
-        config.Source = MigratorFactory.DefaultSource;
     }
 
     if (config.DryRun)
@@ -251,12 +237,11 @@ void Configure()
     logger = Kyna.ApplicationServices.Logging.LoggerFactory.Create<Program>(logDef);
     KLogger.SetLogger(logger);
 
-    migrator = MigratorFactory.Create(config.Source ?? MigratorFactory.DefaultSource,
-        importDef, finDef, config.ConfigFile!, processId, config.DryRun);
+    migrator = MigratorFactory.Create(importDef, finDef, config.ConfigFile!, processId, config.DryRun);
 
     if (migrator == null)
     {
-        throw new Exception($"Unable to instantiate {config.Source} importer.");
+        throw new Exception($"Unable to instantiate importer.");
     }
 
     migrator!.Communicate += Migrator_Communicate;
@@ -273,5 +258,4 @@ class Config(string appName, string appVersion, string? description, bool dryRun
     public bool ShowInfo { get; set; }
     public bool DryRun { get; set; } = dryRun;
     public FileInfo? ConfigFile { get; set; }
-    public string? Source { get; set; }
 }

@@ -9,14 +9,15 @@ namespace Kyna.ApplicationServices.DataManagement;
 public static class MigratorFactory
 {
     public const string DefaultSource = PolygonMigrator.SourceName;
-    
-    public static IImportsMigrator Create(string source,
-        DbDef sourceDbDef, DbDef targetDbDef,
+
+    public static IImportsMigrator Create(DbDef sourceDbDef, DbDef targetDbDef,
         FileInfo configFileInfo,
         Guid? processId = null,
         bool dryRun = false)
     {
         var options = JsonOptionsRepository.DefaultSerializerOptions;
+
+        var source = SourceUtility.GetSource(configFileInfo);
 
         if (source.Equals(EodHdMigrator.SourceName, StringComparison.OrdinalIgnoreCase))
         {

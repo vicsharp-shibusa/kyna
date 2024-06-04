@@ -183,7 +183,6 @@ void ShowHelp()
 {
     CliArg[] localArgs = [
         new CliArg(["-f", "--file"], ["configuration file"], true, "JSON import configuration file to process."),
-        new CliArg(["-s", "--source"], ["source name"], false, $"Source for import. When excluded, defaults to {ImporterFactory.DefaultSource}"),
         new CliArg(["--dry-run"], [], false, "Executes a 'dry run' - reports only what the app would do with the specified configuration."),
         new CliArg(["--info", "--show-info"], [], false, "Show source-specific information."),
         new CliArg(["-y"], [], false, "Accept danger automatically.")
@@ -227,14 +226,6 @@ void HandleArguments(string[] args)
                     throw new ArgumentException("The specified configuration file does not exist.");
                 }
                 break;
-            case "-s":
-            case "--source":
-                if (a == args.Length - 1)
-                {
-                    throw new ArgumentException($"A source name is required after {args[a]}");
-                }
-                config.Source = args[++a];
-                break;
             case "--dry-run":
                 config.DryRun = true;
                 break;
@@ -263,11 +254,6 @@ void ValidateArgsAndSetDefaults()
         throw new ArgumentException("A configuration file is required. See --help.");
     }
 
-    if (string.IsNullOrWhiteSpace(config.Source))
-    {
-        config.Source = ImporterFactory.DefaultSource;
-    }
-
     if (config.ShowInfo)
     {
         config.DryRun = config.ShowHelp = false;
@@ -293,7 +279,8 @@ void Configure()
     var logDef = dbDefs.FirstOrDefault(d => d.Name == ConfigKeys.DbKeys.Logs);
     var importDef = dbDefs.FirstOrDefault(d => d.Name == ConfigKeys.DbKeys.Imports);
 
-    if (config.Source == "yahoo")
+    var source = SourceUtility.GetSource(config.ConfigFile);
+    if (source == "yahoo")
     {
         importDef = dbDefs.FirstOrDefault(d => d.Name == ConfigKeys.DbKeys.Financials);
     }
@@ -301,15 +288,15 @@ void Configure()
     logger = Kyna.ApplicationServices.Logging.LoggerFactory.Create<Program>(logDef);
     KLogger.SetLogger(logger);
 
-    config.ApiKey = configuration.GetSection($"ApiKeys:{config.Source}").Value;
-    config.AccessKey = configuration.GetSection($"AccessKeys:{config.Source}").Value;
+    config.ApiKey = configuration.GetSection($"ApiKeys:{source}").Value;
+    config.AccessKey = configuration.GetSection($"AccessKeys:{source}").Value;
 
-    importer = ImporterFactory.Create(config.Source?.ToLower() ?? "", importDef,
+    importer = ImporterFactory.Create(importDef,
         config.ConfigFile, config.ApiKey, config.AccessKey, processId, config.DryRun);
 
     if (importer == null)
     {
-        throw new Exception($"Unable to instantiate {config.Source} importer.");
+        throw new Exception($"Unable to instantiate {source} importer.");
     }
 
     importer!.Communicate += Importer_Communicate;
@@ -328,8 +315,6 @@ class Config(string appName, string appVersion, string? description, bool showIn
     public bool DryRun { get; set; } = dryRun;
 
     public FileInfo? ConfigFile { get; set; }
-
-    public string? Source { get; set; }
 
     public string? ApiKey { get; set; }
 

@@ -2,7 +2,7 @@
   "profiles": {
     "Kyna.Importer.Cli": {
       "commandName": "Project",
-      "commandLineArgs": "-v -s polygon.io -f ./configs/price-polygon.json"
+      "commandLineArgs": "-v -f ./configs/price-polygon.json"
     }
   }
 }
