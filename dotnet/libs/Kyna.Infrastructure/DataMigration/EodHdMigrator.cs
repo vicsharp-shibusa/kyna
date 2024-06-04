@@ -66,6 +66,7 @@ internal sealed class EodHdMigrator(DbDef sourceDef, DbDef targetDef,
         foreach (var actionType in new[] {
             EodHdImporter.Constants.Actions.Fundamentals,
             EodHdImporter.Constants.Actions.Splits,
+            EodHdImporter.Constants.Actions.Dividends,
             EodHdImporter.Constants.Actions.EndOfDayPrices
         })
         {
@@ -183,6 +184,11 @@ internal sealed class EodHdMigrator(DbDef sourceDef, DbDef targetDef,
                 await MigrateSplitsAsync(item, responseBody).ConfigureAwait(false);
             }
 
+            if (item.Category.Equals(EodHdImporter.Constants.Actions.Dividends))
+            {
+                await MigrateDividendsAsync(item, responseBody).ConfigureAwait(false);
+            }
+
             if (item.Category.Equals(EodHdImporter.Constants.Actions.Fundamentals))
             {
                 if (!(responseBody == "{}" || responseBody == "[]"))
@@ -273,6 +279,46 @@ internal sealed class EodHdMigrator(DbDef sourceDef, DbDef targetDef,
         }
 
         return Task.CompletedTask;
+    }
+
+    private Task MigrateDividendsAsync(ApiTransactionForMigration item, string responseBody)
+    {
+        var dividends = JsonSerializer.Deserialize<EodHistoricalData.Models.Dividend[]>(
+            responseBody, JsonOptionsRepository.DefaultSerializerOptions);
+
+        if ((dividends?.Length ?? 0) > 0)
+        {
+            return _targetContext.ExecuteAsync(_targetContext.Sql.Dividends.Upsert,
+                dividends!.Select(s => new Database.DataAccessObjects.Dividend(item.Source, item.SubCategory,
+                "CD", _processId)
+                {
+                    DeclarationDate = s.DeclarationDate,
+                    Amount = s.Value,
+                    ExDividendDate = null,
+                    PayDate = s.PaymentDate,
+                    RecordDate = s.RecordDate,
+                    Type = s.Period?.ToLower() == "special" ? "SD" : "CD",
+                    Frequency = ConvertFrequencyTextToNumber(s.Period)
+                }));
+        }
+
+        return Task.CompletedTask;
+    }
+
+    private static int ConvertFrequencyTextToNumber(string? frequency)
+    {
+        var f = frequency?.ToLower();
+        return f switch
+        {
+            null => 0,
+            "quarterly" => 4,
+            "other" or "unknown" or "special" => 0,
+            "annual" or "interim" or "final" => 1,
+            "semiannual" => 2,
+            "monthly" => 12,
+            "weekly" => 52,
+            _ => throw new Exception($"Could not convert frequency '{frequency}' to a number.")
+        };
     }
 
     private async Task<bool> TryMigrateFundamentalsForCommonStock(ApiTransactionForMigration item, string responseBody)

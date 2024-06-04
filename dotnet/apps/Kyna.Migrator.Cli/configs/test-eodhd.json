@@ -1,9 +1,7 @@
 {
   "Source": "eodhd.com",
   "Categories": [
-    "Fundamentals",
-    "Splits",
-    "EOD Prices"
+    "Dividends"
   ],
   "Mode": "Latest",
   "Source Deletion Mode": "All Except Latest",

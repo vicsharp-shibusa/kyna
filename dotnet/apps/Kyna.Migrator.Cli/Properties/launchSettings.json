@@ -2,7 +2,7 @@
   "profiles": {
     "Kyna.Migrator.Cli": {
       "commandName": "Project",
-      "commandLineArgs": "-v -s eodhd.com -f \\repos\\kyna-ins-and-outs\\migrators\\eodhd.json"
+      "commandLineArgs": "-v -s eodhd.com -f configs\\test-eodhd.json"
     }
   }
 }
