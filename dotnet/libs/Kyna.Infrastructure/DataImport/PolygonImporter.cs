@@ -33,8 +33,6 @@ internal sealed class PolygonImporter : HttpImporterBase, IExternalDataImporter
     private int _yearsOfData;
     private List<string> _tickers = [];
 
-    private Regex[] _fileMatchRegexes = [];
-
     public PolygonImporter(DbDef dbDef, DataImportConfiguration importConfig,
         Guid? processId = null, bool dryRun = false)
         : base(dbDef, Constants.Uris.Base, importConfig.ApiKey, processId)
@@ -116,17 +114,21 @@ internal sealed class PolygonImporter : HttpImporterBase, IExternalDataImporter
 
         var downloadAction = FindImportAction(Constants.Actions.FlatFiles);
 
-        // TODO: change this to use an array of types and change file
-        // prefixes to correspond.
         if (downloadAction.Name != null &&
             (downloadAction.Details?.Length ?? 0) > 0 &&
-            !downloadAction.Details![0].Equals("false", StringComparison.Ordinal) &&
             _downloadDirectory != null)
         {
             CommunicateAction(Constants.Actions.FlatFiles);
 
             if (!_dryRun)
             {
+                var fileMatchRegexes = new Regex[downloadAction.Details!.Length];
+
+                for (int i = 0; i < downloadAction.Details!.Length; i++)
+                {
+                    fileMatchRegexes[i] = new Regex($@"{downloadAction.Details![i]}/\d{{4}}/\d{{2}}/([\d-]+)\.csv\.gz", RegexOptions.Singleline);
+                }
+
                 var credentials = new Amazon.Runtime.BasicAWSCredentials(_accessKey, _apiKey);
                 var config = new AmazonS3Config
                 {
@@ -153,7 +155,8 @@ internal sealed class PolygonImporter : HttpImporterBase, IExternalDataImporter
 
                         foreach (S3Object obj in response.S3Objects)
                         {
-                            var dateOfFile = GetDateFromKey(obj.Key);
+                            // this is where the Regex file match takes place.
+                            var dateOfFile = GetDateFromKey(obj.Key, fileMatchRegexes);
                             if (dateOfFile.HasValue)
                             {
                                 s3Objects.Add(obj);
@@ -237,11 +240,11 @@ WHERE source = @Source AND provider = @Provider";
         }
     }
 
-    private DateOnly? GetDateFromKey(string key)
+    private DateOnly? GetDateFromKey(string key, Regex[] fileMatchRegexes)
     {
         DateOnly today = DateOnly.FromDateTime(DateTime.Now);
 
-        foreach (var regex in _fileMatchRegexes)
+        foreach (var regex in fileMatchRegexes)
         {
             var matches = regex.Matches(key);
             if (matches.Count > 0)
@@ -313,10 +316,18 @@ WHERE source = @Source AND provider = @Provider";
                 continue;
             }
 
-            string val = kvp.Value;
-            string[] vals = string.IsNullOrWhiteSpace(val) ? []
-                : val.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
+            string[] vals = [];
+            if (action == Constants.Actions.FlatFiles)
+            {
+                vals = importConfig.ImportFilePrefixes ?? [];
+            }
+            else
+            {
+                string val = kvp.Value;
+                vals = string.IsNullOrWhiteSpace(val) ? []
+                    : val.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
 
+            }
             actions.Add(new(action, vals));
         }
 
@@ -631,16 +642,6 @@ WHERE source = @Source AND provider = @Provider";
             }
         }
 
-        if (options.TryGetValue(Constants.OptionKeys.ImportFilePrefixes, out string[]? prefixes) && prefixes.Length != 0)
-        {
-            _fileMatchRegexes = new Regex[prefixes.Length];
-
-            for (int i = 0; i < prefixes.Length; i++)
-            {
-                _fileMatchRegexes[i] = new Regex($@"{prefixes[i]}/\d{{4}}/\d{{2}}/([\d-]+)\.csv\.gz", RegexOptions.Singleline);
-            }
-        }
-
         if (options.TryGetValue(Constants.OptionKeys.YearsOfData, out string[]? yod) && yod.Length > 0)
         {
             int y = Convert.ToInt32(yod[0]);
@@ -789,6 +790,7 @@ WHERE source = @Source AND provider = @Provider";
     public class ImportConfigfile(IDictionary<string, string> importActions,
         IDictionary<string, string>? exchanges,
         IDictionary<string, string>? symbolTypes,
+        string[]? importFilePrefixes,
         IDictionary<string, string>? options,
         IDictionary<string, string>? dateRanges)
     {
@@ -799,7 +801,8 @@ WHERE source = @Source AND provider = @Provider";
 
         [JsonPropertyName("Symbol Types")]
         public IDictionary<string, string>? SymbolTypes { get; set; } = symbolTypes;
-
+        [JsonPropertyName("Import File Prefixes")]
+        public string[]? ImportFilePrefixes { get; set; } = importFilePrefixes;
         public IDictionary<string, string>? Options { get; set; } = options;
 
         [JsonPropertyName("Date Ranges")]
@@ -810,11 +813,13 @@ WHERE source = @Source AND provider = @Provider";
         string apiKey,
         string accessKey,
         IDictionary<string, string>? importActions,
+        string[]? importFilePrefixes,
         IDictionary<string, string>? options)
     {
         public string ApiKey { get; } = apiKey;
         public string AccessKey { get; } = accessKey;
         public string Source { get; } = source;
+        public string[]? ImportFilePrefixes { get; } = importFilePrefixes;
         public IDictionary<string, string> Actions { get; } = importActions ?? new Dictionary<string, string>();
         public IDictionary<string, string>? Options { get; } = options;
         internal static ReadOnlyDictionary<string, string[]> CreateDictionary(IDictionary<string, string>? dict)

@@ -85,6 +85,7 @@ public static class ImporterFactory
                 new PolygonImporter.DataImportConfiguration(PolygonImporter.SourceName,
                     apiKey, accessKey,
                     polygonImportConfig.ImportActions,
+                    polygonImportConfig.ImportFilePrefixes ?? [],
                     polygonImportConfig.Options),
                 processId, dryRun);
         }
