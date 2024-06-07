@@ -1,0 +1,16 @@
+{
+  "Source": "yahoo",
+  "Categories": [
+    "Prices",
+    "Splits",
+    "Dividends",
+    "Financials",
+    "Balance Sheets",
+    "Cash Flows",
+    "Quarterly Balance Sheets",
+    "Quarterly Cash Flows"
+  ],
+  "Source Deletion Mode": "All",
+  "Max Parallelization": 0,
+  "Import File Location": "C:\\temp\\yahoo-data"
+}

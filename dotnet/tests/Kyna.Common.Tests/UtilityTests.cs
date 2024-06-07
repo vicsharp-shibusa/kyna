@@ -34,4 +34,13 @@ public class UtilityTests
         List<string> descriptions = ["None", "Some", "All"];
         Assert.True(descriptions.SequenceEqual(EnumUtilities.GetDescriptions<NoDescription>()));
     }
+
+    [Fact]
+    public void ENotationTest()
+    {
+        string x = "9.999999747378752e-05";
+        var r = decimal.TryParse(x, System.Globalization.NumberStyles.Float, null, out decimal result);
+        Assert.True(r);
+        Assert.Equal(0.00009999999747378752M, result);
+    }
 }

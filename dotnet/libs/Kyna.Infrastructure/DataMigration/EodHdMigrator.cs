@@ -18,15 +18,15 @@ internal sealed class EodHdMigrator(DbDef sourceDef, DbDef targetDef,
     : ImportsMigratorBase(sourceDef, targetDef, processId, dryRun), IImportsMigrator
 {
     public override string Source => SourceName;
+    public const string SourceName = "eodhd.com";
 
     public event EventHandler<CommunicationEventArgs>? Communicate;
-
-    public const string SourceName = "eodhd.com";
 
     private readonly MigrationConfiguration _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
 
     public async Task<TimeSpan> MigrateAsync(CancellationToken cancellationToken = default)
     {
+        cancellationToken.ThrowIfCancellationRequested();
         var timer = Stopwatch.StartNew();
 
         var itemsArray = GetTransactionsToMigrate().ToArray();
@@ -395,9 +395,9 @@ internal sealed class EodHdMigrator(DbDef sourceDef, DbDef targetDef,
         }
     }
 
-    public class MigrationConfiguration(MigrationSourceMode mode, string source)
+    public class MigrationConfiguration(MigrationSourceMode mode)
     {
-        public string Source { get; init; } = source;
+        public string Source { get; init; } = SourceName;
         public string[] Categories { get; init; } = [];
         public MigrationSourceMode Mode { get; init; } = mode;
 

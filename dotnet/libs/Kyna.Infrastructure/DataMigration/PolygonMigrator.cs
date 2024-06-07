@@ -26,6 +26,7 @@ internal sealed class PolygonMigrator(DbDef sourceDef, DbDef targetDef,
 
     public async Task<TimeSpan> MigrateAsync(CancellationToken cancellationToken = default)
     {
+        cancellationToken.ThrowIfCancellationRequested();
         var timer = Stopwatch.StartNew();
 
         var itemsArray = GetTransactionsToMigrate().ToArray();
@@ -449,9 +450,9 @@ WHERE source = @Source and code = @Code";
         }
     }
 
-    public class MigrationConfiguration(MigrationSourceMode mode, string source)
+    public class MigrationConfiguration(MigrationSourceMode mode)
     {
-        public string Source { get; init; } = source;
+        public string Source { get; init; } = SourceName;
         public string[] Categories { get; init; } = [];
         public MigrationSourceMode Mode { get; init; } = mode;
 

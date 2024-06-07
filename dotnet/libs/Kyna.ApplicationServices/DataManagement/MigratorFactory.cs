@@ -19,6 +19,18 @@ public static class MigratorFactory
 
         var source = SourceUtility.GetSource(configFileInfo);
 
+        if (source.Equals(YahooMigrator.SourceName, StringComparison.OrdinalIgnoreCase))
+        {
+            options.Converters.Add(new EnumDescriptionConverter<YahooMigrator.SourceDeletionMode>());
+
+            var yahooMigratorConfig = JsonSerializer.Deserialize<YahooMigrator.MigrationConfiguration>(
+                File.ReadAllText(configFileInfo.FullName), options);
+
+            Debug.Assert(yahooMigratorConfig != null);
+
+            return new YahooMigrator(sourceDbDef, targetDbDef, yahooMigratorConfig, processId, dryRun);
+        }
+
         if (source.Equals(EodHdMigrator.SourceName, StringComparison.OrdinalIgnoreCase))
         {
             options.Converters.Add(new EnumDescriptionConverter<EodHdMigrator.MigrationSourceMode>());

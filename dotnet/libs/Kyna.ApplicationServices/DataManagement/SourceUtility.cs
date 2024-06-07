@@ -1,5 +1,5 @@
 ﻿using Kyna.Common;
-using Kyna.Infrastructure.DataImport;
+using Kyna.Infrastructure.DataMigration;
 using System.Text.Json;
 
 namespace Kyna.ApplicationServices.DataManagement;
@@ -8,7 +8,7 @@ public static class SourceUtility
 {
     public static string GetSource(FileInfo? fileInfo)
     {
-        var defaultSource = YahooImporter.SourceName;
+        var defaultSource = YahooMigrator.SourceName;
         if (fileInfo == null)
         {
             return defaultSource;
