@@ -2,15 +2,12 @@
 
 The Kyna import utility is a command line interface used to import data from an external API and preserve the results in the `api_transactions` table in the `imports` database.
 
-The `-s <source name>` argument is *required* (but defaults to `eodhd.com`) when not showing help.
-The only currently supported source is `eodhd.com`.
-
-The `-c <configuration file>` is *required* when not showing help.
-The configuration file must be JSON and must correspond to the source name specified by `-s`.
+The `-f <configuration file>` is *required* when not showing help.
+The configuration file must be JSON.
 
 You can use `--dry-run` to get a sense of what your configuration file will do.
 
-Use `--info` to see information about your daily limit and current usage.
+Use `--info` to see information (if available) about the state of your subscription (different results for different sources).
 
 ## Help Text
 
@@ -20,7 +17,6 @@ kyna-importer v1
 CLI for importing financial data.
 
 -f|--file <configuration file>  JSON import configuration file to process.
-[-s|--source <source name>]     Source for import. When excluded, defaults to eodhd.com
 [--dry-run]                     Executes a 'dry run' - reports only what the app would do with the specified configuration.
 [--info|--show-info]            Show source-specific information.
 [-y]                            Accept danger automatically.

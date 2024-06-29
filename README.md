@@ -30,9 +30,7 @@ Kyna is intended to be a suite of software tools that
 
 ### Current Project Phase
 
-The current phase is [Phase 1.7](https://github.com/vicsharp-shibusa/kyna/milestone/11), in which we are adding [polygon.io](https://polygon.io/) support. Polygon.io is a data provider for historical and real-time stock, options, indices, and crypto data.
-
-
+Next step: back-testing "game."
 
 ### Project History
 
@@ -73,9 +71,13 @@ This importer, `YahooImporter` follows a simpler path than the `EodHdImporter` i
 
 [Phase 1.6](https://github.com/vicsharp-shibusa/kyna/milestone/10) was a short phase in which we updated the Yahoo importer to hydrate our `entities` table.
 
+[Phase 1.7](https://github.com/vicsharp-shibusa/kyna/milestone/11) was the stretch in which we added [polygon.io](https://polygon.io/) support. Polygon.io is a data provider for historical and real-time stock, options, indices, and crypto data.
+
+The Kyna MVP project has come to a close. A lot of good work was done, many lessons were learned, and the project's output will be useful in the upcoming project(s).
+
 ### YouTube
 
-This project is being chronicled on a [YouTube channel Playlist](https://www.youtube.com/playlist?list=PLGw44r0iH8bayhAUZsMaK15Ny7--x8Mq_).
+This project's progress is being chronicled on a [YouTube channel Playlist](https://www.youtube.com/playlist?list=PLGw44r0iH8bayhAUZsMaK15Ny7--x8Mq_).
 For more information about the thought processes behind various choices, please subscribe to the channel.
 
 ### Backtesting Approach

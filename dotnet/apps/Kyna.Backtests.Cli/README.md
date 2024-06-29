@@ -11,9 +11,12 @@ kyna-backtest v1
 
 CLI for importing financial data.
 
--f|--file <configuration file>  JSON import configuration file to process.
-[?|-?|-h|--help]                Show this help.
-[-v|--verbose]                  Turn on verbose communication.
+[-i|--input-dir <directory>]            Directory of JSON import configuration files to process.
+[-f|--file <configuration file>]        JSON import configuration file to process.
+[-l|--list]                             List process identifiers.
+[-d|--delete <process id>]              Delete backtest, results, and stats for specified process id.
+[?|-?|-h|--help]                        Show this help.
+[-v|--verbose]                          Turn on verbose communication.
 ```
 
 ## Sample JSON Configuration Files

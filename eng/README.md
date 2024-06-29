@@ -2,6 +2,9 @@
 
 ## Local Deployment
 
+The **deploy-folder.sh** script takes a source and a target directory and copies from one to the other.
+This is not the most useful of scripts since it can be replaced with a `cp` command.
+
 The **deploy-from-local.sh** script can be used to deploy the *kyna/dotnet/app* CLI applications to a target directory.
 The script takes two arguments:
 
