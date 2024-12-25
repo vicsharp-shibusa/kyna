@@ -1,5 +1,5 @@
 ﻿using Kyna.Common.Events;
-using Kyna.EodHistoricalData.Models;
+using Kyna.DataProviders.EodHistoricalData.Models;
 using Kyna.Infrastructure.Database;
 using System;
 using System.Diagnostics;

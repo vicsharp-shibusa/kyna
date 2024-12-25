@@ -20,8 +20,7 @@
 
 	<ItemGroup>
 		<ProjectReference Include="..\Kyna.Backtests\Kyna.Backtests.csproj" />
-		<ProjectReference Include="..\Kyna.EodHistoricalData\Kyna.EodHistoricalData.csproj" />
-		<ProjectReference Include="..\Kyna.Polygon\Kyna.Polygon.csproj" />
+		<ProjectReference Include="..\Kyna.DataProviders\Kyna.DataProviders.csproj" />
 	</ItemGroup>
 
 </Project>

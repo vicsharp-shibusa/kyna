@@ -19,10 +19,10 @@ public class SplitTests(ITestOutputHelper output)
         Assert.True(aaplPricesFile.Exists);
         Assert.True(applSplitsFile.Exists);
 
-        var splits = JsonSerializer.Deserialize<EodHistoricalData.Models.Split[]>(
+        var splits = JsonSerializer.Deserialize<DataProviders.EodHistoricalData.Models.Split[]>(
             File.ReadAllText(applSplitsFile.FullName),
             JsonOptionsRepository.DefaultSerializerOptions);
-        var prices = JsonSerializer.Deserialize<EodHistoricalData.Models.PriceAction[]>(
+        var prices = JsonSerializer.Deserialize<DataProviders.EodHistoricalData.Models.PriceAction[]>(
             File.ReadAllText(aaplPricesFile.FullName),
             JsonOptionsRepository.DefaultSerializerOptions);
 

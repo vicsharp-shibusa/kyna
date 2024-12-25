@@ -14,7 +14,7 @@ public class ChartFactoryTests
 
         Assert.True(aaplPricesFile.Exists);
 
-        var prices = JsonSerializer.Deserialize<EodHistoricalData.Models.PriceAction[]>(
+        var prices = JsonSerializer.Deserialize<DataProviders.EodHistoricalData.Models.PriceAction[]>(
             File.ReadAllText(aaplPricesFile.FullName),
             JsonOptionsRepository.DefaultSerializerOptions);
 
@@ -43,7 +43,7 @@ public class ChartFactoryTests
 
         Assert.True(aaplPricesFile.Exists);
 
-        var prices = JsonSerializer.Deserialize<EodHistoricalData.Models.PriceAction[]>(
+        var prices = JsonSerializer.Deserialize<DataProviders.EodHistoricalData.Models.PriceAction[]>(
             File.ReadAllText(aaplPricesFile.FullName),
             JsonOptionsRepository.DefaultSerializerOptions);
 
@@ -74,7 +74,7 @@ public class ChartFactoryTests
 
         Assert.True(aaplPricesFile.Exists);
 
-        var prices = JsonSerializer.Deserialize<EodHistoricalData.Models.PriceAction[]>(
+        var prices = JsonSerializer.Deserialize<DataProviders.EodHistoricalData.Models.PriceAction[]>(
             File.ReadAllText(aaplPricesFile.FullName),
             JsonOptionsRepository.DefaultSerializerOptions);
 
@@ -105,7 +105,7 @@ public class ChartFactoryTests
 
         Assert.True(aaplPricesFile.Exists);
 
-        var prices = JsonSerializer.Deserialize<EodHistoricalData.Models.PriceAction[]>(
+        var prices = JsonSerializer.Deserialize<DataProviders.EodHistoricalData.Models.PriceAction[]>(
             File.ReadAllText(aaplPricesFile.FullName),
             JsonOptionsRepository.DefaultSerializerOptions);
 
@@ -136,7 +136,7 @@ public class ChartFactoryTests
 
         Assert.True(aaplPricesFile.Exists);
 
-        var prices = JsonSerializer.Deserialize<EodHistoricalData.Models.PriceAction[]>(
+        var prices = JsonSerializer.Deserialize<DataProviders.EodHistoricalData.Models.PriceAction[]>(
             File.ReadAllText(aaplPricesFile.FullName),
             JsonOptionsRepository.DefaultSerializerOptions);
 

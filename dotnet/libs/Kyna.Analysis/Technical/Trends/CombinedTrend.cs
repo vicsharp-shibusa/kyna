@@ -55,12 +55,12 @@ public class CombinedTrend : TrendBase, ITrend
 
     private (TrendSentiment Sentiment, double Value) CalculateTrendForPosition(int position)
     {
+        var value = 0D;
         if (position < 0 || position > (_length - 1))
         {
-            return (TrendSentiment.None, 0D);
+            return (TrendSentiment.None, value);
         }
 
-        var value = 0D;
         foreach (var trend in _trends)
         {
             value += trend.TrendValues[position].Value;

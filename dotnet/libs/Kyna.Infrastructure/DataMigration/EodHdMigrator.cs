@@ -1,7 +1,7 @@
 ﻿using Kyna.Common;
 using Kyna.Common.Events;
 using Kyna.Common.Logging;
-using Kyna.EodHistoricalData.Models;
+using Kyna.DataProviders.EodHistoricalData.Models;
 using Kyna.Infrastructure.Database;
 using Kyna.Infrastructure.Database.DataAccessObjects;
 using Kyna.Infrastructure.DataImport;
@@ -268,7 +268,7 @@ internal sealed class EodHdMigrator(DbDef sourceDef, DbDef targetDef,
 
     private Task MigrateSplitsAsync(ApiTransactionForMigration item, string responseBody)
     {
-        var splits = JsonSerializer.Deserialize<EodHistoricalData.Models.Split[]>(
+        var splits = JsonSerializer.Deserialize<DataProviders.EodHistoricalData.Models.Split[]>(
             responseBody, JsonOptionsRepository.DefaultSerializerOptions);
 
         if ((splits?.Length ?? 0) > 0)
@@ -283,7 +283,7 @@ internal sealed class EodHdMigrator(DbDef sourceDef, DbDef targetDef,
 
     private Task MigrateDividendsAsync(ApiTransactionForMigration item, string responseBody)
     {
-        var dividends = JsonSerializer.Deserialize<EodHistoricalData.Models.Dividend[]>(
+        var dividends = JsonSerializer.Deserialize<DataProviders.EodHistoricalData.Models.Dividend[]>(
             responseBody, JsonOptionsRepository.DefaultSerializerOptions);
 
         if ((dividends?.Length ?? 0) > 0)
@@ -326,7 +326,7 @@ internal sealed class EodHdMigrator(DbDef sourceDef, DbDef targetDef,
         try
         {
             var fundamentals = JsonSerializer
-                .Deserialize<EodHistoricalData.Models.Fundamentals.CommonStock.FundamentalsCollection>(
+                .Deserialize<DataProviders.EodHistoricalData.Models.Fundamentals.CommonStock.FundamentalsCollection>(
                 responseBody, JsonOptionsRepository.DefaultSerializerOptions);
 
             if (!string.IsNullOrWhiteSpace(fundamentals.General.Code))
@@ -367,7 +367,7 @@ internal sealed class EodHdMigrator(DbDef sourceDef, DbDef targetDef,
         try
         {
             var fundamentals = JsonSerializer
-                .Deserialize<EodHistoricalData.Models.Fundamentals.Etf.FundamentalsCollection>(
+                .Deserialize<DataProviders.EodHistoricalData.Models.Fundamentals.Etf.FundamentalsCollection>(
                 responseBody, JsonOptionsRepository.DefaultSerializerOptions);
 
             if (!string.IsNullOrWhiteSpace(fundamentals.General.Code))

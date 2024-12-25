@@ -61,8 +61,7 @@ internal static partial class ConvertMatch
                 _ => throw new Exception($"Could not parse '{match.Groups[1].Value}' into a moving average type.")
             };
 
-            return new MovingAverageKey(Convert.ToInt32(match.Groups[2].Value),
-                pricePoint, type);
+            return new MovingAverageKey(Convert.ToInt32(match.Groups[2].Value), pricePoint, type);
         }
         return null;
     }

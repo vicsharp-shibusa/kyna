@@ -262,10 +262,10 @@ internal sealed class PolygonMigrator(DbDef sourceDef, DbDef targetDef,
 
                     if (lines.Length > 1)
                     {
-                        Polygon.Models.FlatFile[] flatFileLines = new Polygon.Models.FlatFile[lines.Length - 1];
+                        DataProviders.Polygon.Models.FlatFile[] flatFileLines = new DataProviders.Polygon.Models.FlatFile[lines.Length - 1];
                         for (int i = 1; i < lines.Length; i++)
                         {
-                            flatFileLines[i - 1] = new Polygon.Models.FlatFile(lines[i]);
+                            flatFileLines[i - 1] = new DataProviders.Polygon.Models.FlatFile(lines[i]);
                         }
                         await _targetContext.ExecuteAsync(_targetContext.Sql.EodPrices.Upsert, flatFileLines.Select(f => new EodPrice(SourceName, f.Code, _processId)
                         {
@@ -313,7 +313,7 @@ WHERE source = @Source and code = @Code";
 
     private Task MigrateSplitsAsync(ApiTransactionForMigration item, string responseBody)
     {
-        var splitResponse = JsonSerializer.Deserialize<Polygon.Models.SplitResponse>(
+        var splitResponse = JsonSerializer.Deserialize<DataProviders.Polygon.Models.SplitResponse>(
             responseBody, JsonOptionsRepository.DefaultSerializerOptions);
 
         if (splitResponse.Results.Length > 0)
@@ -328,7 +328,7 @@ WHERE source = @Source and code = @Code";
 
     private Task MigrateDividendsAsync(ApiTransactionForMigration item, string responseBody)
     {
-        var dividendResponse = JsonSerializer.Deserialize<Polygon.Models.DividendResponse>(
+        var dividendResponse = JsonSerializer.Deserialize<DataProviders.Polygon.Models.DividendResponse>(
             responseBody, JsonOptionsRepository.DefaultSerializerOptions);
 
         if (dividendResponse.Results.Length > 0)
@@ -344,7 +344,7 @@ WHERE source = @Source and code = @Code";
 
     private Task MigrateTickerDetailsAsync(ApiTransactionForMigration item, string responseBody)
     {
-        var detailResponse = JsonSerializer.Deserialize<Polygon.Models.TickerDetailResponse>(responseBody,
+        var detailResponse = JsonSerializer.Deserialize<DataProviders.Polygon.Models.TickerDetailResponse>(responseBody,
             JsonOptionsRepository.DefaultSerializerOptions);
 
         if ("OK".Equals(detailResponse.Status, StringComparison.OrdinalIgnoreCase))
@@ -381,7 +381,7 @@ WHERE source = @Source and code = @Code";
         try
         {
             var fundamentals = JsonSerializer
-                .Deserialize<EodHistoricalData.Models.Fundamentals.CommonStock.FundamentalsCollection>(
+                .Deserialize<DataProviders.EodHistoricalData.Models.Fundamentals.CommonStock.FundamentalsCollection>(
                 responseBody, JsonOptionsRepository.DefaultSerializerOptions);
 
             if (!string.IsNullOrWhiteSpace(fundamentals.General.Code))
@@ -422,7 +422,7 @@ WHERE source = @Source and code = @Code";
         try
         {
             var fundamentals = JsonSerializer
-                .Deserialize<EodHistoricalData.Models.Fundamentals.Etf.FundamentalsCollection>(
+                .Deserialize<DataProviders.EodHistoricalData.Models.Fundamentals.Etf.FundamentalsCollection>(
                 responseBody, JsonOptionsRepository.DefaultSerializerOptions);
 
             if (!string.IsNullOrWhiteSpace(fundamentals.General.Code))

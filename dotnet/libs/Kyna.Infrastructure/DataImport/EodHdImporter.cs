@@ -1,7 +1,7 @@
 ﻿using Kyna.Common;
 using Kyna.Common.Events;
 using Kyna.Common.Logging;
-using Kyna.EodHistoricalData.Models;
+using Kyna.DataProviders.EodHistoricalData.Models;
 using Kyna.Infrastructure.Database;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
@@ -17,7 +17,7 @@ internal sealed class EodHdImporter : HttpImporterBase, IExternalDataImporter
 {
     private readonly IDbContext _dbContext;
 
-    private readonly object _locker = new();
+    private readonly Lock _locker = new();
 
     private int _usage = 0;
     private int _available = 100_000;

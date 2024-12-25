@@ -5,7 +5,7 @@ using Kyna.Common.Events;
 using Kyna.Common.Logging;
 using Kyna.Infrastructure.Database;
 using Kyna.Infrastructure.Database.DataAccessObjects;
-using Kyna.Polygon.Models;
+using Kyna.DataProviders.Polygon.Models;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Reflection;
