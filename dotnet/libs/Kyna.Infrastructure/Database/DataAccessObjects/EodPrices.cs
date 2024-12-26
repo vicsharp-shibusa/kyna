@@ -1,4 +1,6 @@
-﻿namespace Kyna.Infrastructure.Database.DataAccessObjects;
+﻿using Kyna.Analysis.Technical.Charts;
+
+namespace Kyna.Infrastructure.Database.DataAccessObjects;
 
 internal sealed record class EodPrice : DaoBase
 {
@@ -42,7 +44,7 @@ internal sealed record class EodPrice : DaoBase
     public decimal Close { get => _close; init => _close = Math.Round(value, MoneyPrecision); }
     public long Volume { get; init; }
 
-    public Analysis.Technical.Ohlc ToOhlc() =>
+    public Ohlc ToOhlc() =>
         new(Code, DateEod, Open, High, Low, Close, Volume, 1D);
 }
 
@@ -107,6 +109,6 @@ internal sealed record class AdjustedEodPrice : DaoBase
     public long Volume { get; init; }
     public double Factor { get; init; } = 1D;
 
-    public Analysis.Technical.Ohlc ToOhlc() =>
+    public Ohlc ToOhlc() =>
         new(Code, DateEod, Open, High, Low, Close, Volume, Factor);
 }

@@ -1,4 +1,5 @@
 ﻿using Kyna.Analysis.Technical;
+using Kyna.Analysis.Technical.Charts;
 using Kyna.ApplicationServices.Cli;
 using Kyna.ApplicationServices.Configuration;
 using Kyna.ApplicationServices.Logging;

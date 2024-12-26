@@ -1,4 +1,5 @@
-﻿using System.Runtime.CompilerServices;
+﻿using Kyna.Analysis.Technical.Charts;
+using System.Runtime.CompilerServices;
 
 [assembly: InternalsVisibleTo("Kyna.Analysis.Tests")]
 namespace Kyna.Analysis.Technical.Trends;

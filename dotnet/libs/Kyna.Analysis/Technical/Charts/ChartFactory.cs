@@ -3,6 +3,7 @@ using Kyna.Common;
 using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
 using Microsoft.Extensions.Caching.Memory;
+using Kyna.Analysis.Technical.Charts;
 
 namespace Kyna.Analysis.Technical;
 

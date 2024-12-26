@@ -1,4 +1,5 @@
 ﻿using Kyna.Analysis.Technical;
+using Kyna.Analysis.Technical.Charts;
 using Kyna.Analysis.Technical.Signals;
 using Kyna.ApplicationServices.Analysis;
 using Kyna.Backtests;

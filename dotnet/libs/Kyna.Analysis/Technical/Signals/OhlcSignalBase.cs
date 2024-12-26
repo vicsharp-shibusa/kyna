@@ -1,4 +1,5 @@
-﻿using Kyna.Common;
+﻿using Kyna.Analysis.Technical.Charts;
+using Kyna.Common;
 
 namespace Kyna.Analysis.Technical.Signals;
 

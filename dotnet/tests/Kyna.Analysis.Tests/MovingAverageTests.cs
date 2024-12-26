@@ -1,4 +1,4 @@
-using Kyna.Analysis.Technical;
+using Kyna.Analysis.Technical.Charts;
 
 namespace Kyna.Analysis.Tests;
 

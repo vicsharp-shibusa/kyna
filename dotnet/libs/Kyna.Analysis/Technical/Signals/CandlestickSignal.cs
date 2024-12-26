@@ -1,4 +1,6 @@
-﻿namespace Kyna.Analysis.Technical.Signals;
+﻿using Kyna.Analysis.Technical.Charts;
+
+namespace Kyna.Analysis.Technical.Signals;
 
 public sealed class CandlestickSignal(SignalName signalName,
     int numberRequired,

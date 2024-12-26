@@ -1,4 +1,6 @@
-﻿namespace Kyna.Analysis.Technical.Trends;
+﻿using Kyna.Analysis.Technical.Charts;
+
+namespace Kyna.Analysis.Technical.Trends;
 
 public class MovingAverageTrend(MovingAverageKey movingAverageKey, Ohlc[] prices)
     : TrendBase(prices?.Length ?? 0), ITrend

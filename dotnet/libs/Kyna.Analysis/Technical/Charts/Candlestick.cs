@@ -1,4 +1,4 @@
-﻿namespace Kyna.Analysis.Technical;
+﻿namespace Kyna.Analysis.Technical.Charts;
 
 public record class Candlestick : Ohlc
 {
@@ -59,7 +59,7 @@ public record class Candlestick : Ohlc
 
     protected bool HasShavenHead => UpperShadow.Length == 0;
     protected bool HasShavenBottom => LowerShadow.Length == 0;
-    
+
     public bool IsBullishBelthold => !IsDojiBody
         && !IsMarubozu
         && High != 0
@@ -86,14 +86,14 @@ public record class Candlestick : Ohlc
 
     public bool IsUmbrella => Length > 0
         && !IsDojiBody
-        && LowerShadow.Length >= (2 * Body.Length)
-        && UpperShadow.Length <= (Length * .1M)
+        && LowerShadow.Length >= 2 * Body.Length
+        && UpperShadow.Length <= Length * .1M
         && Body.Low > MidPoint;
 
     public bool IsInvertedUmbrella => Length > 0
         && !IsDojiBody
-        && UpperShadow.Length >= (2 * Body.Length)
-        && LowerShadow.Length <= (Length * .1M)
+        && UpperShadow.Length >= 2 * Body.Length
+        && LowerShadow.Length <= Length * .1M
         && Body.High < MidPoint;
 
     public bool IsSpinningTop => UpperShadow.Length > Body.Length

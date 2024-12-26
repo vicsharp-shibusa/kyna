@@ -1,5 +1,5 @@
 ﻿using Kyna.Analysis;
-using Kyna.Analysis.Technical;
+using Kyna.Analysis.Technical.Charts;
 using Kyna.Infrastructure.Database;
 using Kyna.Infrastructure.Database.DataAccessObjects;
 

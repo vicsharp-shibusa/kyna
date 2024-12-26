@@ -1,4 +1,4 @@
-﻿namespace Kyna.Analysis.Technical;
+﻿namespace Kyna.Analysis.Technical.Charts;
 
 public record class PriceRange
 {

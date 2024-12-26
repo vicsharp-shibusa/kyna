@@ -18,7 +18,7 @@ public static class CliHelper
 
     public static string[] HydrateDefaultAppConfig(string[] args, IAppConfig config)
     {
-        List<string> remainingArgs = new(args.Length + 1);
+        List<string> remainingArgs = new(args.Length);
 
         for (int i = 0; i < args.Length; i++)
         {

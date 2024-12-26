@@ -156,14 +156,14 @@ WHERE process_id = @ProcessId";
         backtestIds.Insert(0, "Backtest Id");
         fileNames.Insert(0, "File Names");
 
-        summaryReport.AddRow(names.ToArray());
-        summaryReport.AddRow(types.ToArray());
-        summaryReport.AddRow(sources.ToArray());
-        summaryReport.AddRow(descriptions.ToArray());
-        summaryReport.AddRow(timestamps.ToArray());
-        summaryReport.AddRow(processIds.ToArray());
-        summaryReport.AddRow(backtestIds.ToArray());
-        summaryReport.AddRow(fileNames.ToArray());
+        summaryReport.AddRow([.. names]);
+        summaryReport.AddRow([.. types]);
+        summaryReport.AddRow([.. sources]);
+        summaryReport.AddRow([.. descriptions]);
+        summaryReport.AddRow([.. timestamps]);
+        summaryReport.AddRow([.. processIds]);
+        summaryReport.AddRow([.. backtestIds]);
+        summaryReport.AddRow([.. fileNames]);
 
         reports.Add(summaryReport);
 

@@ -1,6 +1,6 @@
 ﻿using Kyna.Analysis.Technical.Trends;
 
-namespace Kyna.Analysis.Technical;
+namespace Kyna.Analysis.Technical.Charts;
 
 public class Chart : IEquatable<Chart?>
 {
@@ -62,12 +62,12 @@ public class Chart : IEquatable<Chart?>
 
         if (lookbackPosition == 0)
         {
-            return Candlesticks[position].Body.Low > (tolerance * _averageBodyHeights[position - 1]);
+            return Candlesticks[position].Body.Low > tolerance * _averageBodyHeights[position - 1];
         }
         else
         {
             var avg = Candlesticks[lookbackPosition..(position - 1)].Select(c => c.Body.Length).Average();
-            return Candlesticks[position].Body.Length > (tolerance * avg);
+            return Candlesticks[position].Body.Length > tolerance * avg;
         }
     }
 
@@ -84,12 +84,12 @@ public class Chart : IEquatable<Chart?>
 
         if (lookbackPeriod == 0)
         {
-            return Candlesticks[position].Body.Low < (tolerance * _averageBodyHeights[position - 1]);
+            return Candlesticks[position].Body.Low < tolerance * _averageBodyHeights[position - 1];
         }
         else
         {
             var avg = Candlesticks[lookbackPosition..(position - 1)].Select(c => c.Body.Length).Average();
-            return Candlesticks[position].Body.Length < (tolerance * avg);
+            return Candlesticks[position].Body.Length < tolerance * avg;
         }
     }
 
@@ -179,9 +179,9 @@ public class Chart : IEquatable<Chart?>
             }
             else
             {
-                _averageHeights[p] = _averageHeights[p - 1] + ((Candlesticks[p].Length - _averageHeights[p - 1]) / (p + 1));
-                _averageBodyHeights[p] = _averageBodyHeights[p - 1] + ((Candlesticks[p].Body.Length - _averageBodyHeights[p - 1]) / (p + 1));
-                _averageVolumes[p] = Convert.ToInt64(Math.Ceiling((decimal)_averageVolumes[p - 1] + ((Candlesticks[p].Volume - _averageVolumes[p - 1]) / (p + 1))));
+                _averageHeights[p] = _averageHeights[p - 1] + (Candlesticks[p].Length - _averageHeights[p - 1]) / (p + 1);
+                _averageBodyHeights[p] = _averageBodyHeights[p - 1] + (Candlesticks[p].Body.Length - _averageBodyHeights[p - 1]) / (p + 1);
+                _averageVolumes[p] = Convert.ToInt64(Math.Ceiling((decimal)_averageVolumes[p - 1] + (Candlesticks[p].Volume - _averageVolumes[p - 1]) / (p + 1)));
             }
         }
 

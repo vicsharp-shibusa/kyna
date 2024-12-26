@@ -1,4 +1,5 @@
 ﻿using Kyna.Analysis.Technical;
+using Kyna.Analysis.Technical.Charts;
 using Kyna.Common;
 using System.Diagnostics;
 using System.Text.Json;

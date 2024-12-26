@@ -1,4 +1,6 @@
-﻿namespace Kyna.Analysis.Technical.Signals;
+﻿using Kyna.Analysis.Technical.Charts;
+
+namespace Kyna.Analysis.Technical.Signals;
 
 public sealed partial class CandlestickSignalRepository
 {
