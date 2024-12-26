@@ -735,7 +735,7 @@
     </mxGraphModel>
   </diagram>
   <diagram id="mcy6PzDu_oeBd98WLrst" name="Game">
-    <mxGraphModel dx="1036" dy="702" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="0" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+    <mxGraphModel dx="1436" dy="702" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="0" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
@@ -764,13 +764,12 @@
           </mxGeometry>
         </mxCell>
         <mxCell id="0C9tD0GTuak4EIW9fMaG-7" value="Account&lt;div&gt;&lt;br&gt;&lt;/div&gt;&lt;div&gt;Ledger; positions;&lt;br&gt;balances&lt;/div&gt;" style="html=1;whiteSpace=wrap;" vertex="1" parent="1">
-          <mxGeometry x="32" y="374" width="162" height="111" as="geometry" />
+          <mxGeometry x="24" y="477" width="162" height="111" as="geometry" />
         </mxCell>
         <mxCell id="0C9tD0GTuak4EIW9fMaG-10" value="" style="endArrow=diamondThin;endFill=0;endSize=24;html=1;rounded=0;" edge="1" parent="1" source="0C9tD0GTuak4EIW9fMaG-7" target="0C9tD0GTuak4EIW9fMaG-4">
           <mxGeometry width="160" relative="1" as="geometry">
             <mxPoint x="-5" y="652" as="sourcePoint" />
             <mxPoint x="155" y="652" as="targetPoint" />
-            <Array as="points" />
           </mxGeometry>
         </mxCell>
         <mxCell id="0C9tD0GTuak4EIW9fMaG-11" value="Strategy" style="html=1;whiteSpace=wrap;" vertex="1" parent="1">
@@ -825,6 +824,36 @@
           <mxGeometry width="160" relative="1" as="geometry">
             <mxPoint x="665" y="538" as="sourcePoint" />
             <mxPoint x="665" y="474" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ORfmWivE_wdjU2ln-BHk-1" value="Broker&lt;br&gt;&lt;br&gt;Handles Buy and Sell&lt;br&gt;Transactions." style="html=1;whiteSpace=wrap;" vertex="1" parent="1">
+          <mxGeometry x="24" y="259" width="162" height="111" as="geometry" />
+        </mxCell>
+        <mxCell id="ORfmWivE_wdjU2ln-BHk-3" value="" style="endArrow=diamondThin;endFill=0;endSize=24;html=1;rounded=0;" edge="1" parent="1" source="ORfmWivE_wdjU2ln-BHk-1" target="0C9tD0GTuak4EIW9fMaG-1">
+          <mxGeometry width="160" relative="1" as="geometry">
+            <mxPoint x="199" y="512" as="sourcePoint" />
+            <mxPoint x="321" y="469" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ORfmWivE_wdjU2ln-BHk-4" value="Use" style="endArrow=open;endSize=12;dashed=1;html=1;rounded=0;" edge="1" parent="1" source="0C9tD0GTuak4EIW9fMaG-4" target="ORfmWivE_wdjU2ln-BHk-1">
+          <mxGeometry width="160" relative="1" as="geometry">
+            <mxPoint x="483" y="440" as="sourcePoint" />
+            <mxPoint x="593" y="440" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ORfmWivE_wdjU2ln-BHk-5" value="Chart Repository" style="html=1;whiteSpace=wrap;" vertex="1" parent="1">
+          <mxGeometry x="-185" y="238" width="162" height="111" as="geometry" />
+        </mxCell>
+        <mxCell id="ORfmWivE_wdjU2ln-BHk-6" value="" style="endArrow=diamondThin;endFill=0;endSize=24;html=1;rounded=0;" edge="1" parent="1" source="ORfmWivE_wdjU2ln-BHk-5" target="0C9tD0GTuak4EIW9fMaG-1">
+          <mxGeometry width="160" relative="1" as="geometry">
+            <mxPoint x="141" y="269" as="sourcePoint" />
+            <mxPoint x="181" y="187" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ORfmWivE_wdjU2ln-BHk-7" value="Use" style="endArrow=open;endSize=12;dashed=1;html=1;rounded=0;" edge="1" parent="1" source="0C9tD0GTuak4EIW9fMaG-7" target="ORfmWivE_wdjU2ln-BHk-5">
+          <mxGeometry width="160" relative="1" as="geometry">
+            <mxPoint x="321" y="407" as="sourcePoint" />
+            <mxPoint x="196" y="357" as="targetPoint" />
           </mxGeometry>
         </mxCell>
       </root>
@@ -977,13 +1006,13 @@
           </mxGeometry>
         </mxCell>
         <mxCell id="3BWSPLF-KYeKSO5yooMk-22" value="" style="html=1;points=[[0,0,0,0,5],[0,1,0,0,-5],[1,0,0,0,5],[1,1,0,0,-5]];perimeter=orthogonalPerimeter;outlineConnect=0;targetShapes=umlLifeline;portConstraint=eastwest;newEdgeStyle={&quot;curved&quot;:0,&quot;rounded&quot;:0};" vertex="1" parent="3BWSPLF-KYeKSO5yooMk-1">
-          <mxGeometry x="44" y="212" width="10" height="40" as="geometry" />
+          <mxGeometry x="46" y="161" width="10" height="40" as="geometry" />
         </mxCell>
         <mxCell id="3BWSPLF-KYeKSO5yooMk-23" value="determine chart events" style="html=1;align=left;spacingLeft=2;endArrow=block;rounded=0;edgeStyle=orthogonalEdgeStyle;curved=0;rounded=0;" edge="1" target="3BWSPLF-KYeKSO5yooMk-22" parent="3BWSPLF-KYeKSO5yooMk-1">
           <mxGeometry relative="1" as="geometry">
-            <mxPoint x="49" y="192" as="sourcePoint" />
+            <mxPoint x="51" y="141" as="sourcePoint" />
             <Array as="points">
-              <mxPoint x="79" y="222" />
+              <mxPoint x="81" y="171" />
             </Array>
           </mxGeometry>
         </mxCell>
