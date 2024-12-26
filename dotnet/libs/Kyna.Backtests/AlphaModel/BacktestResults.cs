@@ -1,7 +1,7 @@
 ﻿using Kyna.Analysis.Technical;
 using Kyna.Common;
 
-namespace Kyna.Backtests;
+namespace Kyna.Backtests.AlphaModel;
 
 public class BacktestResult(BacktestingConfiguration configuration)
 {

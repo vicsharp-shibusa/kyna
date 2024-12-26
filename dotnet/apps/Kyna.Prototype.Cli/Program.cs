@@ -4,6 +4,7 @@ using Kyna.ApplicationServices.Cli;
 using Kyna.ApplicationServices.Configuration;
 using Kyna.ApplicationServices.Logging;
 using Kyna.Backtests;
+using Kyna.Backtests.AlphaModel;
 using Kyna.Common;
 using Kyna.Common.Logging;
 using Microsoft.Extensions.Configuration;

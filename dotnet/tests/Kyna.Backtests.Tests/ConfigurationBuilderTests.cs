@@ -1,4 +1,5 @@
 using Kyna.Analysis.Technical;
+using Kyna.Backtests.AlphaModel;
 using Kyna.Common;
 using System.Text.Json;
 

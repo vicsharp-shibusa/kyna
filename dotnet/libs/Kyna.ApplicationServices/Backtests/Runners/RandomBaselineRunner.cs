@@ -1,5 +1,6 @@
 ﻿using Kyna.ApplicationServices.Analysis;
 using Kyna.Backtests;
+using Kyna.Backtests.AlphaModel;
 using Kyna.Common.Events;
 using Kyna.Infrastructure.Database;
 using System.Collections.Concurrent;

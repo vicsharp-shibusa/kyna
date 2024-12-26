@@ -225,6 +225,6 @@ public struct CodeAndDates
     public DateOnly Start;
     public DateOnly Finish;
     public readonly string CommonCode => Source.Equals("eodhd.com", StringComparison.OrdinalIgnoreCase)
-        ? Code.Replace(".US", "")
+        ? Code.Replace(".US", "", StringComparison.OrdinalIgnoreCase)
         : Code;
 }

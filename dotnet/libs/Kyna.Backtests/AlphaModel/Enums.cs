@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel;
 
-namespace Kyna.Backtests;
+namespace Kyna.Backtests.AlphaModel;
 
 public enum BacktestType
 {

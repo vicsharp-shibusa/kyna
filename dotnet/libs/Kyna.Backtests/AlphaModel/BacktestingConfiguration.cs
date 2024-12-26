@@ -1,11 +1,11 @@
 ﻿using Kyna.Analysis.Technical;
 using System.Text.Json.Serialization;
 
-namespace Kyna.Backtests;
+namespace Kyna.Backtests.AlphaModel;
 
 public class BacktestingConfiguration(BacktestType type,
     string source,
-    string name, 
+    string name,
     string description,
     PricePoint entryPricePoint,
     TestTargetPercentage targetUp,
@@ -19,28 +19,28 @@ public class BacktestingConfiguration(BacktestType type,
     MarketConfiguration? marketConfiguration = null)
 {
     public BacktestType Type { get; init; } = type;
-    
+
     public string Name { get; init; } = name;
-    
+
     public string Source { get; init; } = source;
-    
+
     public string Description { get; init; } = description;
-    
+
     [JsonPropertyName("Entry Price Point")]
     public PricePoint EntryPricePoint { get; init; } = entryPricePoint;
-    
+
     [JsonPropertyName("Target Up")]
     public TestTargetPercentage TargetUp { get; init; } = targetUp;
-    
+
     [JsonPropertyName("Target Down")]
     public TestTargetPercentage TargetDown { get; init; } = targetDown;
-    
+
     [JsonPropertyName("Signal Names")]
     public string[]? SignalNames { get; init; } = signalnames;
-    
+
     [JsonPropertyName("Length of Prologue")]
     public int LengthOfPrologue { get; init; } = lengthOfPrologue;
-    
+
     [JsonPropertyName("Max Parallelization")]
     public int? MaxParallelization { get; init; } = maxparallelization;
 

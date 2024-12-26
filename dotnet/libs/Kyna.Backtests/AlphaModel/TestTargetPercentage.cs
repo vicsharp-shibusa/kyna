@@ -2,7 +2,7 @@
 using Kyna.Common;
 using System.Text.Json.Serialization;
 
-namespace Kyna.Backtests;
+namespace Kyna.Backtests.AlphaModel;
 
 public struct TestTargetPercentage(PricePoint pricePoint, double value)
 {

@@ -15,7 +15,7 @@ public sealed partial class ReportService(DbDef backtestsDbDef, DbDef financials
     private readonly FinancialsRepository _financialsRepository = new(financialsDbDef);
 
     public event EventHandler<CommunicationEventArgs>? Communicate;
-    
+
     private void ReportService_Communicate(object? sender, CommunicationEventArgs e)
     {
         Communicate?.Invoke(sender, e);
@@ -100,12 +100,13 @@ public class Report
     public Report(string name, IEnumerable<string> headers, int capacity = 1_000)
     {
         Headers = headers.ToArray();
-        Name = name;
-        _rows = new List<object?[]>(capacity);
         if (Headers.Length == 0)
         {
             throw new ArgumentException("At least one header is required.");
         }
+
+        Name = name;
+        _rows = new List<object?[]>(capacity);
     }
 
     public string Name { get; }
@@ -118,7 +119,10 @@ public class Report
         {
             throw new ArgumentException($"Expecting a row with {Headers.Length} items.");
         }
-        _rows.Add(data);
+        if (data != null)
+        {
+            _rows.Add(data);
+        }
     }
 
     public void AddRowRange(IEnumerable<object?[]> data)

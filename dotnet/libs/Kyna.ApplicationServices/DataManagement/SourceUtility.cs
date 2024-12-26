@@ -18,10 +18,9 @@ public static class SourceUtility
         return config.Source ?? defaultSource;
     }
 
-#pragma warning disable CS0649
     struct SourceConfig
     {
+        public SourceConfig() { Source = null; }
         public string? Source;
     }
-#pragma warning restore CS0649
 }

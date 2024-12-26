@@ -1,13 +1,12 @@
 ﻿using Kyna.Analysis.Technical.Signals;
-using Kyna.ApplicationServices.Backtests.Runners;
-using Kyna.Backtests;
+using Kyna.Backtests.AlphaModel;
 using Kyna.Common;
 using Kyna.Common.Events;
 using Kyna.Infrastructure.Database;
 using System.Diagnostics;
 using static Kyna.ApplicationServices.Reports.ReportService;
 
-namespace Kyna.ApplicationServices.Backtests;
+namespace Kyna.ApplicationServices.Backtests.Runners;
 
 public sealed class BacktestingService(DbDef finDef, DbDef backtestDef) : IDisposable
 {

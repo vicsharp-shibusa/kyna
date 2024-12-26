@@ -1,5 +1,5 @@
 ﻿using Kyna.Analysis.Technical;
-using Kyna.Backtests;
+using Kyna.Backtests.AlphaModel;
 using Kyna.Common;
 using Kyna.Common.Events;
 using Kyna.Infrastructure.Database;

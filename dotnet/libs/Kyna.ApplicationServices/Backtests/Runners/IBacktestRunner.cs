@@ -1,6 +1,6 @@
 ﻿using Kyna.Common.Events;
 
-namespace Kyna.ApplicationServices.Backtests;
+namespace Kyna.ApplicationServices.Backtests.Runners;
 
 internal interface IBacktestRunner
 {

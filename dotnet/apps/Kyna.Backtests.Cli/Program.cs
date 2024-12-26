@@ -1,4 +1,4 @@
-﻿using Kyna.ApplicationServices.Backtests;
+﻿using Kyna.ApplicationServices.Backtests.Runners;
 using Kyna.ApplicationServices.Cli;
 using Kyna.ApplicationServices.Configuration;
 using Kyna.Common;
