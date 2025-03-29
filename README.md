@@ -2,7 +2,9 @@
 
 [Kyna](https://www.theparentz.com/baby-names/kyna) is an MIT-licensed, open-source project with the goal of creating a reliable framework from which coders/traders/investors can collect historical stock data, backtest trading ideas against that data, and make informed decisions with their money.
 
-What we're doing here is not groundbreaking science, but it is 100% transparent and grounded in a set of tools available to retail investors. Anyone is welcome to a copy of the code repository for their own purposes. Those who want to *contribute* are invited to do so - we welcome the help from any interested and capable party.
+What we're doing here is not groundbreaking science, but it is 100% transparent and grounded in a set of tools available to retail investors.
+Everyone is welcome to a copy of the code repository for their own purposes.
+Those who want to *contribute* are invited to do so - we welcome the help from any interested and capable party.
 
 If the development process or the thought processes behind the decisions are of interest to you, such things are being actively chronicled on the [Vic Sharp YouTube Channel - Kyna Project Playlist](https://www.youtube.com/playlist?list=PLGw44r0iH8bayhAUZsMaK15Ny7--x8Mq_). *Don't forget to like and subscribe.*
 
@@ -30,7 +32,30 @@ Kyna is intended to be a suite of software tools that
 
 ### Current Project Phase
 
-Next step: back-testing "game."
+It's been a minute since I worked on this project, but I think I'm ready for another round with it.
+I've been thinking about it.
+
+I spent some time last year toying with the idea of a "game version" in which "players" could be constructed with different goals and strategies.
+The "game board" would be a set of stocks over a period of time and the winner would be the player with the most money at the end.
+Players would, of course, have equal account values at the start (i.e., the same amount of "money").
+I still think this is a good idea, but it's a massive undertaking.
+Buying strategies are not too difficult, but selling strategies are another level.
+And trying to manage a portfolio (e.g., making decisions about when to sell X in order to afford buying Y) is another level beyond.
+
+So, back to earth.
+The next test is going to be built around "swing trading" with a 3-week prologue and epilogue.
+See [the project on GitHub](https://github.com/users/vicsharp-shibusa/projects/5).
+The plan is to work out the test using stocks, develop some very specific sell rules, and then see if we can't also work in option data analysis as a _stretch goal_.
+I want to accomplish this without disturbing the existing code, meaning preserving backward compatibility.
+At least for now - if the model that is the output from this phase accomplishes its goals, we could sunset the existing model without losing the ability to re-create its outputs.
+
+The big thrust of the current phase is _more signals_.
+I'll resurrect the `ChartReader` concept where each `ChartReader` instance reads a `Chart` for a specific thing and offers up `IEnumerable<Signal>` or some such thing.
+It's a good chance to work on _parallelization_.
+
+There's probably a lot more Python in this phase - to take advantage of its ability to generate charts.
+I believe we'll want to see charts overlayed with the _signals_ collected.
+I'm going to use the existing dotnet framework (and the existing database) I've built to collect and organize the data for easy access from Python.
 
 ### Project History
 
@@ -89,4 +114,3 @@ The backtesting engine must never be allowed to look forward. Given any pattern 
 Many "indicators" or "patterns" evangelized in the finfluencer marketplace require that the market and/or price action be in a certain state (e.g., "trend") for the indicator to be valid. An example of this is the "Bullish Engulfing" candlestick pattern; for this pattern to be "valid," it must occur in a "downtrend." Determining "trend" will be an early priority within the project.
 
 Determining success of an indicator (e.g., does the stock go up or down after {INSERT PATTERN HERE}?) is, of course, a top priority. To properly gauge the efficacy of a given indicator, a baseline probability of "success" is required. Early in the process, we will randomnly select price points on many charts and check the up/down ratio to use as our measuring stick. In other words, by throwing a dart at the chart, is it more likely to go up or down 10% from that point? 
-
