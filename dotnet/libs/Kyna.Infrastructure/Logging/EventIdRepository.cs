@@ -1,8 +1,9 @@
-﻿using Kyna.Common.Abstractions;
+﻿using Kyna.Infrastructure.Abstractions;
 using Microsoft.Extensions.Logging;
 
-namespace Kyna.Common.Logging;
+namespace Kyna.Infrastructure.Logging;
 
+// TODO: This is only used at the highest level - can probably move up there.
 public static class EventIdRepository
 {
     private enum Events

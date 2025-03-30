@@ -35,18 +35,19 @@ public class Chart : IEquatable<Chart?>
     public Ohlc[] PriceActions { get; private set; } = [];
     public Candlestick[] Candlesticks { get; private set; } = [];
     public int Length => PriceActions.Length;
+    public int Duration => End.DayNumber - Start.DayNumber;
     public DateOnly Start => PriceActions[0].Date;
     public DateOnly End => PriceActions[^1].Date;
     public MovingAverage[] MovingAverages => [.. _movingaverages];
 
-    public int? GetIndexOfDate(DateOnly date)
+    public int GetIndexOfDate(DateOnly date)
     {
         var ohlc = PriceActions.FirstOrDefault(p => p.Date.Equals(date));
         if (ohlc != null)
         {
             return Array.IndexOf(PriceActions, ohlc);
         }
-        return null;
+        return -1;
     }
 
     public bool IsTall(int position, int lookbackPeriod = 0, decimal tolerance = 1M)
@@ -62,7 +63,7 @@ public class Chart : IEquatable<Chart?>
 
         if (lookbackPosition == 0)
         {
-            return Candlesticks[position].Body.Low > tolerance * _averageBodyHeights[position - 1];
+            return Candlesticks[position].Body.Length > tolerance * _averageBodyHeights[position - 1];
         }
         else
         {
@@ -84,7 +85,7 @@ public class Chart : IEquatable<Chart?>
 
         if (lookbackPeriod == 0)
         {
-            return Candlesticks[position].Body.Low < tolerance * _averageBodyHeights[position - 1];
+            return Candlesticks[position].Body.Length < tolerance * _averageBodyHeights[position - 1];
         }
         else
         {
@@ -93,7 +94,9 @@ public class Chart : IEquatable<Chart?>
         }
     }
 
-    public TrendSentiment PrologueSentiment(int position) => _prologueSentiment[position];
+    public TrendSentiment PrologueSentiment(int position) => position > -1 && position < _prologueSentiment.Length
+        ? _prologueSentiment[position]
+        : TrendSentiment.None;
 
     public Chart WithMovingAverage(MovingAverageKey key)
     {

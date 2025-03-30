@@ -1,4 +1,4 @@
-﻿using Kyna.Common.Events;
+﻿using Kyna.Infrastructure.Events;
 
 namespace Kyna.Infrastructure.DataImport;
 

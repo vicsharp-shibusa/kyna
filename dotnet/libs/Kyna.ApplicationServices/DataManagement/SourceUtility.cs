@@ -14,7 +14,7 @@ public static class SourceUtility
             return defaultSource;
         }
         var config = JsonSerializer.Deserialize<SourceConfig>(
-            File.ReadAllText(fileInfo.FullName), JsonOptionsRepository.DefaultSerializerOptions);
+            File.ReadAllText(fileInfo.FullName), JsonSerializerOptionsRepository.Custom);
         return config.Source ?? defaultSource;
     }
 

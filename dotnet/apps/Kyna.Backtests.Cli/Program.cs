@@ -2,7 +2,7 @@
 using Kyna.ApplicationServices.Cli;
 using Kyna.ApplicationServices.Configuration;
 using Kyna.Common;
-using Kyna.Common.Logging;
+using Kyna.Infrastructure.Logging;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using System.Diagnostics;
@@ -291,7 +291,7 @@ void Configure()
     KLogger.SetLogger(logger);
 }
 
-void Backtests_Communicate(object? sender, Kyna.Common.Events.CommunicationEventArgs e)
+void Backtests_Communicate(object? sender, Kyna.Infrastructure.Events.CommunicationEventArgs e)
 {
     Communicate(e.Message, scope: e.Scope);
 }

@@ -1,8 +1,6 @@
 ﻿using Microsoft.Extensions.Logging;
-using System.Runtime.CompilerServices;
 
-[assembly: InternalsVisibleTo("Kyna.Infrastructure")]
-namespace Kyna.Common.Logging;
+namespace Kyna.Infrastructure.Logging;
 
 public sealed class LogItem
 {

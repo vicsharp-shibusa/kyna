@@ -1,4 +1,4 @@
-﻿namespace Kyna.Common.Events;
+﻿namespace Kyna.Infrastructure.Events;
 
 public sealed class CommunicationEventArgs(string? message, string? scope) : EventArgs
 {

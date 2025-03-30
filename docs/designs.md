@@ -55,7 +55,7 @@ An example of the `secret.json`:
 
 The name of the key, `eodhd.com` in the `ApiKeys` section above must correspond to the `Source` property of your `IExternalDataImport` implementation and, of course, the value must be a valid key.
 
-The `DataImportConfiguration` class is a deserialized implementation of a JSON file passed into the `kyna-importer` application using the `-f <file name>` argument. For samples of possible configuration files, see the `configs` folder under the `Kyna.FinancialDataImport.Cli` project in the Kyna solution.
+The `DataImportConfiguration` class is a deserialized implementation of a JSON file passed into the `kyna-importer` application using the `-f <file name>` argument. 
 
 The configuration file is passed on the command line, deserialized into the appropriate class, and then used in the instantiation of your `IExternalDataImporter` implementation. See the `ConfigureImporter` function in the `Program.cs` in the `Kyna.FinancialDataImport.Cli` project.
 
@@ -76,8 +76,6 @@ The first is `HideToken`, which is used to obfuscate your secret key when writin
 The second is `GetStringResponseAsync`, which makes use of the `HttpClient` to make calls to the external API, write them to the `imports.api_transactions` table, and return the response as a string.
 
 The final is `InvokeApiCallAsync`, which calls `GetStringResponseAsync`, but throws away the string result.
-
-The reason for both `GetStringResponseAsync` and `InvokeApiCallAsync` is that sometimes you need the results in real-time, like when the results inform some subsequent import action you want to take. For example, in the `EodHdImporter` class, a list of symbols is captured (and filtered) and that list of symbols is used for capturing price (and other) data. Other calls are simply made and passed to the `ApiTransactionService` to be written to the data store without the importer concerning itself with their content.
 
 ## Data Migration
 

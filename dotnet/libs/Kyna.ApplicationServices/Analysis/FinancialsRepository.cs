@@ -1,5 +1,4 @@
-﻿using Kyna.Analysis;
-using Kyna.Analysis.Technical.Charts;
+﻿using Kyna.Analysis.Technical.Charts;
 using Kyna.Infrastructure.Database;
 using Kyna.Infrastructure.Database.DataAccessObjects;
 
@@ -8,50 +7,11 @@ namespace Kyna.ApplicationServices.Analysis;
 public sealed class FinancialsRepository
 {
     private readonly IDbContext _dbContext;
-    //private readonly HashSet<InvestableEntity> _entities;
 
     public FinancialsRepository(DbDef finDef)
     {
         _dbContext = DbContextFactory.Create(finDef);
-//        _entities = new(10_000);
-
-//        string sql = @$"{_dbContext.Sql.Fundamentals.FetchEntity}
-//WHERE source = @Source";
-//        var entityDaos = _dbContext.Query<Entity>(sql, new { source });
-
-//        foreach (var entity in entityDaos)
-//        {
-//            var splitSql = @$"{_dbContext.Sql.Splits.Fetch}
-//WHERE source = @Source AND code = @Code";
-//            var splitDaos = _dbContext.Query<Infrastructure.Database.DataAccessObjects.Split>(
-//                splitSql, new { source, entity.Code });
-//            var splits = splitDaos.Select(s => s.ToDomainSplit());
-
-//            _entities.Add(new InvestableEntity(entity.Source, entity.Code)
-//            {
-//                Country = entity.Country,
-//                Splits = splits.ToArray(),
-//                Exchange = entity.Exchange,
-//                GicGroup = entity.GicGroup,
-//                GicIndustry = entity.GicIndustry,
-//                GicSector = entity.GicSector,
-//                GicSubIndustry = entity.GicSubIndustry,
-//                Industry = entity.Industry,
-//                Name = entity.Name,
-//                Phone = entity.Phone,
-//                WebUrl = entity.WebUrl,
-//                Sector = entity.Sector,
-//                Type = entity.Type?.GetEnumValueFromDescription<EntityType>() ?? EntityType.Unknown,
-//                Currency = entity.Currency,
-//                Dividends = [],
-//                IsIgnored = entity.Ignored,
-//                IgnoredReason = entity.IgnoredReason,
-//                IsDelisted = entity.Delisted,
-//            });
-//        }
     }
-
-    //public InvestableEntity[] Entities => [.. _entities];
 
     public Task<IEnumerable<string>> GetAllAdjustedSymbolsForSourceAsync(string source)
     {

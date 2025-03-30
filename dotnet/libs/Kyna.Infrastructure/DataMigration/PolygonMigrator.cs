@@ -1,5 +1,5 @@
 ﻿using Kyna.Common;
-using Kyna.Common.Events;
+using Kyna.Infrastructure.Events;
 using Kyna.Infrastructure.Database;
 using Kyna.Infrastructure.Database.DataAccessObjects;
 using Kyna.Infrastructure.DataImport;
@@ -314,7 +314,7 @@ WHERE source = @Source and code = @Code";
     private Task MigrateSplitsAsync(ApiTransactionForMigration item, string responseBody)
     {
         var splitResponse = JsonSerializer.Deserialize<DataProviders.Polygon.Models.SplitResponse>(
-            responseBody, JsonOptionsRepository.DefaultSerializerOptions);
+            responseBody, JsonSerializerOptionsRepository.Custom);
 
         if (splitResponse.Results.Length > 0)
         {
@@ -329,7 +329,7 @@ WHERE source = @Source and code = @Code";
     private Task MigrateDividendsAsync(ApiTransactionForMigration item, string responseBody)
     {
         var dividendResponse = JsonSerializer.Deserialize<DataProviders.Polygon.Models.DividendResponse>(
-            responseBody, JsonOptionsRepository.DefaultSerializerOptions);
+            responseBody, JsonSerializerOptionsRepository.Custom);
 
         if (dividendResponse.Results.Length > 0)
         {
@@ -345,7 +345,7 @@ WHERE source = @Source and code = @Code";
     private Task MigrateTickerDetailsAsync(ApiTransactionForMigration item, string responseBody)
     {
         var detailResponse = JsonSerializer.Deserialize<DataProviders.Polygon.Models.TickerDetailResponse>(responseBody,
-            JsonOptionsRepository.DefaultSerializerOptions);
+            JsonSerializerOptionsRepository.Custom);
 
         if ("OK".Equals(detailResponse.Status, StringComparison.OrdinalIgnoreCase))
         {
@@ -382,7 +382,7 @@ WHERE source = @Source and code = @Code";
         {
             var fundamentals = JsonSerializer
                 .Deserialize<DataProviders.EodHistoricalData.Models.Fundamentals.CommonStock.FundamentalsCollection>(
-                responseBody, JsonOptionsRepository.DefaultSerializerOptions);
+                responseBody, JsonSerializerOptionsRepository.Custom);
 
             if (!string.IsNullOrWhiteSpace(fundamentals.General.Code))
             {
@@ -423,7 +423,7 @@ WHERE source = @Source and code = @Code";
         {
             var fundamentals = JsonSerializer
                 .Deserialize<DataProviders.EodHistoricalData.Models.Fundamentals.Etf.FundamentalsCollection>(
-                responseBody, JsonOptionsRepository.DefaultSerializerOptions);
+                responseBody, JsonSerializerOptionsRepository.Custom);
 
             if (!string.IsNullOrWhiteSpace(fundamentals.General.Code))
             {

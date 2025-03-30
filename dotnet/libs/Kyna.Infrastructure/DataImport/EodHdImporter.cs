@@ -1,6 +1,6 @@
 ﻿using Kyna.Common;
-using Kyna.Common.Events;
-using Kyna.Common.Logging;
+using Kyna.Infrastructure.Events;
+using Kyna.Infrastructure.Logging;
 using Kyna.DataProviders.EodHistoricalData.Models;
 using Kyna.Infrastructure.Database;
 using System.Collections.ObjectModel;
@@ -288,7 +288,7 @@ internal sealed class EodHdImporter : HttpImporterBase, IExternalDataImporter
         var response = await GetStringResponseAsync(uri, Constants.Actions.User,
             cancellationToken: cancellationToken).ConfigureAwait(false);
 
-        var user = JsonSerializer.Deserialize<User>(response, JsonOptionsRepository.DefaultSerializerOptions);
+        var user = JsonSerializer.Deserialize<User>(response, JsonSerializerOptionsRepository.Custom);
 
         _apiRequestsDate = user.ApiRequestsDate.ToString("yyyy-MM-dd");
 
@@ -395,7 +395,7 @@ internal sealed class EodHdImporter : HttpImporterBase, IExternalDataImporter
                     string json = await GetStringResponseAsync(uri, Constants.Actions.ExchangeSymbolList,
                         exchange, cancellationToken: cancellationToken).ConfigureAwait(false);
 
-                    symbols.Add(exchange, JsonSerializer.Deserialize<Symbol[]>(json, JsonOptionsRepository.DefaultSerializerOptions)!);
+                    symbols.Add(exchange, JsonSerializer.Deserialize<Symbol[]>(json, JsonSerializerOptionsRepository.Custom)!);
 
                     AddCallToUsage(uri);
                 }

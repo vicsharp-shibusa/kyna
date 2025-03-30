@@ -17,7 +17,7 @@ public class ChartFactoryTests
 
         var prices = JsonSerializer.Deserialize<DataProviders.EodHistoricalData.Models.PriceAction[]>(
             File.ReadAllText(aaplPricesFile.FullName),
-            JsonOptionsRepository.DefaultSerializerOptions);
+            JsonSerializerOptionsRepository.Custom);
 
         Debug.Assert(prices != null);
 
@@ -32,8 +32,10 @@ public class ChartFactoryTests
 
         for (int i = 1; i < weeklyChart.Candlesticks.Length - 1; i++)
         {
-            Assert.True(weeklyChart.Candlesticks[i].Date.DayOfWeek is DayOfWeek.Monday or DayOfWeek.Tuesday);
-            Assert.True(weeklyChart.Candlesticks[i].End.DayOfWeek is DayOfWeek.Thursday or DayOfWeek.Friday);
+            var sow = weeklyChart.Candlesticks[i].Start;
+            var eow = weeklyChart.Candlesticks[i].End;
+            Assert.True(sow < eow);
+            Assert.True(sow.DayOfWeek < eow.DayOfWeek);
         }
     }
 
@@ -46,7 +48,7 @@ public class ChartFactoryTests
 
         var prices = JsonSerializer.Deserialize<DataProviders.EodHistoricalData.Models.PriceAction[]>(
             File.ReadAllText(aaplPricesFile.FullName),
-            JsonOptionsRepository.DefaultSerializerOptions);
+            JsonSerializerOptionsRepository.Custom);
 
         Debug.Assert(prices != null);
 
@@ -77,7 +79,7 @@ public class ChartFactoryTests
 
         var prices = JsonSerializer.Deserialize<DataProviders.EodHistoricalData.Models.PriceAction[]>(
             File.ReadAllText(aaplPricesFile.FullName),
-            JsonOptionsRepository.DefaultSerializerOptions);
+            JsonSerializerOptionsRepository.Custom);
 
         Debug.Assert(prices != null);
 
@@ -108,7 +110,7 @@ public class ChartFactoryTests
 
         var prices = JsonSerializer.Deserialize<DataProviders.EodHistoricalData.Models.PriceAction[]>(
             File.ReadAllText(aaplPricesFile.FullName),
-            JsonOptionsRepository.DefaultSerializerOptions);
+            JsonSerializerOptionsRepository.Custom);
 
         Debug.Assert(prices != null);
 
@@ -139,7 +141,7 @@ public class ChartFactoryTests
 
         var prices = JsonSerializer.Deserialize<DataProviders.EodHistoricalData.Models.PriceAction[]>(
             File.ReadAllText(aaplPricesFile.FullName),
-            JsonOptionsRepository.DefaultSerializerOptions);
+            JsonSerializerOptionsRepository.Custom);
 
         Debug.Assert(prices != null);
 

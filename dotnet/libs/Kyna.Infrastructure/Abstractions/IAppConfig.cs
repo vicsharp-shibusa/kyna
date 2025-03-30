@@ -1,4 +1,4 @@
-﻿namespace Kyna.Common.Abstractions;
+﻿namespace Kyna.Infrastructure.Abstractions;
 
 public interface IAppConfig
 {

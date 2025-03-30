@@ -15,7 +15,7 @@ public static class MigratorFactory
         Guid? processId = null,
         bool dryRun = false)
     {
-        var options = JsonOptionsRepository.DefaultSerializerOptions;
+        var options = JsonSerializerOptionsRepository.Custom;
 
         var source = SourceUtility.GetSource(configFileInfo);
 

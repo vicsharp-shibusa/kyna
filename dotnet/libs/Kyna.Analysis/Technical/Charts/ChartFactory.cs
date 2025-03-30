@@ -1,9 +1,9 @@
-﻿using Kyna.Analysis.Technical.Trends;
+﻿using Kyna.Analysis.Technical.Charts;
+using Kyna.Analysis.Technical.Trends;
 using Kyna.Common;
+using Microsoft.Extensions.Caching.Memory;
 using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
-using Microsoft.Extensions.Caching.Memory;
-using Kyna.Analysis.Technical.Charts;
 
 namespace Kyna.Analysis.Technical;
 
@@ -257,24 +257,15 @@ public static class ChartFactory
             return ChartInterval.Daily;
         }
 
-        var ts = new TimeSpan(ohlc.End.Ticks - ohlc.Start.Ticks);
+        var ts = ohlc.End - ohlc.Start;
 
-        if (ts.TotalDays > 95)
+        return ts.TotalDays switch
         {
-            return ChartInterval.Annually;
-        }
-
-        if (ts.TotalDays > 35)
-        {
-            return ChartInterval.Quarterly;
-        }
-
-        if (ts.TotalDays > 27)
-        {
-            return ChartInterval.Monthly;
-        }
-
-        return ChartInterval.Weekly;
+            > 95 => ChartInterval.Annually,
+            > 35 => ChartInterval.Quarterly,
+            > 27 => ChartInterval.Monthly,
+            _ => ChartInterval.Weekly
+        };
     }
 
     public static class ConvertFromDaily
@@ -294,418 +285,94 @@ public static class ChartFactory
                 End.ToDateTime(TimeOnly.MaxValue), Open, High, Low, Close, Volume);
         }
 
-        public static Ohlc[] ToWeekly(Ohlc[] ohlc)
+        public static Ohlc[] ToWeekly(Ohlc[] ohlc) => Aggregate(ohlc, IsNewWeek, ohlc.Length / 5);
+        public static Ohlc[] ToMonthly(Ohlc[] ohlc) => Aggregate(ohlc, IsNewMonth, ohlc.Length / 30);
+        public static Ohlc[] ToQuarterly(Ohlc[] ohlc) => Aggregate(ohlc, IsNewQuarter, ohlc.Length / 90);
+        public static Ohlc[] ToAnnually(Ohlc[] ohlc) => Aggregate(ohlc, IsNewYear, ohlc.Length / 360);
+
+        private static Ohlc[] Aggregate(Ohlc[] ohlc, Func<Ohlc, Ohlc, bool> isNewPeriod, int initialCapacity)
         {
+            ArgumentNullException.ThrowIfNull(ohlc, nameof(ohlc));
             if (ohlc.Length == 0)
             {
                 return [];
             }
 
-            List<Ohlc> results = new(1 + ohlc.Length / 5);
-
+            List<Ohlc> results = new(initialCapacity);
             Candle? candle = null;
 
             for (int i = 0; i < ohlc.Length; i++)
             {
-                if (i == ohlc.Length - 1)
+                if (i > 0 && ohlc[i] < ohlc[i - 1])
                 {
-                    if (candle == null)
-                    {
-                        candle = new Candle()
-                        {
-                            Start = ohlc[i].Date,
-                            End = ohlc[i].Date,
-                            Open = ohlc[i].Open,
-                            High = ohlc[i].High,
-                            Low = ohlc[i].Low,
-                            Close = ohlc[i].Close,
-                            Volume = ohlc[i].Volume
-                        };
-                    }
-                    else
-                    {
-                        candle.End = ohlc[i].Date;
-                        candle.Close = ohlc[i].Close;
-                        if (ohlc[i].Low < candle.Low)
-                        {
-                            candle.Low = ohlc[i].Low;
-                        }
-                        if (ohlc[i].High > candle.High)
-                        {
-                            candle.High = ohlc[i].High;
-                        }
-                        candle.Volume += ohlc[i].Volume;
-                    }
-                    results.Add(candle.ToOhlc());
+                    throw new ArgumentException("OHLC data must be in chronological order.", nameof(ohlc));
                 }
-                else if (candle == null)
+
+                bool isLast = i == ohlc.Length - 1;
+                bool startNewPeriod = candle != null && i > 0 && isNewPeriod(ohlc[i - 1], ohlc[i]);
+
+                if (startNewPeriod)
                 {
-                    candle = new Candle()
-                    {
-                        Start = ohlc[i].Date,
-                        End = ohlc[i].Date,
-                        Open = ohlc[i].Open,
-                        High = ohlc[i].High,
-                        Low = ohlc[i].Low,
-                        Close = ohlc[i].Close,
-                        Volume = ohlc[i].Volume
-                    };
-                }
-                else if (ohlc[i].Date.DayOfWeek > DayOfWeek.Tuesday &&
-                    ohlc[i + 1].Date.DayOfWeek < DayOfWeek.Wednesday)
-                {
-                    candle.End = ohlc[i].Date;
-                    candle.Close = ohlc[i].Close;
-                    if (ohlc[i].Low < candle.Low)
-                    {
-                        candle.Low = ohlc[i].Low;
-                    }
-                    if (ohlc[i].High > candle.High)
-                    {
-                        candle.High = ohlc[i].High;
-                    }
-                    candle.Volume += ohlc[i].Volume;
-                    results.Add(candle.ToOhlc());
+                    results.Add(candle!.ToOhlc());
                     candle = null;
-                    continue;
+                }
+
+                if (candle == null)
+                {
+                    candle = CreateCandle(ohlc[i]);
                 }
                 else
                 {
-                    candle.End = ohlc[i].Date;
-                    candle.Close = ohlc[i].Close;
-                    if (ohlc[i].Low < candle.Low)
-                    {
-                        candle.Low = ohlc[i].Low;
-                    }
-                    if (ohlc[i].High > candle.High)
-                    {
-                        candle.High = ohlc[i].High;
-                    }
-                    candle.Volume += ohlc[i].Volume;
+                    UpdateCandle(candle, ohlc[i]);
+                }
+
+                if (isLast)
+                {
+                    results.Add(candle.ToOhlc());
                 }
             }
+
             return [.. results];
         }
 
-        public static Ohlc[] ToMonthly(Ohlc[] ohlc)
+        private static Candle CreateCandle(Ohlc ohlc) => new()
         {
-            if (ohlc.Length == 0)
-            {
-                return [];
-            }
+            Symbol = ohlc.Symbol,
+            Start = ohlc.Date,
+            End = ohlc.Date,
+            Open = ohlc.Open,
+            High = ohlc.High,
+            Low = ohlc.Low,
+            Close = ohlc.Close,
+            Volume = ohlc.Volume
+        };
 
-            List<Ohlc> results = new(ohlc.Length / 30);
-
-            Candle? candle = null;
-            var m = ohlc[0].Date.Month;
-            for (int i = 0; i < ohlc.Length; i++)
-            {
-                if (i == ohlc.Length - 1)
-                {
-                    if (candle == null)
-                    {
-                        candle = new Candle()
-                        {
-                            Start = ohlc[i].Date,
-                            End = ohlc[i].Date,
-                            Open = ohlc[i].Open,
-                            High = ohlc[i].High,
-                            Low = ohlc[i].Low,
-                            Close = ohlc[i].Close,
-                            Volume = ohlc[i].Volume
-                        };
-                    }
-                    else if (ohlc[i].Date.Month != m)
-                    {
-                        results.Add(candle.ToOhlc());
-                        candle = new Candle()
-                        {
-                            Start = ohlc[i].Date,
-                            End = ohlc[i].Date,
-                            Open = ohlc[i].Open,
-                            High = ohlc[i].High,
-                            Low = ohlc[i].Low,
-                            Close = ohlc[i].Close,
-                            Volume = ohlc[i].Volume
-                        };
-                    }
-                    else
-                    {
-                        candle.End = ohlc[i].Date;
-                        candle.Close = ohlc[i].Close;
-                        if (ohlc[i].Low < candle.Low)
-                        {
-                            candle.Low = ohlc[i].Low;
-                        }
-                        if (ohlc[i].High > candle.High)
-                        {
-                            candle.High = ohlc[i].High;
-                        }
-                        candle.Volume += ohlc[i].Volume;
-                    }
-                    results.Add(candle.ToOhlc());
-                }
-                else if (candle == null)
-                {
-                    candle = new Candle()
-                    {
-                        Start = ohlc[i].Date,
-                        End = ohlc[i].Date,
-                        Open = ohlc[i].Open,
-                        High = ohlc[i].High,
-                        Low = ohlc[i].Low,
-                        Close = ohlc[i].Close,
-                        Volume = ohlc[i].Volume
-                    };
-                }
-                else if (ohlc[i].Date.Month != m)
-                {
-                    results.Add(candle.ToOhlc());
-                    candle = new Candle()
-                    {
-                        Start = ohlc[i].Date,
-                        End = ohlc[i].Date,
-                        Open = ohlc[i].Open,
-                        High = ohlc[i].High,
-                        Low = ohlc[i].Low,
-                        Close = ohlc[i].Close,
-                        Volume = ohlc[i].Volume
-                    };
-                }
-                else
-                {
-                    candle.End = ohlc[i].Date;
-                    candle.Close = ohlc[i].Close;
-                    if (ohlc[i].Low < candle.Low)
-                    {
-                        candle.Low = ohlc[i].Low;
-                    }
-                    if (ohlc[i].High > candle.High)
-                    {
-                        candle.High = ohlc[i].High;
-                    }
-                    candle.Volume += ohlc[i].Volume;
-                }
-                m = ohlc[i].Date.Month;
-            }
-
-            return [.. results];
-        }
-
-        public static Ohlc[] ToQuarterly(Ohlc[] ohlc)
+        private static void UpdateCandle(Candle candle, Ohlc ohlc)
         {
-            if (ohlc.Length == 0)
-            {
-                return [];
-            }
-
-            List<Ohlc> results = new(ohlc.Length / 90);
-
-            Candle? candle = null;
-            var m = ohlc[0].Date.Year;
-            for (int i = 0; i < ohlc.Length; i++)
-            {
-                if (i == ohlc.Length - 1)
-                {
-                    if (candle == null)
-                    {
-                        candle = new Candle()
-                        {
-                            Start = ohlc[i].Date,
-                            End = ohlc[i].Date,
-                            Open = ohlc[i].Open,
-                            High = ohlc[i].High,
-                            Low = ohlc[i].Low,
-                            Close = ohlc[i].Close,
-                            Volume = ohlc[i].Volume
-                        };
-                    }
-                    else if (IsNewQuarter(m, ohlc[i].Date.Month))
-                    {
-                        results.Add(candle.ToOhlc());
-                        candle = new Candle()
-                        {
-                            Start = ohlc[i].Date,
-                            End = ohlc[i].Date,
-                            Open = ohlc[i].Open,
-                            High = ohlc[i].High,
-                            Low = ohlc[i].Low,
-                            Close = ohlc[i].Close,
-                            Volume = ohlc[i].Volume
-                        };
-                    }
-                    else
-                    {
-                        candle.End = ohlc[i].Date;
-                        candle.Close = ohlc[i].Close;
-                        if (ohlc[i].Low < candle.Low)
-                        {
-                            candle.Low = ohlc[i].Low;
-                        }
-                        if (ohlc[i].High > candle.High)
-                        {
-                            candle.High = ohlc[i].High;
-                        }
-                        candle.Volume += ohlc[i].Volume;
-                    }
-                    results.Add(candle.ToOhlc());
-                }
-                else if (candle == null)
-                {
-                    candle = new Candle()
-                    {
-                        Start = ohlc[i].Date,
-                        End = ohlc[i].Date,
-                        Open = ohlc[i].Open,
-                        High = ohlc[i].High,
-                        Low = ohlc[i].Low,
-                        Close = ohlc[i].Close,
-                        Volume = ohlc[i].Volume
-                    };
-                }
-                else if (IsNewQuarter(m, ohlc[i].Date.Month))
-                {
-                    results.Add(candle.ToOhlc());
-                    candle = new Candle()
-                    {
-                        Start = ohlc[i].Date,
-                        End = ohlc[i].Date,
-                        Open = ohlc[i].Open,
-                        High = ohlc[i].High,
-                        Low = ohlc[i].Low,
-                        Close = ohlc[i].Close,
-                        Volume = ohlc[i].Volume
-                    };
-                }
-                else
-                {
-                    candle.End = ohlc[i].Date;
-                    candle.Close = ohlc[i].Close;
-                    if (ohlc[i].Low < candle.Low)
-                    {
-                        candle.Low = ohlc[i].Low;
-                    }
-                    if (ohlc[i].High > candle.High)
-                    {
-                        candle.High = ohlc[i].High;
-                    }
-                    candle.Volume += ohlc[i].Volume;
-                }
-                m = ohlc[i].Date.Month;
-            }
-
-            return [.. results];
+            candle.End = ohlc.Date;
+            candle.Close = ohlc.Close;
+            candle.High = Math.Max(candle.High, ohlc.High);
+            candle.Low = Math.Min(candle.Low, ohlc.Low);
+            candle.Volume += ohlc.Volume;
         }
 
-        public static Ohlc[] ToAnnually(Ohlc[] ohlc)
+        private static bool IsNewWeek(Ohlc previous, Ohlc current) =>
+            current.Date.DayOfWeek < previous.Date.DayOfWeek;
+
+        private static bool IsNewMonth(Ohlc previous, Ohlc current) =>
+            current > previous && current.Date.Month != previous.Date.Month;
+
+        private static bool IsNewQuarter(Ohlc previous, Ohlc current)
         {
-            if (ohlc.Length == 0)
-            {
-                return [];
-            }
+            if (current <= previous)
+                return false;
 
-            List<Ohlc> results = new(ohlc.Length / 360);
-
-            Candle? candle = null;
-            var y = ohlc[0].Date.Year;
-            for (int i = 0; i < ohlc.Length; i++)
-            {
-                if (i == ohlc.Length - 1)
-                {
-                    if (candle == null)
-                    {
-                        candle = new Candle()
-                        {
-                            Start = ohlc[i].Date,
-                            End = ohlc[i].Date,
-                            Open = ohlc[i].Open,
-                            High = ohlc[i].High,
-                            Low = ohlc[i].Low,
-                            Close = ohlc[i].Close,
-                            Volume = ohlc[i].Volume
-                        };
-                    }
-                    else if (ohlc[i].Date.Year != y)
-                    {
-                        results.Add(candle.ToOhlc());
-                        candle = new Candle()
-                        {
-                            Start = ohlc[i].Date,
-                            End = ohlc[i].Date,
-                            Open = ohlc[i].Open,
-                            High = ohlc[i].High,
-                            Low = ohlc[i].Low,
-                            Close = ohlc[i].Close,
-                            Volume = ohlc[i].Volume
-                        };
-                    }
-                    else
-                    {
-                        candle.End = ohlc[i].Date;
-                        candle.Close = ohlc[i].Close;
-                        if (ohlc[i].Low < candle.Low)
-                        {
-                            candle.Low = ohlc[i].Low;
-                        }
-                        if (ohlc[i].High > candle.High)
-                        {
-                            candle.High = ohlc[i].High;
-                        }
-                        candle.Volume += ohlc[i].Volume;
-                    }
-                    results.Add(candle.ToOhlc());
-                }
-                else if (candle == null)
-                {
-                    candle = new Candle()
-                    {
-                        Start = ohlc[i].Date,
-                        End = ohlc[i].Date,
-                        Open = ohlc[i].Open,
-                        High = ohlc[i].High,
-                        Low = ohlc[i].Low,
-                        Close = ohlc[i].Close,
-                        Volume = ohlc[i].Volume
-                    };
-                }
-                else if (ohlc[i].Date.Year != y)
-                {
-                    results.Add(candle.ToOhlc());
-                    candle = new Candle()
-                    {
-                        Start = ohlc[i].Date,
-                        End = ohlc[i].Date,
-                        Open = ohlc[i].Open,
-                        High = ohlc[i].High,
-                        Low = ohlc[i].Low,
-                        Close = ohlc[i].Close,
-                        Volume = ohlc[i].Volume
-                    };
-                }
-                else
-                {
-                    candle.End = ohlc[i].Date;
-                    candle.Close = ohlc[i].Close;
-                    if (ohlc[i].Low < candle.Low)
-                    {
-                        candle.Low = ohlc[i].Low;
-                    }
-                    if (ohlc[i].High > candle.High)
-                    {
-                        candle.High = ohlc[i].High;
-                    }
-                    candle.Volume += ohlc[i].Volume;
-                }
-                y = ohlc[i].Date.Year;
-            }
-
-            return [.. results];
+            int prevQuarter = (previous.Date.Month - 1) / 3 + 1;
+            int currQuarter = (current.Date.Month - 1) / 3 + 1;
+            return currQuarter != prevQuarter;
         }
 
-        private static bool IsNewQuarter(int previousMonth, int currentMonth) =>
-            (previousMonth is 1 or 2 or 3 && currentMonth == 4) ||
-            (previousMonth is 4 or 5 or 6 && currentMonth == 7) ||
-            (previousMonth is 7 or 8 or 9 && currentMonth == 10) ||
-            (previousMonth is 10 or 11 or 12 && currentMonth == 1);
+        private static bool IsNewYear(Ohlc previous, Ohlc current) =>
+            current > previous && current.Date.Year != previous.Date.Year;
     }
 }

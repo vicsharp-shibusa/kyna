@@ -31,7 +31,7 @@ public static class ImporterFactory
             }
             var eodHdImportConfig = JsonSerializer.Deserialize<EodHdImporter.ImportConfigfile>(
                 File.ReadAllText(configFileInfo.FullName),
-                JsonOptionsRepository.DefaultSerializerOptions);
+                JsonSerializerOptionsRepository.Custom);
 
             Debug.Assert(eodHdImportConfig != null);
 
@@ -65,7 +65,7 @@ public static class ImporterFactory
 
             var polygonImportConfig = JsonSerializer.Deserialize<PolygonImporter.ImportConfigfile>(
                 File.ReadAllText(configFileInfo.FullName),
-                JsonOptionsRepository.DefaultSerializerOptions);
+                JsonSerializerOptionsRepository.Custom);
 
             Debug.Assert(polygonImportConfig != null);
 

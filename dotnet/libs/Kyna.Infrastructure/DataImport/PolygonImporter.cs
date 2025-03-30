@@ -1,8 +1,8 @@
 ﻿using Amazon.S3;
 using Amazon.S3.Model;
 using Kyna.Common;
-using Kyna.Common.Events;
-using Kyna.Common.Logging;
+using Kyna.Infrastructure.Events;
+using Kyna.Infrastructure.Logging;
 using Kyna.Infrastructure.Database;
 using Kyna.Infrastructure.Database.DataAccessObjects;
 using Kyna.DataProviders.Polygon.Models;
@@ -19,8 +19,6 @@ namespace Kyna.Infrastructure.DataImport;
 internal sealed class PolygonImporter : HttpImporterBase, IExternalDataImporter
 {
     private readonly IDbContext _dbContext;
-
-    private readonly object _locker = new();
 
     private const string BucketName = "flatfiles";
 
@@ -357,7 +355,7 @@ WHERE source = @Source AND provider = @Provider";
                 {
                     var response = await GetStringResponseAsync(uri, Constants.Actions.Tickers, "US", false, cancellationToken);
 
-                    var tickerResponse = JsonSerializer.Deserialize<TickerResponse>(response, JsonOptionsRepository.DefaultSerializerOptions);
+                    var tickerResponse = JsonSerializer.Deserialize<TickerResponse>(response, JsonSerializerOptionsRepository.Custom);
 
                     if (tickerTypes.HasFlag(Constants.TickerTypes.Stocks))
                     {
@@ -493,7 +491,7 @@ WHERE source = @Source AND provider = @Provider";
                     {
                         var response = await GetStringResponseAsync(uri, Constants.Actions.Splits, null, false, cancellationToken);
 
-                        var splitResponse = JsonSerializer.Deserialize<SplitResponse>(response, JsonOptionsRepository.DefaultSerializerOptions);
+                        var splitResponse = JsonSerializer.Deserialize<SplitResponse>(response, JsonSerializerOptionsRepository.Custom);
 
                         uri = splitResponse.NextUrl == null ? null : $"{splitResponse.NextUrl}&{GetToken()}";
                     }
@@ -565,7 +563,7 @@ WHERE source = @Source AND provider = @Provider";
                     {
                         var response = await GetStringResponseAsync(uri, Constants.Actions.Dividends, null, false, cancellationToken);
 
-                        var dividendResponse = JsonSerializer.Deserialize<SplitResponse>(response, JsonOptionsRepository.DefaultSerializerOptions);
+                        var dividendResponse = JsonSerializer.Deserialize<SplitResponse>(response, JsonSerializerOptionsRepository.Custom);
 
                         uri = dividendResponse.NextUrl == null ? null : $"{dividendResponse.NextUrl}&{GetToken()}";
                     }

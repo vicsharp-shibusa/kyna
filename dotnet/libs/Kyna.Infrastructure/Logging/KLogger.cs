@@ -1,6 +1,6 @@
 ﻿using Microsoft.Extensions.Logging;
 
-namespace Kyna.Common.Logging;
+namespace Kyna.Infrastructure.Logging;
 
 public static class KLogger
 {

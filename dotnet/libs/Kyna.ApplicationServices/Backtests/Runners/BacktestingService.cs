@@ -1,7 +1,7 @@
 ﻿using Kyna.Analysis.Technical.Signals;
 using Kyna.Backtests.AlphaModel;
 using Kyna.Common;
-using Kyna.Common.Events;
+using Kyna.Infrastructure.Events;
 using Kyna.Infrastructure.Database;
 using System.Diagnostics;
 using static Kyna.ApplicationServices.Reports.ReportService;

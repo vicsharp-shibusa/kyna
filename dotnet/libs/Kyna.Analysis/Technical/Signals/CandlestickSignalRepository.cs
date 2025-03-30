@@ -330,7 +330,7 @@ public sealed partial class CandlestickSignalRepository
         }
         if (position > chart.Length - numberRequired)
         {
-            throw new ArgumentException($"{nameof(position)} must be less than chart length minus number of OHLC required.");
+            throw new ArgumentException($"{nameof(position)} must be less than chart length minus the number of OHLC required.");
         }
         if (chart.TrendValues.Length == 0)
         {

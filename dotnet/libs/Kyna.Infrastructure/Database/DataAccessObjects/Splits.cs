@@ -1,4 +1,4 @@
-﻿using Kyna.Common.Logging;
+﻿using Kyna.Infrastructure.Logging;
 using System.Diagnostics;
 
 namespace Kyna.Infrastructure.Database.DataAccessObjects;

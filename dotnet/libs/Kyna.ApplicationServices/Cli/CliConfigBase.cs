@@ -1,4 +1,4 @@
-﻿using Kyna.Common.Abstractions;
+﻿using Kyna.Infrastructure.Abstractions;
 
 namespace Kyna.ApplicationServices.Cli;
 

@@ -15,7 +15,7 @@ public class ConfigurationBuilderTests
             new TestTargetPercentage(PricePoint.High, .1),
             new TestTargetPercentage(PricePoint.Low, .1));
 
-        var options = JsonOptionsRepository.DefaultSerializerOptions;
+        var options = JsonSerializerOptionsRepository.Custom;
         options.Converters.Add(new EnumDescriptionConverter<BacktestType>());
         options.Converters.Add(new EnumDescriptionConverter<PricePoint>());
 

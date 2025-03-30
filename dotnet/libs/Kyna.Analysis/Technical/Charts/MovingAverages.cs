@@ -23,7 +23,9 @@ public struct MovingAverage
     public decimal[] Values;
 
     public MovingAverage(MovingAverageKey key, Ohlc[] prices)
-        : this(key, prices.Select(p => p.GetPricePoint(key.PricePoint)).ToArray())
+        : this(key, prices?.Length > 0
+            ? prices.Select(p => p.GetPricePoint(key.PricePoint)).ToArray()
+            : throw new ArgumentException("Prices array cannot be null or empty.", nameof(prices)))
     {
     }
 
@@ -37,42 +39,70 @@ public struct MovingAverage
             return;
         }
 
-        if (key.Period < 2 || values.Length < key.Period)
+        if (values.Length == 0)
         {
-            Values = Enumerable.Repeat(0M, values.Length).ToArray();
+            Values = [];
             return;
         }
 
         Values = new decimal[values.Length];
 
-        for (int i = 0; i < key.Period - 1; i++)
+        if (values.Length < key.Period)
+        {
+            Array.Fill(Values, 0M);
+            return;
+        }
+
+        // Pad initial values
+        for (int i = 0; i < Math.Min(key.Period - 1, values.Length); i++)
         {
             Values[i] = 0M;
         }
 
-        if (key.Type == MovingAverageType.Simple)
+        switch (key.Type)
         {
-            decimal sum = values.Take(key.Period).Sum();
-            Values[key.Period - 1] = sum / key.Period;
+            case MovingAverageType.Simple:
+                ComputeSma(key.Period, values);
+                break;
 
-            for (int i = key.Period; i < values.Length; i++)
-            {
-                sum += values[i] - values[i - key.Period];
-                Values[i] = sum / key.Period;
-            }
+            case MovingAverageType.Exponential:
+                ComputeEma(key.Period, values);
+                break;
+
+            default:
+                throw new ArgumentException($"Unsupported moving average type: {key.Type}", nameof(key));
         }
+    }
 
-        if (key.Type == MovingAverageType.Exponential)
+    private void ComputeSma(int period, decimal[] values)
+    {
+        decimal sum = 0M;
+        for (int i = 0; i < period; i++)
         {
-            decimal factor = 2M / (key.Period + 1);
+            sum += values[i];
+        }
+        Values[period - 1] = sum / period;
 
-            Values[key.Period - 1] = values.Take(key.Period).Average();
+        for (int i = period; i < values.Length; i++)
+        {
+            sum += values[i] - values[i - period];
+            Values[i] = sum / period;
+        }
+    }
 
-            for (int i = key.Period; i < values.Length; i++)
-            {
-                // https://sciencing.com/calculate-exponential-moving-averages-8221813.html
-                Values[i] = (values[i] - Values[i - 1]) * factor + Values[i - 1];
-            }
+    private void ComputeEma(int period, decimal[] values)
+    {
+        decimal factor = 2M / (period + 1);
+        decimal sum = 0M;
+        for (int i = 0; i < period; i++)
+        {
+            sum += values[i];
+        }
+        Values[period - 1] = sum / period; // Initial SMA
+
+        for (int i = period; i < values.Length; i++)
+        {
+            Values[i] = (values[i] - Values[i - 1]) * factor + Values[i - 1];
         }
     }
 }

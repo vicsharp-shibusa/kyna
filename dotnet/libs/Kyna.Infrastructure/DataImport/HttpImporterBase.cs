@@ -17,7 +17,7 @@ internal abstract class HttpImporterBase : IDisposable
 
     protected readonly ApiTransactionService _transactionService;
     protected readonly HttpClient _httpClient;
-    protected readonly JsonSerializerOptions _serializerOptions = JsonOptionsRepository.DefaultSerializerOptions;
+    protected readonly JsonSerializerOptions _serializerOptions = JsonSerializerOptionsRepository.Custom;
 
     protected readonly ConcurrentBag<(string Uri, string Category, string? SubCategory)> _concurrentBag;
 
@@ -84,6 +84,11 @@ internal abstract class HttpImporterBase : IDisposable
         return await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
     }
 
+    /// <summary>
+    /// This protects the api key from leaking via error messages.
+    /// </summary>
+    /// <param name="text">Text with api key.</param>
+    /// <returns></returns>
     protected virtual string HideToken(string text) => _apiKey == null ? text : text.Replace(_apiKey, "{SECRET_KEY}");
 
     protected virtual void Dispose(bool disposing)

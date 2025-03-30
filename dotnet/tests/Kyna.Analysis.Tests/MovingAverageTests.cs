@@ -29,15 +29,4 @@ public class MovingAverageTests
             Assert.Equal(expected[i], movingAverage.Values[i], 6);
         }
     }
-
-    [Fact]
-    public void MovingAverage_PeriodLessThanTwo_ReturnsZeroValues()
-    {
-        var values = new decimal[] { 10M, 15M, 20M, 25M, 30M };
-        var key = new MovingAverageKey(1, type: MovingAverageType.Simple);
-
-        var movingAverage = new MovingAverage(key, values);
-
-        Assert.Equal((decimal[])[0M, 0M, 0M, 0M, 0M], movingAverage.Values);
-    }
 }

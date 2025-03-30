@@ -51,9 +51,9 @@ public abstract class OhlcSignalBase(
                 if (useMarket)
                 {
                     var index = market!.GetIndexOfDate(chart.PriceActions[i].Date);
-                    if (index.HasValue &&
-                        (market.TrendValues[index.Value].Sentiment is TrendSentiment.Bullish or TrendSentiment.Bearish) &&
-                        market.TrendValues[index.Value].Sentiment != Sentiment)
+                    if (index > -1 &&
+                        (market.TrendValues[index].Sentiment is TrendSentiment.Bullish or TrendSentiment.Bearish) &&
+                        market.TrendValues[index].Sentiment != Sentiment)
                     {
                         continue;
                     }
@@ -67,8 +67,8 @@ public abstract class OhlcSignalBase(
                         Code = chart.Code ?? "None",
                         Industry = chart.Industry,
                         Sector = chart.Sector,
-                        Prologue = new ChartRange(i - Options.LengthOfPrologue, i - 1),
-                        Signal = new ChartRange(i, i + NumberRequired - 1),
+                        Prologue = new ChartPositionRange(i - Options.LengthOfPrologue, i - 1),
+                        Signal = new ChartPositionRange(i, i + NumberRequired - 1),
                         Position = position
                     };
                 }
@@ -77,19 +77,20 @@ public abstract class OhlcSignalBase(
     }
 }
 
-public struct SignalMatch(string signalName, string code, string? industry, string? sector, ChartRange prologue, ChartRange signal,
+public struct SignalMatch(string signalName, string code, string? industry, string? sector,
+    ChartPositionRange prologue, ChartPositionRange signal,
     int position)
 {
     public string SignalName = signalName;
     public string Code = code;
     public string? Industry = industry;
     public string? Sector = sector;
-    public ChartRange Prologue = prologue;
-    public ChartRange Signal = signal;
+    public ChartPositionRange Prologue = prologue;
+    public ChartPositionRange Signal = signal;
     public int Position = position;
 }
 
-public struct ChartRange(int start, int end)
+public struct ChartPositionRange(int start, int end)
 {
     public int Start = start;
     public int End = end;

@@ -48,4 +48,24 @@ public record class Ohlc : PriceRange
             _ => MidPoint
         };
     }
+
+    public static bool operator <(Ohlc a, Ohlc b)
+    {
+        return a.Date.DayNumber < b.Date.DayNumber;
+    }
+
+    public static bool operator >(Ohlc a, Ohlc b)
+    {
+        return a.Date.DayNumber > b.Date.DayNumber;
+    }
+
+    public static bool operator <=(Ohlc a, Ohlc b)
+    {
+        return a.Date.DayNumber <= b.Date.DayNumber;
+    }
+
+    public static bool operator >=(Ohlc a, Ohlc b)
+    {
+        return a.Date.DayNumber >= b.Date.DayNumber;
+    }
 }

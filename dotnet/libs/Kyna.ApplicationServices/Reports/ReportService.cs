@@ -1,7 +1,7 @@
 ﻿using ClosedXML.Excel;
 using Kyna.ApplicationServices.Analysis;
 using Kyna.Common;
-using Kyna.Common.Events;
+using Kyna.Infrastructure.Events;
 using Kyna.Infrastructure.Database;
 
 namespace Kyna.ApplicationServices.Reports;

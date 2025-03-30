@@ -5,9 +5,9 @@ using System.Text.RegularExpressions;
 
 namespace Kyna.Common;
 
-public static class JsonOptionsRepository
+public static class JsonSerializerOptionsRepository
 {
-    public static JsonSerializerOptions DefaultSerializerOptions
+    public static JsonSerializerOptions Custom
     {
         get
         {
@@ -40,6 +40,8 @@ public static class JsonOptionsRepository
             return options;
         }
     }
+    public static JsonSerializerOptions Web => JsonSerializerOptions.Web;
+    public static JsonSerializerOptions Default => JsonSerializerOptions.Default;
 }
 
 public sealed class NullableStringJsonConverter : JsonConverter<string?>

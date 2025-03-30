@@ -6,7 +6,7 @@ using Kyna.ApplicationServices.Logging;
 using Kyna.Backtests;
 using Kyna.Backtests.AlphaModel;
 using Kyna.Common;
-using Kyna.Common.Logging;
+using Kyna.Infrastructure.Logging;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using System.Collections.ObjectModel;
@@ -46,7 +46,7 @@ try
     {
         bool onlySignalWithMarket = false;
 
-        var options = JsonOptionsRepository.DefaultSerializerOptions;
+        var options = JsonSerializerOptionsRepository.Custom;
         options.Converters.Add(new EnumDescriptionConverter<PricePoint>());
         options.Converters.Add(new EnumDescriptionConverter<BacktestType>());
         options.WriteIndented = true;

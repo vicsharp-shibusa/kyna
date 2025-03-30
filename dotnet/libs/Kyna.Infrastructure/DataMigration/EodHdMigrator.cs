@@ -1,6 +1,6 @@
 ﻿using Kyna.Common;
-using Kyna.Common.Events;
-using Kyna.Common.Logging;
+using Kyna.Infrastructure.Events;
+using Kyna.Infrastructure.Logging;
 using Kyna.DataProviders.EodHistoricalData.Models;
 using Kyna.Infrastructure.Database;
 using Kyna.Infrastructure.Database.DataAccessObjects;
@@ -228,7 +228,7 @@ internal sealed class EodHdMigrator(DbDef sourceDef, DbDef targetDef,
         if (_configuration.PriceMigrationMode != PriceMigrationMode.None)
         {
             var eodPriceActions = JsonSerializer.Deserialize<PriceAction[]>(
-                responseBody, JsonOptionsRepository.DefaultSerializerOptions);
+                responseBody, JsonSerializerOptionsRepository.Custom);
 
             if ((eodPriceActions?.Length ?? 0) > 0)
             {
@@ -269,7 +269,7 @@ internal sealed class EodHdMigrator(DbDef sourceDef, DbDef targetDef,
     private Task MigrateSplitsAsync(ApiTransactionForMigration item, string responseBody)
     {
         var splits = JsonSerializer.Deserialize<DataProviders.EodHistoricalData.Models.Split[]>(
-            responseBody, JsonOptionsRepository.DefaultSerializerOptions);
+            responseBody, JsonSerializerOptionsRepository.Custom);
 
         if ((splits?.Length ?? 0) > 0)
         {
@@ -284,7 +284,7 @@ internal sealed class EodHdMigrator(DbDef sourceDef, DbDef targetDef,
     private Task MigrateDividendsAsync(ApiTransactionForMigration item, string responseBody)
     {
         var dividends = JsonSerializer.Deserialize<DataProviders.EodHistoricalData.Models.Dividend[]>(
-            responseBody, JsonOptionsRepository.DefaultSerializerOptions);
+            responseBody, JsonSerializerOptionsRepository.Custom);
 
         if ((dividends?.Length ?? 0) > 0)
         {
@@ -327,7 +327,7 @@ internal sealed class EodHdMigrator(DbDef sourceDef, DbDef targetDef,
         {
             var fundamentals = JsonSerializer
                 .Deserialize<DataProviders.EodHistoricalData.Models.Fundamentals.CommonStock.FundamentalsCollection>(
-                responseBody, JsonOptionsRepository.DefaultSerializerOptions);
+                responseBody, JsonSerializerOptionsRepository.Custom);
 
             if (!string.IsNullOrWhiteSpace(fundamentals.General.Code))
             {
@@ -368,7 +368,7 @@ internal sealed class EodHdMigrator(DbDef sourceDef, DbDef targetDef,
         {
             var fundamentals = JsonSerializer
                 .Deserialize<DataProviders.EodHistoricalData.Models.Fundamentals.Etf.FundamentalsCollection>(
-                responseBody, JsonOptionsRepository.DefaultSerializerOptions);
+                responseBody, JsonSerializerOptionsRepository.Custom);
 
             if (!string.IsNullOrWhiteSpace(fundamentals.General.Code))
             {

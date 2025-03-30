@@ -1,5 +1,5 @@
 ﻿using Dapper;
-using Kyna.Common.Logging;
+using Kyna.Infrastructure.Logging;
 using System.Data;
 using System.Diagnostics;
 

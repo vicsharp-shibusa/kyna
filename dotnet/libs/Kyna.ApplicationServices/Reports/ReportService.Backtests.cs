@@ -22,7 +22,7 @@ WHERE process_id = @ProcessId";
 
         var signalNames = counts.Select(c => c.SignalName).Distinct().ToArray();
 
-        var scReport = CreateReport($"{processId.First8()}-summary", "Id",
+        var scReport = CreateReport($"{processId.First()}-summary", "Id",
             "Signal Name", "Result Direction", "Count", "Percentage", "Description");
 
         List<SignalNameCount> snCounts = new(counts.Length);
@@ -33,7 +33,7 @@ WHERE process_id = @ProcessId";
             {
                 snCounts.Add(new SignalNameCount
                 {
-                    BacktestNum = backtestId.First8(),
+                    BacktestNum = backtestId.First(),
                     Name = signalName,
                     Count = counts.Where(c => c.BacktestId.Equals(backtestId) &&
                         c.SignalName.Equals(signalName)).Sum(c => c.Count)
@@ -43,7 +43,7 @@ WHERE process_id = @ProcessId";
 
         foreach (var count in counts)
         {
-            var num = count.BacktestId.First8();
+            var num = count.BacktestId.First();
             var totalForSignal = snCounts.FirstOrDefault(s => s.BacktestNum.Equals(num) &&
                 s.Name.Equals(count.SignalName)).Count;
             var p = totalForSignal == 0 ? 0D : count.Count / (double)totalForSignal;
@@ -64,7 +64,7 @@ WHERE process_id = @ProcessId";
             foreach (var btDao in backtestDaos)
             {
                 var signalSummaryReport = CreateReport(
-                    $"{snAbbrev}-{btDao.Id.First8()}-summary",
+                    $"{snAbbrev}-{btDao.Id.First()}-summary",
                     "Name", "Category", "Sub Category",
                     "Number Signals", "Success %", "Avg Duration");
 
@@ -88,7 +88,7 @@ WHERE process_id = @ProcessId";
                     new { BacktestId = btDao.Id, processId, signalName });
 
                 var signalDetailReport = CreateReport(
-                    $"{snAbbrev}-{btDao.Id.First8()}-details",
+                    $"{snAbbrev}-{btDao.Id.First()}-details",
                     "Name", "Code", "Industry", "Sector",
                     "Entry Date", "Entry Price Point", "Entry Price",
                     "Result Up Date", "Result Up Price Point", "Result Up Price",
@@ -128,7 +128,7 @@ WHERE process_id = @ProcessId";
         foreach (var b in backtests.OrderBy(b => b.Id.ToString()))
         {
             var num = (++i).ToString().PadLeft(3, '0');
-            map.Add(b.Id, (num, $"backtest_stats_{processId.First8()}_{num}.xlsx"));
+            map.Add(b.Id, (num, $"backtest_stats_{processId.First()}_{num}.xlsx"));
         }
 
         List<Report> reports = new(2);
@@ -206,7 +206,7 @@ WHERE process_id = @ProcessId";
 
         reports.Add(scReport);
 
-        var fn = Path.Combine(outputDir, $"backtest_stats_{processId.First8()}_summary.xlsx");
+        var fn = Path.Combine(outputDir, $"backtest_stats_{processId.First()}_summary.xlsx");
 
         CreateSpreadsheet(fn, [.. reports]);
 
@@ -259,7 +259,7 @@ WHERE process_id = @ProcessId";
 
                 reports.Add(signalDetailReport);
 
-                fn = Path.Combine(outputDir, $"backtest_stats_{processId.First8()}_{map[backtestId].Num}.xlsx");
+                fn = Path.Combine(outputDir, $"backtest_stats_{processId.First()}_{map[backtestId].Num}.xlsx");
                 CreateSpreadsheet(fn, [.. reports]);
                 yield return fn;
                 signalDetailReport = null;

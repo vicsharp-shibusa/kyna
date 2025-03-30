@@ -182,11 +182,11 @@ public sealed partial class ReportService
         var fn = Path.Combine(outputDir, $"{comparisonReport.Name}.csv");
         CreateCsv(fn, comparisonReport, "|");
 
-        Communicate?.Invoke(this, new Common.Events.CommunicationEventArgs(
+        Communicate?.Invoke(this, new Infrastructure.Events.CommunicationEventArgs(
             $"Total Reviewed : {totalReviewed:#,##0}", nameof(ReportService)));
-        Communicate?.Invoke(this, new Common.Events.CommunicationEventArgs(
+        Communicate?.Invoke(this, new Infrastructure.Events.CommunicationEventArgs(
             $"Total Skipped  : {totalSkipped:#,##0}", nameof(ReportService)));
-        Communicate?.Invoke(this, new Common.Events.CommunicationEventArgs(
+        Communicate?.Invoke(this, new Infrastructure.Events.CommunicationEventArgs(
             $"Total Trouble  : {totalTrouble:#,##0}", nameof(ReportService)));
 
         return [fn];

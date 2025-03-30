@@ -1,7 +1,7 @@
 ﻿using Kyna.Analysis.Technical;
 using Kyna.Backtests.AlphaModel;
 using Kyna.Common;
-using Kyna.Common.Events;
+using Kyna.Infrastructure.Events;
 using Kyna.Infrastructure.Database;
 using Kyna.Infrastructure.Database.DataAccessObjects;
 using System.Collections.Concurrent;
@@ -70,7 +70,7 @@ internal abstract class RunnerBase
         {
             throw new ArgumentException($"Configuration file, {configFile.FullName}, does not exist.");
         }
-        var options = JsonOptionsRepository.DefaultSerializerOptions;
+        var options = JsonSerializerOptionsRepository.Custom;
         options.Converters.Add(new EnumDescriptionConverter<BacktestType>());
         options.Converters.Add(new EnumDescriptionConverter<PricePoint>());
 

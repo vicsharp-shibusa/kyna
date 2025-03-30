@@ -1,5 +1,5 @@
 ﻿using Kyna.ApplicationServices.Configuration;
-using Kyna.Common.Abstractions;
+using Kyna.Infrastructure.Abstractions;
 using Kyna.Infrastructure.Database;
 using Microsoft.Extensions.Configuration;
 using System.Text;

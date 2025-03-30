@@ -2,7 +2,7 @@
 using Kyna.ApplicationServices.Configuration;
 using Kyna.ApplicationServices.DataManagement;
 using Kyna.Common;
-using Kyna.Common.Logging;
+using Kyna.Infrastructure.Logging;
 using Kyna.Infrastructure.DataMigration;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
@@ -247,7 +247,7 @@ void Configure()
     migrator!.Communicate += Migrator_Communicate;
 }
 
-void Migrator_Communicate(object? sender, Kyna.Common.Events.CommunicationEventArgs e)
+void Migrator_Communicate(object? sender, Kyna.Infrastructure.Events.CommunicationEventArgs e)
 {
     Communicate(e.Message, scope: e.Scope);
 }

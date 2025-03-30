@@ -21,10 +21,10 @@ public class SplitTests(ITestOutputHelper output)
 
         var splits = JsonSerializer.Deserialize<DataProviders.EodHistoricalData.Models.Split[]>(
             File.ReadAllText(applSplitsFile.FullName),
-            JsonOptionsRepository.DefaultSerializerOptions);
+            JsonSerializerOptionsRepository.Custom);
         var prices = JsonSerializer.Deserialize<DataProviders.EodHistoricalData.Models.PriceAction[]>(
             File.ReadAllText(aaplPricesFile.FullName),
-            JsonOptionsRepository.DefaultSerializerOptions);
+            JsonSerializerOptionsRepository.Custom);
 
         Assert.NotNull(splits);
         Assert.NotEmpty(splits);

@@ -26,6 +26,7 @@ internal sealed class PostgreSqlContext(DbDef dbDef) : DbContextBase(dbDef), IDb
 
     private NpgsqlConnection GetConnection()
     {
+        // TODO: double-check this; postgresql might handle this stuff by now.
         var connection = new NpgsqlConnection(DbDef.ConnectionString);
         if (!SqlMapper.HasTypeHandler(typeof(SqlDateOnlyTypeHandler)))
         {
