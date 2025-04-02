@@ -8,10 +8,8 @@ CREATE TABLE IF NOT EXISTS public.splits
   before_split DOUBLE PRECISION NOT NULL,
   after_split DOUBLE PRECISION NOT NULL,
   factor DOUBLE PRECISION NOT NULL,
-  created_ticks_utc BIGINT NOT NULL,
-  updated_ticks_utc BIGINT NOT NULL,
-  created_utc TIMESTAMP WITH TIME ZONE GENERATED ALWAYS AS (to_timestamp((created_ticks_utc - 621355968000000000) / 10000000)) STORED,
-  updated_utc TIMESTAMP WITH TIME ZONE GENERATED ALWAYS AS (to_timestamp((updated_ticks_utc - 621355968000000000) / 10000000)) STORED,
+  created_at TIMESTAMP WITH TIME ZONE NOT NULL,
+  updated_at TIMESTAMP WITH TIME ZONE NOT NULL,
   process_id UUID NULL,
   PRIMARY KEY (source, code, date_split)
 );
@@ -27,10 +25,8 @@ CREATE TABLE IF NOT EXISTS public.dividends
   record_date DATE NULL,
   frequency INT NULL,
   amount NUMERIC(22,4) NOT NULL,
-  created_ticks_utc BIGINT NOT NULL,
-  updated_ticks_utc BIGINT NOT NULL,
-  created_utc TIMESTAMP WITH TIME ZONE GENERATED ALWAYS AS (to_timestamp((created_ticks_utc - 621355968000000000) / 10000000)) STORED,
-  updated_utc TIMESTAMP WITH TIME ZONE GENERATED ALWAYS AS (to_timestamp((updated_ticks_utc - 621355968000000000) / 10000000)) STORED,
+  created_at TIMESTAMP WITH TIME ZONE NOT NULL,
+  updated_at TIMESTAMP WITH TIME ZONE NOT NULL,
   process_id UUID NULL,
   PRIMARY KEY (source, code, type, declaration_date)
 );
@@ -45,10 +41,8 @@ CREATE TABLE IF NOT EXISTS public.eod_prices
   low NUMERIC(22,4) NOT NULL,
   close NUMERIC(22,4) NOT NULL,
   volume BIGINT NOT NULL,
-  created_ticks_utc BIGINT NOT NULL,
-  updated_ticks_utc BIGINT NOT NULL,
-  created_utc TIMESTAMP WITH TIME ZONE GENERATED ALWAYS AS (to_timestamp((created_ticks_utc - 621355968000000000) / 10000000)) STORED,
-  updated_utc TIMESTAMP WITH TIME ZONE GENERATED ALWAYS AS (to_timestamp((updated_ticks_utc - 621355968000000000) / 10000000)) STORED,
+  created_at TIMESTAMP WITH TIME ZONE NOT NULL,
+  updated_at TIMESTAMP WITH TIME ZONE NOT NULL,
   process_id UUID NULL,
   PRIMARY KEY (source, code, date_eod)
 );
@@ -64,10 +58,8 @@ CREATE TABLE IF NOT EXISTS public.eod_adjusted_prices
   close NUMERIC(22,4) NOT NULL,
   volume BIGINT NOT NULL,
   factor DOUBLE PRECISION NOT NULL,
-  created_ticks_utc BIGINT NOT NULL,
-  updated_ticks_utc BIGINT NOT NULL,
-  created_utc TIMESTAMP WITH TIME ZONE GENERATED ALWAYS AS (to_timestamp((created_ticks_utc - 621355968000000000) / 10000000)) STORED,
-  updated_utc TIMESTAMP WITH TIME ZONE GENERATED ALWAYS AS (to_timestamp((updated_ticks_utc - 621355968000000000) / 10000000)) STORED,
+  created_at TIMESTAMP WITH TIME ZONE NOT NULL,
+  updated_at TIMESTAMP WITH TIME ZONE NOT NULL,
   process_id UUID NULL,
   PRIMARY KEY (source, code, date_eod)
 );

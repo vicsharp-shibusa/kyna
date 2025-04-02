@@ -150,7 +150,7 @@ void ShowHelp()
         new CliArg(["--info","--show-info"], [], false, "Displays summary info from the provided configuration file.")
     ];
 
-    CliArg[] args = localArgs.Union(CliHelper.GetDefaultArgDescriptions()).ToArray();
+    CliArg[] args = [.. localArgs.Union(CliHelper.GetDefaultArgDescriptions())];
 
     Communicate($"{config.AppName} {config.AppVersion}".Trim(), true);
     Communicate(null, true);
@@ -233,6 +233,15 @@ void Configure()
     var logDef = dbDefs.FirstOrDefault(d => d.Name == ConfigKeys.DbKeys.Logs);
     var importDef = dbDefs.FirstOrDefault(d => d.Name == ConfigKeys.DbKeys.Imports);
     var finDef = dbDefs.FirstOrDefault(d => d.Name == ConfigKeys.DbKeys.Financials);
+
+    if (logDef == null)
+        throw new Exception($"Unable to create {nameof(ConfigKeys.DbKeys.Logs)} db connection; no '{ConfigKeys.DbKeys.Logs}' key found.");
+
+    if (importDef == null)
+        throw new Exception($"Unable to create {nameof(ConfigKeys.DbKeys.Imports)} db connection; no '{ConfigKeys.DbKeys.Imports}' key found.");
+
+    if (finDef == null)
+        throw new Exception($"Unable to create {nameof(ConfigKeys.DbKeys.Financials)} db connection; no '{ConfigKeys.DbKeys.Financials}' key found.");
 
     logger = Kyna.ApplicationServices.Logging.LoggerFactory.Create<Program>(logDef);
     KLogger.SetLogger(logger);

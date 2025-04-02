@@ -30,7 +30,7 @@ Config? config = null;
 
 try
 {
-    HandleArguments(args);
+    ParseArguments(args);
 
     Debug.Assert(config != null);
 
@@ -66,14 +66,15 @@ try
 
         acceptDanger = acceptDanger || !IsDangerous;
 
-        if (!acceptDanger)
+        if (!acceptDanger && IsDangerous)
         {
             if (IsDangerous)
             {
                 bool? allowDanger = null;
                 foreach (var message in DangerMessages)
                 {
-                    allowDanger = allowDanger.HasValue ? allowDanger.Value && CliHelper.ConfirmActionWithUser(message)
+                    allowDanger = allowDanger.HasValue
+                        ? allowDanger.Value && CliHelper.ConfirmActionWithUser(message)
                         : CliHelper.ConfirmActionWithUser(message);
                 }
 
@@ -147,13 +148,12 @@ catch (Exception exc)
 finally
 {
     if (!(config?.ShowHelp ?? false) && !(config?.ShowInfo ?? false))
-    {
         KLogger.LogEvent(EventIdRepository.GetAppFinishedEvent(config!), processId);
-    }
 
     if (importer != null)
     {
         importer.Communicate -= Importer_Communicate;
+        importer.Dispose();
     }
 
     timer.Stop();
@@ -169,14 +169,10 @@ void Communicate(string? message, bool force = false, LogLevel logLevel = LogLev
     string? scope = null)
 {
     if (force || (config?.Verbose ?? false))
-    {
         Console.WriteLine(message);
-    }
 
     if (!string.IsNullOrEmpty(message))
-    {
         KLogger.Log(logLevel, message, scope ?? appName, processId);
-    }
 }
 
 void ShowHelp()
@@ -188,7 +184,7 @@ void ShowHelp()
         new CliArg(["-y"], [], false, "Accept danger automatically.")
     ];
 
-    CliArg[] args = localArgs.Union(CliHelper.GetDefaultArgDescriptions()).ToArray();
+    CliArg[] args = [.. localArgs.Union(CliHelper.GetDefaultArgDescriptions())];
 
     Communicate($"{config.AppName} {config.AppVersion}".Trim(), true);
     Communicate(null, true);
@@ -200,7 +196,7 @@ void ShowHelp()
     Communicate(CliHelper.FormatArguments(args), true);
 }
 
-void HandleArguments(string[] args)
+void ParseArguments(string[] args)
 {
     config = new Config(Assembly.GetExecutingAssembly().GetName().Name ?? nameof(Program), "v1",
         "CLI for importing financial data.");
@@ -245,24 +241,16 @@ void HandleArguments(string[] args)
 void ValidateArgsAndSetDefaults()
 {
     if (config == null)
-    {
         throw new Exception("Logic error; configuration was not created.");
-    }
 
     if (config.ConfigFile == null && !config.ShowInfo)
-    {
         throw new ArgumentException("A configuration file is required. See --help.");
-    }
 
     if (config.ShowInfo)
-    {
         config.DryRun = config.ShowHelp = false;
-    }
 
     if (config.DryRun)
-    {
         config.Verbose = true;
-    }
 }
 
 void Configure()
@@ -279,11 +267,15 @@ void Configure()
     var logDef = dbDefs.FirstOrDefault(d => d.Name == ConfigKeys.DbKeys.Logs);
     var importDef = dbDefs.FirstOrDefault(d => d.Name == ConfigKeys.DbKeys.Imports);
 
+    if (logDef == null)
+        throw new Exception($"Unable to create {nameof(ConfigKeys.DbKeys.Logs)} db connection; no '{ConfigKeys.DbKeys.Logs}' key found.");
+
     var source = SourceUtility.GetSource(config.ConfigFile);
     if (source == "yahoo")
-    {
         importDef = dbDefs.FirstOrDefault(d => d.Name == ConfigKeys.DbKeys.Financials);
-    }
+
+    if (importDef == null)
+        throw new Exception($"Unable to create {nameof(ConfigKeys.DbKeys.Imports)} db connection; no '{ConfigKeys.DbKeys.Imports}' key found.");
 
     logger = Kyna.ApplicationServices.Logging.LoggerFactory.Create<Program>(logDef);
     KLogger.SetLogger(logger);
@@ -295,11 +287,9 @@ void Configure()
         config.ConfigFile, config.ApiKey, config.AccessKey, processId, config.DryRun);
 
     if (importer == null)
-    {
         throw new Exception($"Unable to instantiate {source} importer.");
-    }
 
-    importer!.Communicate += Importer_Communicate;
+    importer.Communicate += Importer_Communicate;
 }
 
 void Importer_Communicate(object? sender, Kyna.Infrastructure.Events.CommunicationEventArgs e)

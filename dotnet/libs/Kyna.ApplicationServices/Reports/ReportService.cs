@@ -1,18 +1,30 @@
 ﻿using ClosedXML.Excel;
 using Kyna.ApplicationServices.Analysis;
 using Kyna.Common;
-using Kyna.Infrastructure.Events;
 using Kyna.Infrastructure.Database;
+using Kyna.Infrastructure.Events;
+using System.Data;
 
 namespace Kyna.ApplicationServices.Reports;
 
-public sealed partial class ReportService(DbDef backtestsDbDef, DbDef financialsDbDef,
-    ReportOptions reportOptions)
+public sealed partial class ReportService
 {
-    private readonly IDbContext _backtestsCtx = DbContextFactory.Create(backtestsDbDef);
-    private readonly IDbContext _financialsCtx = DbContextFactory.Create(financialsDbDef);
-    private readonly ReportOptions _reportOptions = reportOptions;
-    private readonly FinancialsRepository _financialsRepository = new(financialsDbDef);
+    private readonly IDbConnection _backtestConn;
+    private readonly IDbConnection _financialsConn;
+    private readonly ReportOptions _reportOptions;
+    private readonly FinancialsRepository _financialsRepository;
+    private readonly DbDef _backtestDbDef;
+    private readonly DbDef _financialDbDef;
+    public ReportService(DbDef backtestsDbDef, DbDef financialsDbDef,
+        ReportOptions reportOptions)
+    {
+        _backtestDbDef = backtestsDbDef;
+        _financialDbDef = financialsDbDef;
+        _backtestConn = backtestsDbDef.GetConnection();
+        _financialsConn = financialsDbDef.GetConnection();
+        _reportOptions = reportOptions;
+        _financialsRepository = new(financialsDbDef);
+    }
 
     public event EventHandler<CommunicationEventArgs>? Communicate;
 
@@ -99,7 +111,7 @@ public class Report
 
     public Report(string name, IEnumerable<string> headers, int capacity = 1_000)
     {
-        Headers = headers.ToArray();
+        Headers = [.. headers];
         if (Headers.Length == 0)
         {
             throw new ArgumentException("At least one header is required.");

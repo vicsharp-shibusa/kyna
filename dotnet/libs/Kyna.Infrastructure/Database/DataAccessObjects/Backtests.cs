@@ -1,14 +1,27 @@
-﻿using Newtonsoft.Json.Linq;
+﻿using Kyna.Analysis.Technical;
+using Kyna.Common;
 
 namespace Kyna.Infrastructure.Database.DataAccessObjects;
 
 internal sealed record class Backtest : DaoBase
 {
+    public Backtest() : this(id: Guid.NewGuid(),
+        name: "",
+        type: "",
+        source: "",
+        description: "",
+        entryPricePoint: "",
+        targetUpPercentage: 0D,
+        targetUpPricePoint: PricePoint.Close.GetEnumDescription(),
+        targetDownPercentage: 0D,
+        targetDownPricePoint: PricePoint.Close.GetEnumDescription())
+    { }
+
     public Backtest(Guid id, string name, string type, string source, string description,
         string entryPricePoint,
         double targetUpPercentage, string targetUpPricePoint,
         double targetDownPercentage, string targetDownPricePoint,
-        long createdTicksUtc, long updatedTicksUtc, Guid? processId = null) : base(processId)
+        Guid? processId = null) : base(processId)
     {
         Id = id;
         Name = name;
@@ -20,8 +33,6 @@ internal sealed record class Backtest : DaoBase
         TargetUpPricePoint = targetUpPricePoint;
         TargetDownPercentage = targetDownPercentage;
         TargetDownPricePoint = targetDownPricePoint;
-        CreatedTicksUtc = createdTicksUtc;
-        UpdatedTicksUtc = updatedTicksUtc;
     }
 
     public Guid Id { get; init; }
@@ -38,12 +49,32 @@ internal sealed record class Backtest : DaoBase
 
 internal sealed record class BacktestResult : DaoBase
 {
+    public BacktestResult() : this(id: Guid.Empty,
+        backtestId: Guid.Empty,
+        signalName: "",
+        code: "",
+        industry: null, sector: null,
+        entryDate: DateOnly.MinValue,
+        entryPricePoint: "",
+        entryPrice: 0M,
+        resultUpDate: null,
+        resultUpPricePoint: null,
+        resultUpPrice: null,
+        resultDownDate: null,
+        resultDownPricePoint: null,
+        resultDownPrice: null,
+        resultDirection: null,
+        resultDurationTradingDays: null,
+        resultDurationCalendarDays: null)
+    {
+    }
+
     public BacktestResult(Guid id, Guid backtestId, string signalName, string code, string? industry, string? sector,
         DateOnly entryDate, string entryPricePoint, decimal entryPrice,
         DateOnly? resultUpDate, string? resultUpPricePoint, decimal? resultUpPrice,
         DateOnly? resultDownDate, string? resultDownPricePoint, decimal? resultDownPrice,
-        string? resultDirection, int? resultDurationTradingDays, int? resultDurationCalendarDays,
-        long createdTicksUtc, long updatedTicksUtc) : base((Guid?)null)
+        string? resultDirection, int? resultDurationTradingDays, int? resultDurationCalendarDays)
+        : base((Guid?)null)
     {
         Id = id;
         BacktestId = backtestId;
@@ -63,8 +94,6 @@ internal sealed record class BacktestResult : DaoBase
         ResultDirection = resultDirection;
         ResultDurationTradingDays = resultDurationTradingDays;
         ResultDurationCalendarDays = resultDurationCalendarDays;
-        CreatedTicksUtc = createdTicksUtc;
-        UpdatedTicksUtc = updatedTicksUtc;
     }
 
     public Guid Id { get; init; }
@@ -89,20 +118,32 @@ internal sealed record class BacktestResult : DaoBase
 
 internal sealed record class BacktestStats : DaoBase
 {
+    public BacktestStats() : this(backtestId: Guid.Empty,
+        source: "",
+        signalName: "",
+        category: "",
+        subCategory: "",
+        numberEntities: 0,
+        numberSignals: 0,
+        successPercentage: 0D,
+        successCriterion: "",
+        successDurationTradingDays: null,
+        successDurationCalendarDays: null,
+        processId: null)
+    { }
+
     public BacktestStats(
         Guid backtestId,
-        string source, 
-        string signalName, 
-        string category, 
-        string subCategory, 
-        int numberEntities, 
-        int numberSignals, 
-        double successPercentage, 
-        string successCriterion, 
-        int? successDurationTradingDays, 
+        string source,
+        string signalName,
+        string category,
+        string subCategory,
+        int numberEntities,
+        int numberSignals,
+        double successPercentage,
+        string successCriterion,
+        int? successDurationTradingDays,
         int? successDurationCalendarDays,
-        long createdTicksUtc, 
-        long updatedTicksUtc,
         Guid? processId = null) : base(processId)
     {
         BacktestId = backtestId;
@@ -116,8 +157,6 @@ internal sealed record class BacktestStats : DaoBase
         SuccessCriterion = successCriterion;
         SuccessDurationTradingDays = successDurationTradingDays;
         SuccessDurationCalendarDays = successDurationCalendarDays;
-        CreatedTicksUtc = createdTicksUtc;
-        UpdatedTicksUtc = updatedTicksUtc;
     }
 
     public Guid BacktestId { get; init; }
@@ -136,7 +175,7 @@ internal sealed record class BacktestStats : DaoBase
 internal sealed record class BacktestResultsInfo
 {
     public BacktestResultsInfo(string signalName, string code,
-        string? industry, string? sector, 
+        string? industry, string? sector,
         string? resultDirection, int? resultDurationTradingDays, int? resultDurationCalendarDays)
     {
         SignalName = signalName;

@@ -1,33 +1,17 @@
 ﻿using Kyna.Infrastructure.Database;
 using Kyna.Infrastructure.Database.DataAccessObjects;
-using Microsoft.Extensions.Configuration;
-using System.Diagnostics;
 
 namespace Kyna.Infrastructure.Tests.Database;
 
-public class PostgreSqlFinancialTests
+public class PostgreSqlFinancialTests : IClassFixture<PostgreSqlTestFixture>
 {
-    private PostgreSqlContext? _context;
-    private const string DbName = "Financials";
+    private readonly Guid? _processId = Guid.NewGuid();
 
-    public PostgreSqlFinancialTests()
+    private readonly PostgreSqlTestFixture _fixture;
+
+    public PostgreSqlFinancialTests(PostgreSqlTestFixture fixture)
     {
-        Configure();
-        Debug.Assert(_context != null);
-    }
-
-    private void Configure()
-    {
-        IConfigurationBuilder builder = new ConfigurationBuilder()
-            .SetBasePath(AppDomain.CurrentDomain.BaseDirectory)
-            .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
-            .AddJsonFile("secrets.json", optional: false, reloadOnChange: true);
-
-        var configuration = builder.Build();
-
-        Debug.Assert(configuration != null);
-
-        _context = new PostgreSqlContext(new DbDef(DbName, DatabaseEngine.PostgreSql, configuration.GetConnectionString(DbName)!));
+        _fixture = fixture;
     }
 
     [Fact]
@@ -36,16 +20,18 @@ public class PostgreSqlFinancialTests
         Guid processId = Guid.NewGuid();
         var eodPriceDao = CreateEodPricesDao(processId);
 
-        string sqlDelete = $@"{_context!.Sql.EodPrices.Delete} WHERE
-source = @Source AND code = @Code AND date_eod = @DateEod";
+        using var context = _fixture.Financials.GetConnection();
+        Assert.NotNull(context);
 
-        _context.Execute(sqlDelete, eodPriceDao);
-        _context.Execute(_context.Sql.EodPrices.Upsert, eodPriceDao);
+        var sqlDelete = _fixture.Financials.GetSql(SqlKeys.DeleteEodPrices,
+            "source = @Source", "code = @Code", "date_eod = @DateEod");
 
-        string sql = $"{_context.Sql.EodPrices.Fetch} WHERE process_id = @ProcessId";
+        context.Execute(sqlDelete, eodPriceDao);
+        context.Execute(_fixture.Financials.GetSql(SqlKeys.UpsertEodPrice), eodPriceDao);
 
-        var actual = _context.QueryFirstOrDefault<EodPrice>(
-            sql, new { eodPriceDao.ProcessId });
+        var sql = _fixture.Financials.GetSql(SqlKeys.FetchEodPrices, "process_id = @ProcessId");
+
+        var actual = context.QueryFirstOrDefault<EodPrice>(sql, new { eodPriceDao.ProcessId });
 
         Assert.Equal(eodPriceDao, actual);
     }
@@ -56,15 +42,18 @@ source = @Source AND code = @Code AND date_eod = @DateEod";
         Guid processId = Guid.NewGuid();
         var eodPriceDao = CreateAdjustedEodPricesDao(processId);
 
-        string sqlDelete = $@"{_context!.Sql.AdjustedEodPrices.Delete} WHERE
-source = @Source AND code = @Code AND date_eod = @DateEod";
+        var sqlDelete = _fixture.Financials.GetSql(SqlKeys.DeleteAdjustedEodPrices,
+            "source = @Source", "code = @Code", "date_eod = @DateEod");
 
-        _context.Execute(sqlDelete, eodPriceDao);
-        _context.Execute(_context.Sql.AdjustedEodPrices.Upsert, eodPriceDao);
+        using var context = _fixture.Financials.GetConnection();
+        Assert.NotNull(context);
 
-        string sql = $"{_context.Sql.AdjustedEodPrices.Fetch} WHERE process_id = @ProcessId";
+        context.Execute(sqlDelete, eodPriceDao);
+        context.Execute(_fixture.Financials.GetSql(SqlKeys.UpsertAdjustedEodPrice), eodPriceDao);
 
-        var actual = _context.QueryFirstOrDefault<AdjustedEodPrice>(
+        var sql = _fixture.Financials.GetSql(SqlKeys.FetchAdjustedEodPrices, "process_id = @ProcessId");
+
+        var actual = context.QueryFirstOrDefault<EodAdjustedPrice>(
             sql, new { eodPriceDao.ProcessId });
 
         Assert.Equal(eodPriceDao, actual);
@@ -76,12 +65,15 @@ source = @Source AND code = @Code AND date_eod = @DateEod";
         Guid processId = Guid.NewGuid();
         var splitDao = CreateSplitDao(processId);
 
-        _context!.Execute(_context.Sql.Splits.DeleteForSource, splitDao);
-        _context.Execute(_context.Sql.Splits.Upsert, splitDao);
+        using var context = _fixture.Financials.GetConnection();
+        Assert.NotNull(context);
 
-        string sql = $"{_context.Sql.Splits.Fetch} WHERE process_id = @ProcessId";
+        context!.Execute(_fixture.Financials.GetSql(SqlKeys.DeleteSplitsForSource), splitDao);
+        context.Execute(_fixture.Financials.GetSql(SqlKeys.UpsertSplit), splitDao);
 
-        var actual = _context.QueryFirstOrDefault<Split>(sql, new { splitDao.ProcessId });
+        var sql = _fixture.Financials.GetSql(SqlKeys.FetchSplits, "process_id = @ProcessId");
+
+        var actual = context.QueryFirstOrDefault<Split>(sql, new { splitDao.ProcessId });
         Assert.NotNull(actual);
         Assert.Equal(splitDao, actual);
     }
@@ -92,12 +84,15 @@ source = @Source AND code = @Code AND date_eod = @DateEod";
         Guid processId = Guid.NewGuid();
         var dividendDao = CreateDividendDao(processId);
 
-        _context!.Execute(_context.Sql.Dividends.DeleteForSource, dividendDao);
-        _context.Execute(_context.Sql.Dividends.Upsert, dividendDao);
+        using var context = _fixture.Financials.GetConnection();
+        Assert.NotNull(context);
 
-        string sql = $"{_context.Sql.Dividends.Fetch} WHERE process_id = @ProcessId";
+        context!.Execute(_fixture.Financials.GetSql(SqlKeys.DeleteDividendsForSource), dividendDao);
+        context.Execute(_fixture.Financials.GetSql(SqlKeys.UpsertDividend), dividendDao);
 
-        var actual = _context.QueryFirstOrDefault<Dividend>(sql, new { dividendDao.ProcessId });
+        var sql = _fixture.Financials.GetSql(SqlKeys.FetchDividends, "process_id = @ProcessId");
+
+        var actual = context.QueryFirstOrDefault<Dividend>(sql, new { dividendDao.ProcessId });
         Assert.NotNull(actual);
         Assert.Equal(dividendDao, actual);
     }
@@ -107,12 +102,15 @@ source = @Source AND code = @Code AND date_eod = @DateEod";
     {
         var entity = new Entity("BTest", "BTEST.US");
 
-        _context!.Execute(_context.Sql.Fundamentals.DeleteEntityForSourceAndCode,
+        using var context = _fixture.Financials.GetConnection();
+        Assert.NotNull(context);
+
+        context!.Execute(_fixture.Financials.GetSql(SqlKeys.DeleteEntityForSourceAndCode),
             new { entity.Source, entity.Code });
 
-        _context.Execute(_context.Sql.Fundamentals.InsertBasicEntity, entity);
+        context.Execute(_fixture.Financials.GetSql(SqlKeys.InsertBasicEntity), entity);
 
-        var entities = _context.Query<Entity>(_context.Sql.Fundamentals.FetchEntity);
+        var entities = context.Query<Entity>(_fixture.Financials.GetSql(SqlKeys.FetchEntity));
 
         Assert.NotNull(entities);
         Assert.NotEmpty(entities);
@@ -124,12 +122,15 @@ source = @Source AND code = @Code AND date_eod = @DateEod";
     {
         var entity = CreateEntity();
 
-        _context!.Execute(_context.Sql.Fundamentals.DeleteEntityForSourceAndCode,
+        using var context = _fixture.Financials.GetConnection();
+        Assert.NotNull(context);
+
+        context!.Execute(_fixture.Financials.GetSql(SqlKeys.DeleteEntityForSourceAndCode),
             new { entity.Source, entity.Code });
 
-        _context.Execute(_context.Sql.Fundamentals.UpsertEntity, entity);
+        context.Execute(_fixture.Financials.GetSql(SqlKeys.UpsertEntity), entity);
 
-        var entities = _context.Query<Entity>(_context.Sql.Fundamentals.FetchEntity);
+        var entities = context.Query<Entity>(_fixture.Financials.GetSql(SqlKeys.FetchEntity));
 
         Assert.NotNull(entities);
         Assert.NotEmpty(entities);
@@ -167,26 +168,22 @@ source = @Source AND code = @Code AND date_eod = @DateEod";
             Low = Low,
             Close = Close,
             Volume = Volume,
-            DateEod = DateOnly.FromDateTime(DateTime.UtcNow),
-            CreatedTicksUtc = DateTime.UtcNow.Ticks,
-            UpdatedTicksUtc = DateTime.UtcNow.Ticks,
+            DateEod = DateOnly.FromDateTime(DateTime.UtcNow)
         };
     }
 
-    private static AdjustedEodPrice CreateAdjustedEodPricesDao(Guid? processId = null)
+    private static EodAdjustedPrice CreateAdjustedEodPricesDao(Guid? processId = null)
     {
         var (Open, High, Low, Close, Volume) = StockPriceGenerator.GenerateRandomStockPrice(50M, 200M);
 
-        return new AdjustedEodPrice("TEST", "TEST.US", processId ?? Guid.NewGuid())
+        return new EodAdjustedPrice("TEST", "TEST.US", processId ?? Guid.NewGuid())
         {
             Open = Open,
             High = High,
             Low = Low,
             Close = Close,
             Volume = Volume,
-            DateEod = DateOnly.FromDateTime(DateTime.UtcNow),
-            CreatedTicksUtc = DateTime.UtcNow.Ticks,
-            UpdatedTicksUtc = DateTime.UtcNow.Ticks,
+            DateEod = DateOnly.FromDateTime(DateTime.UtcNow)
         };
     }
 
@@ -196,9 +193,7 @@ source = @Source AND code = @Code AND date_eod = @DateEod";
         {
             After = 1,
             Before = 2,
-            SplitDate = DateOnly.FromDateTime(DateTime.UtcNow),
-            CreatedTicksUtc = DateTime.UtcNow.Ticks,
-            UpdatedTicksUtc = DateTime.UtcNow.Ticks,
+            SplitDate = DateOnly.FromDateTime(DateTime.UtcNow)
         };
     }
 
@@ -212,9 +207,7 @@ source = @Source AND code = @Code AND date_eod = @DateEod";
             PayDate = dt,
             RecordDate = dt,
             Amount = 10M,
-            Frequency = 4,
-            CreatedTicksUtc = DateTime.UtcNow.Ticks,
-            UpdatedTicksUtc = DateTime.UtcNow.Ticks,
+            Frequency = 4
         };
     }
 }

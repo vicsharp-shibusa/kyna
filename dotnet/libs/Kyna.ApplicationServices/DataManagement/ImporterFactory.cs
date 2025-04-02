@@ -18,7 +18,7 @@ public static class ImporterFactory
         bool dryRun = false)
     {
         var source = SourceUtility.GetSource(configFileInfo);
-        
+
         if (source.Equals(EodHdImporter.SourceName, StringComparison.OrdinalIgnoreCase))
         {
             if (string.IsNullOrWhiteSpace(apiKey))
@@ -49,19 +49,13 @@ public static class ImporterFactory
         if (source.Equals(PolygonImporter.SourceName, StringComparison.OrdinalIgnoreCase))
         {
             if (string.IsNullOrWhiteSpace(apiKey))
-            {
                 throw new ArgumentException($"{nameof(apiKey)} is required to instantiate an importer for {source}");
-            }
 
             if (string.IsNullOrWhiteSpace(accessKey))
-            {
                 throw new ArgumentException($"{nameof(accessKey)} is required to instantiate an importer for {source}");
-            }
 
             if (configFileInfo == null)
-            {
                 throw new Exception($"A configuration file is required when instantiating {nameof(PolygonImporter)}");
-            }
 
             var polygonImportConfig = JsonSerializer.Deserialize<PolygonImporter.ImportConfigfile>(
                 File.ReadAllText(configFileInfo.FullName),

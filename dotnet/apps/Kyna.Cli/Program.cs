@@ -1,39 +1,27 @@
 ﻿using Kyna.ApplicationServices.Cli;
 using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Logging;
 using System.Diagnostics;
 using System.Reflection;
+using System.Text;
 
 IConfiguration? configuration;
 
 int exitCode = -1;
 
 string? appName = Assembly.GetExecutingAssembly().GetName().Name;
-
-string[] backtestNames = ["backtest", "backtests", "backtesting"];
-string[] importerNames = ["import", "importer", "imports"];
-string[] migratorNames = ["migrate", "migrator", "migrates"];
-string[] reportNames = ["report", "reports", "reporting"];
-
-Dictionary<string, string[]> subcommandDict = new()
-{
-    {CommandKeys.Backtest, backtestNames },
-    {CommandKeys.Importer, importerNames  },
-    {CommandKeys.Migrator, migratorNames },
-    {CommandKeys.Report, reportNames }
-};
-
 Debug.Assert(appName != null);
+
+Dictionary<string, SubCommand> commandDict;
 
 Config? config = null;
 
 try
 {
-    HandleArguments(args, out string[] childArgs);
+    Configure();
+    ParseArguments(args, out string[] childArgs);
 
     Debug.Assert(config != null);
 
-    Configure();
     ValidateArgsAndSetDefaults();
 
     if (args.Length == 0 || config.ShowHelp)
@@ -63,6 +51,7 @@ try
         if (string.IsNullOrWhiteSpace(filename))
         {
             ShowHelp();
+            exitCode = 0;
         }
         else
         {
@@ -80,7 +69,7 @@ try
 }
 catch (ArgumentException exc)
 {
-    exitCode = 1;
+    exitCode = 4;
 
 #if DEBUG
     Communicate(exc.ToString(), true);
@@ -90,7 +79,7 @@ catch (ArgumentException exc)
 }
 catch (Exception exc)
 {
-    exitCode = 2;
+    exitCode = 5;
 
 #if DEBUG
     Communicate(exc.ToString(), true);
@@ -103,8 +92,7 @@ finally
     Environment.Exit(exitCode);
 }
 
-void Communicate(string? message, bool force = false, LogLevel logLevel = LogLevel.None,
-    string? scope = null)
+void Communicate(string? message, bool force = false)
 {
     if (force || (config?.Verbose ?? false))
     {
@@ -132,15 +120,36 @@ void ShowHelp()
     Communicate(null, true);
 
     Communicate("Commands:", true);
-    foreach (var kvp in subcommandDict)
+    const int PadRightVal = 11;
+    var headers = new string[] { "Alias 1", "Alias 2", "Alias 3", "Command Name" };
+    
+    var cmdSb = new StringBuilder();
+    cmdSb.AppendLine($"\t{string.Join(" | ", headers.Select(h => h.PadRight(PadRightVal)))}");
+    cmdSb.AppendLine(new string('-', 70));
+    foreach (var kvp in commandDict)
     {
-        Communicate($"\t{string.Join(" | ", kvp.Value.Select(v => v.PadRight(10)))}", true);
+        cmdSb.Append($"\t{string.Join(" | ", kvp.Value.Aliases.Select(v => v.PadRight(PadRightVal)))}");
+        cmdSb.AppendLine($" | {Path.GetFileName(kvp.Value.FullPath)}");
     }
+    Communicate(cmdSb.ToString(), true);
     Communicate(null, true);
-    Communicate("Use '--help <command>' or '<command> --help' to get help on a specific sub-command.");
+
+    Communicate("You can use any of the aliases; these are all equivalent commands:", true);
+    Communicate(@"
+    kyna import -f ./file.json --info
+    kyna importer -f ./file.json --info
+    kyna imports -f ./file.json --info", true);
+    
+    Communicate(null, true);
+    Communicate("Use 'help <command>' or '<command> --help' to get help on a specific sub-command.",true);
+    
+    Communicate(@"
+    kyna help import
+    kyna importer --help", true);
+    Communicate(null, true);
 }
 
-void HandleArguments(string[] args, out string[] childArgs)
+void ParseArguments(string[] args, out string[] childArgs)
 {
     config = new Config(Assembly.GetExecutingAssembly().GetName().Name ?? nameof(Program), "v1",
         "Control CLI for Kyna applications.");
@@ -168,7 +177,7 @@ void HandleArguments(string[] args, out string[] childArgs)
                 }
                 break;
             default:
-                var key = subcommandDict.Where(d => d.Value.Contains(argument)).Select(d => d.Key).FirstOrDefault();
+                var key = commandDict.Where(d => d.Value.Aliases.Contains(argument)).Select(d => d.Key).FirstOrDefault();
                 if (key != null)
                 {
                     config.Subcommand ??= key;
@@ -179,8 +188,8 @@ void HandleArguments(string[] args, out string[] childArgs)
 
         if (!string.IsNullOrWhiteSpace(config.Subcommand))
         {
-            break;
-        } // If we hit a subcommand, we're done; everything that follows belongs to the subcommand.
+            break; // If we hit a subcommand, we're done; everything that follows belongs to the subcommand.
+        }
     }
 }
 
@@ -205,37 +214,35 @@ void Configure()
         .AddJsonFile("secrets.json", optional: false, reloadOnChange: true);
 
     configuration = builder.Build();
-}
-
-string GetSubcommandFilename(string? subcommand)
-{
-    if (string.IsNullOrWhiteSpace(subcommand))
-    {
-        throw new ArgumentException($"Unknown argument: {subcommand}");
-    }
 
     const string SectionName = "CommandNames";
+    var section = configuration?.GetSection(SectionName);
+    if (section == null)
+        throw new Exception($"Configuration error: could not find section '{SectionName}'");
 
-    var commandName = subcommand.ToLower() switch
+    commandDict = new Dictionary<string, SubCommand>()
     {
-        string x when subcommandDict[CommandKeys.Backtest].Contains(x) =>
-            configuration!.GetSection(SectionName)[CommandKeys.Backtest],
-        string x when subcommandDict[CommandKeys.Importer].Contains(x) =>
-            configuration!.GetSection(SectionName)[CommandKeys.Importer],
-        string x when subcommandDict[CommandKeys.Migrator].Contains(x) =>
-            configuration!.GetSection(SectionName)[CommandKeys.Migrator],
-        string x when subcommandDict[CommandKeys.Report].Contains(x) =>
-            configuration!.GetSection(SectionName)[CommandKeys.Report],
-        _ => throw new ArgumentException($"Unknown argument: {subcommand}")
+        { CommandKeys.Backtest, new SubCommand(GetSubcommandFilename(section[CommandKeys.Backtest]),
+            ["backtest", "backtests", "backtesting"])},
+        { CommandKeys.Importer, new SubCommand(GetSubcommandFilename(section[CommandKeys.Importer]),
+            ["import", "importer", "imports"])},
+        { CommandKeys.Migrator, new SubCommand(GetSubcommandFilename(section[CommandKeys.Migrator]),
+            ["migrate", "migrator", "migrates"])},
+        { CommandKeys.Report, new SubCommand(GetSubcommandFilename(section[CommandKeys.Report]),
+            ["report", "reports", "reporting"])}
     };
+}
+
+string GetSubcommandFilename(string? commandName)
+{
+    ArgumentNullException.ThrowIfNull(commandName);
 
     commandName = CliHelper.IsWindows() ? $"{commandName}.exe" : commandName;
-
-    Debug.Assert(commandName != null);
 
     var dir = new FileInfo(Assembly.GetExecutingAssembly().Location).Directory;
 
 #if DEBUG
+    // Map this to your local dev directory to make this work with an IDE.
     dir = new DirectoryInfo(Path.Combine("/", "repos", "kyna", "dotnet", "apps"));
 #endif
 
@@ -275,10 +282,33 @@ class Config(string appName, string appVersion, string? description)
     public string? Subcommand { get; set; }
 }
 
+/// <summary>
+/// These keys correspond to the keys in the 'CommandName section of appsettings.json.
+/// </summary>
 static class CommandKeys
 {
     public const string Backtest = "backtest";
     public const string Importer = "importer";
     public const string Migrator = "migrator";
     public const string Report = "report";
+}
+
+/// <summary>
+/// Represents the full path to the executable
+/// </summary>
+struct SubCommand
+{
+    public SubCommand()
+    {
+        Aliases = [];
+    }
+
+    public SubCommand(string? fullPath, string[] aliases)
+    {
+        FullPath = fullPath;
+        Aliases = aliases;
+    }
+
+    public string? FullPath;
+    public string[] Aliases;
 }

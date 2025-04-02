@@ -1,4 +1,6 @@
-﻿namespace Kyna.Analysis.Technical.Charts;
+﻿using Kyna.Common;
+
+namespace Kyna.Analysis.Technical.Charts;
 
 public record class Ohlc : PriceRange
 {
@@ -10,8 +12,8 @@ public record class Ohlc : PriceRange
         Date = DateOnly.FromDateTime(start);
         Start = start;
         End = end;
-        Open = Math.Round(open, MoneyPrecision);
-        Close = Math.Round(close, MoneyPrecision);
+        Open = Math.Round(open, Constants.MoneyPrecision);
+        Close = Math.Round(close, Constants.MoneyPrecision);
         Volume = volume;
         Factor = factor;
     }

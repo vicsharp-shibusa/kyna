@@ -1,10 +1,9 @@
-﻿namespace Kyna.Analysis.Technical.Charts;
+﻿using Kyna.Common;
+
+namespace Kyna.Analysis.Technical.Charts;
 
 public record class PriceRange
 {
-    // Number of places to the right of the decimal point in money calculations.
-    protected const int MoneyPrecision = 4;
-
     public PriceRange(decimal high, decimal low)
     {
         if (low > high)
@@ -12,8 +11,8 @@ public record class PriceRange
             throw new ArgumentException($"{nameof(low)} must be lower than or equal to {nameof(high)}");
         }
 
-        High = Math.Round(high, MoneyPrecision);
-        Low = Math.Round(low, MoneyPrecision);
+        High = Math.Round(high, Constants.MoneyPrecision);
+        Low = Math.Round(low, Constants.MoneyPrecision);
     }
 
     public decimal High { get; }

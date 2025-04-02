@@ -1,11 +1,11 @@
 ﻿using Amazon.S3;
 using Amazon.S3.Model;
 using Kyna.Common;
-using Kyna.Infrastructure.Events;
-using Kyna.Infrastructure.Logging;
+using Kyna.DataProviders.Polygon.Models;
 using Kyna.Infrastructure.Database;
 using Kyna.Infrastructure.Database.DataAccessObjects;
-using Kyna.DataProviders.Polygon.Models;
+using Kyna.Infrastructure.Events;
+using Kyna.Infrastructure.Logging;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Reflection;
@@ -18,18 +18,16 @@ namespace Kyna.Infrastructure.DataImport;
 
 internal sealed class PolygonImporter : HttpImporterBase, IExternalDataImporter
 {
-    private readonly IDbContext _dbContext;
-
     private const string BucketName = "flatfiles";
 
     private int? _maxParallelization = null;
     private DirectoryInfo? _downloadDirectory;
-    private readonly bool _dryRun = false;
     private readonly ImportAction[] _importActions;
     private readonly ReadOnlyDictionary<string, string[]> _options;
     private readonly string _accessKey;
     private int _yearsOfData;
     private List<string> _tickers = [];
+    private readonly bool _dryRun = false;
 
     public PolygonImporter(DbDef dbDef, DataImportConfiguration importConfig,
         Guid? processId = null, bool dryRun = false)
@@ -42,9 +40,7 @@ internal sealed class PolygonImporter : HttpImporterBase, IExternalDataImporter
 
         _accessKey = importConfig.AccessKey;
 
-        _dbContext = DbContextFactory.Create(dbDef);
-
-        _importActions = ExtractImportActions(importConfig);
+        _importActions = [.. ExtractImportActions(importConfig)];
 
         if (_importActions.Length == 0)
         {
@@ -101,6 +97,18 @@ internal sealed class PolygonImporter : HttpImporterBase, IExternalDataImporter
         await InvokeDividendsCallAsync(cancellationToken).ConfigureAwait(false);
 
         await DownloadFlatFilesAsync(cancellationToken).ConfigureAwait(false);
+
+        if (!_concurrentBag.IsEmpty)
+        {
+            _maxParallelization = 0;
+            Communicate?.Invoke(this, new CommunicationEventArgs($"Processing {_concurrentBag.Count} stragglers.", null));
+
+            foreach (var item in _concurrentBag)
+            {
+                await InvokeApiCallAsync(item.Uri, item.Category, item.SubCategory,
+                    cancellationToken: cancellationToken).ConfigureAwait(false);
+            }
+        }
 
         timer.Stop();
         return timer.Elapsed;
@@ -166,10 +174,10 @@ internal sealed class PolygonImporter : HttpImporterBase, IExternalDataImporter
 
                     if (s3Objects.Count > 0)
                     {
-                        var sql = $@"{_dbContext.Sql.RemoteFiles.Fetch}
-WHERE source = @Source AND provider = @Provider";
+                        var sql = $@"{_dbDef.Sql.GetFormattedSqlWithWhereClause(SqlKeys.FetchRemoteFiles,
+                            LogicalOperator.And, "source = @Source", "provider = @Provider")}";
 
-                        var remoteFiles = (await _dbContext.QueryAsync<RemoteFile>(sql,
+                        var remoteFiles = (await _connection.QueryAsync<RemoteFile>(sql,
                             new { Source = SourceName, Provider = "AWS" },
                             cancellationToken: cancellationToken).ConfigureAwait(false)).ToArray();
 
@@ -211,17 +219,18 @@ WHERE source = @Source AND provider = @Provider";
                                 Communicate?.Invoke(this, new CommunicationEventArgs(
                                     $"{targetFileName} downloaded successfully.", nameof(PolygonImporter)));
 
-                                await _dbContext.ExecuteAsync(_dbContext.Sql.RemoteFiles.Upsert, new RemoteFile()
-                                {
-                                    Source = SourceName,
-                                    Provider = "AWS",
-                                    HashCode = obj.ETag[1..^1],
-                                    Location = BucketName,
-                                    Name = obj.Key,
-                                    ProcessId = _processId,
-                                    Size = obj.Size,
-                                    UpdateDate = DateOnly.FromDateTime(obj.LastModified)
-                                }, cancellationToken: cancellationToken).ConfigureAwait(false);
+                                await _connection.ExecuteAsync(_dbDef.GetSql(SqlKeys.UpsertRemoteFile),
+                                    new RemoteFile()
+                                    {
+                                        Source = SourceName,
+                                        Provider = "AWS",
+                                        HashCode = obj.ETag[1..^1],
+                                        Location = BucketName,
+                                        Name = obj.Key,
+                                        ProcessId = _processId,
+                                        Size = obj.Size,
+                                        UpdateDate = DateOnly.FromDateTime(obj.LastModified)
+                                    }, cancellationToken: cancellationToken).ConfigureAwait(false);
                             }
                         }
                     }
@@ -285,10 +294,10 @@ WHERE source = @Source AND provider = @Provider";
                     }
                 }
 
-                var t = _dbContext.ExecuteAsync(_dbContext.Sql.ApiTransactions.DeleteForSource, new { Source },
+                var t = _connection.ExecuteAsync(_dbDef.GetSql(SqlKeys.DeleteApiTransactionsForSource), new { Source },
                     cancellationToken: cancellationToken);
-                await _dbContext.ExecuteAsync(_dbContext.Sql.RemoteFiles.DeleteForSource, new { Source },
-                    cancellationToken: cancellationToken);
+                await _connection.ExecuteAsync(_dbDef.GetSql(SqlKeys.DeleteRemoteFilesForSource),
+                    new { Source }, cancellationToken: cancellationToken);
                 await t;
             }
         }
@@ -301,9 +310,8 @@ WHERE source = @Source AND provider = @Provider";
         Communicate?.Invoke(this, new CommunicationEventArgs(message, nameof(PolygonImporter)));
     }
 
-    private static ImportAction[] ExtractImportActions(DataImportConfiguration importConfig)
+    private static IEnumerable<ImportAction> ExtractImportActions(DataImportConfiguration importConfig)
     {
-        List<ImportAction> actions = new(importConfig.Actions.Keys.Count + 1);
         foreach (var kvp in importConfig.Actions)
         {
             var action = kvp.Key;
@@ -314,22 +322,20 @@ WHERE source = @Source AND provider = @Provider";
                 continue;
             }
 
-            string[] vals = [];
+            string[] details = [];
             if (action == Constants.Actions.FlatFiles)
             {
-                vals = importConfig.ImportFilePrefixes ?? [];
+                details = importConfig.ImportFilePrefixes ?? [];
             }
             else
             {
                 string val = kvp.Value;
-                vals = string.IsNullOrWhiteSpace(val) ? []
+                details = string.IsNullOrWhiteSpace(val) ? []
                     : val.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
 
             }
-            actions.Add(new(action, vals));
+            yield return new(action, details);
         }
-
-        return [.. actions];
     }
 
     private async Task InvokeTickersCallAsync(CancellationToken cancellationToken)
@@ -647,27 +653,27 @@ WHERE source = @Source AND provider = @Provider";
         }
     }
 
-    private string GetTokenAndFormat(string format = "json") => $"{GetToken()}&{GetFormat(format)}";
+    //private string GetTokenAndFormat(string format = "json") => $"{GetToken()}&{GetFormat(format)}";
 
     private string GetToken() => $"apikey={_apiKey}";
 
-    private static string GetFormat(string format = "json") => $"fmt={format}";
+    //private static string GetFormat(string format = "json") => $"fmt={format}";
 
-    private static string BuildFromAndTo(DateOnly[] dates)
-    {
-        StringBuilder sb = new();
+    //private static string BuildFromAndTo(DateOnly[] dates)
+    //{
+    //    StringBuilder sb = new();
 
-        if (dates.Length > 0)
-        {
-            sb.Append($"from={dates[0]:yyyy-MM-dd}");
-        }
-        if (dates.Length > 1)
-        {
-            sb.Append($"&to={dates[1]:yyyy-MM-dd}");
-        }
+    //    if (dates.Length > 0)
+    //    {
+    //        sb.Append($"from={dates[0]:yyyy-MM-dd}");
+    //    }
+    //    if (dates.Length > 1)
+    //    {
+    //        sb.Append($"&to={dates[1]:yyyy-MM-dd}");
+    //    }
 
-        return sb.ToString();
-    }
+    //    return sb.ToString();
+    //}
 
     private string BuildSplitsUri() =>
         $"{Constants.Uris.Base}/{Constants.Uris.Splits}?{GetToken()}";

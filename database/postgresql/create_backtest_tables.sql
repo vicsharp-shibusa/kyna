@@ -12,11 +12,11 @@ CREATE TABLE IF NOT EXISTS public.backtests
   target_up_price_point TEXT NOT NULL,
   target_down_percentage DOUBLE PRECISION NOT NULL,
   target_down_price_point TEXT NOT NULL,
-  created_ticks_utc BIGINT NOT NULL,
-  updated_ticks_utc BIGINT NOT NULL,
+  created_at TIMESTAMP WITH TIME ZONE NOT NULL,
+  updated_at TIMESTAMP WITH TIME ZONE NOT NULL,
+  created_at_unix_ms BIGINT NOT NULL,
+  updated_at_unix_ms BIGINT NOT NULL,
   process_id UUID NULL,
-  created_utc TIMESTAMP WITH TIME ZONE GENERATED ALWAYS AS (to_timestamp((created_ticks_utc - 621355968000000000) / 10000000)) STORED,
-  updated_utc TIMESTAMP WITH TIME ZONE GENERATED ALWAYS AS (to_timestamp((updated_ticks_utc - 621355968000000000) / 10000000)) STORED,
   PRIMARY KEY (id)
 );
 
@@ -40,10 +40,11 @@ CREATE TABLE IF NOT EXISTS public.backtest_results
   result_direction TEXT NULL,
   result_duration_trading_days INTEGER NULL,
   result_duration_calendar_days INTEGER NULL,
-  created_ticks_utc BIGINT NOT NULL,
-  updated_ticks_utc BIGINT NOT NULL,
-  created_utc TIMESTAMP WITH TIME ZONE GENERATED ALWAYS AS (to_timestamp((created_ticks_utc - 621355968000000000) / 10000000)) STORED,
-  updated_utc TIMESTAMP WITH TIME ZONE GENERATED ALWAYS AS (to_timestamp((updated_ticks_utc - 621355968000000000) / 10000000)) STORED,
+  created_at TIMESTAMP WITH TIME ZONE NOT NULL,
+  updated_at TIMESTAMP WITH TIME ZONE NOT NULL,
+  created_at_unix_ms BIGINT NOT NULL,
+  updated_at_unix_ms BIGINT NOT NULL,
+  process_id UUID NULL,
   PRIMARY KEY (id)
 );
 
@@ -59,11 +60,11 @@ CREATE TABLE IF NOT EXISTS public.backtest_stats
   success_criterion TEXT NOT NULL,
   success_duration_trading_days INTEGER NULL,
   success_duration_calendar_days INTEGER NULL,
-  process_id UUID NULL,
   backtest_id UUID NOT NULL,
-  created_ticks_utc BIGINT NOT NULL,
-  updated_ticks_utc BIGINT NOT NULL,
-  created_utc TIMESTAMP WITH TIME ZONE GENERATED ALWAYS AS (to_timestamp((created_ticks_utc - 621355968000000000) / 10000000)) STORED,
-  updated_utc TIMESTAMP WITH TIME ZONE GENERATED ALWAYS AS (to_timestamp((updated_ticks_utc - 621355968000000000) / 10000000)) STORED,
+  created_at TIMESTAMP WITH TIME ZONE NOT NULL,
+  updated_at TIMESTAMP WITH TIME ZONE NOT NULL,
+  created_at_unix_ms BIGINT NOT NULL,
+  updated_at_unix_ms BIGINT NOT NULL,
+  process_id UUID NULL,
   PRIMARY KEY (backtest_id, source, signal_name, category, sub_category)
 );

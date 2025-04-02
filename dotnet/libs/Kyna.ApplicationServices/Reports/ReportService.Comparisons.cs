@@ -1,5 +1,6 @@
 ﻿using Kyna.Analysis.Technical;
 using Kyna.Analysis.Technical.Charts;
+using Kyna.Infrastructure.Database;
 using Kyna.Infrastructure.Database.DataAccessObjects;
 using Kyna.Infrastructure.DataImport;
 
@@ -9,9 +10,10 @@ public sealed partial class ReportService
 {
     public IEnumerable<string> CreateSplitsComparisonCsvReport(string outputDir)
     {
+        // TODO: rogue SQL.
         string sourceSql = "SELECT DISTINCT source FROM public.splits";
 
-        var sources = _financialsCtx.Query<string>(sourceSql).ToArray();
+        var sources = _financialsConn.Query<string>(sourceSql).ToArray();
 
         if (sources.Length < 2)
         {
@@ -24,23 +26,23 @@ public sealed partial class ReportService
 
         foreach (var source in sources)
         {
-            var sql = $"{_financialsCtx.Sql.Splits.Fetch} WHERE source = @Source";
-            var splits = _financialsCtx.Query<Split>(sql, new { source });
+            var sql = _financialDbDef.GetSql(SqlKeys.FetchSplits, "source = @Source");
+            var splits = _financialsConn.Query<Split>(sql, new { source });
             if (source == EodHdImporter.SourceName)
             {
-                tickersBySourceDictionary.Add(source, splits.Select(s => new Split(source, s.Code.Replace(".US", ""))
+                tickersBySourceDictionary.Add(source, [.. splits.Select(s => new Split(source, s.Code.Replace(".US", ""))
                 {
                     After = s.After,
                     Before = s.Before,
-                    CreatedTicksUtc = s.CreatedTicksUtc,
                     ProcessId = s.ProcessId,
                     SplitDate = s.SplitDate,
-                    UpdatedTicksUtc = s.UpdatedTicksUtc
-                }).ToArray());
+                    CreatedAt = s.CreatedAt,
+                    UpdatedAt = s.UpdatedAt
+                })]);
             }
             else
             {
-                tickersBySourceDictionary.Add(source, splits.ToArray());
+                tickersBySourceDictionary.Add(source, [.. splits]);
             }
         }
 
@@ -73,16 +75,16 @@ public sealed partial class ReportService
 
     public async Task<IEnumerable<string>> CreateChartComparisonCsvReportAsync(string outputDir)
     {
-        var codesAndDates = _financialsCtx.Query<CodeAndDates>(
-            _financialsCtx.Sql.AdjustedEodPrices.FetchCodesAndDates,
-            commandTimeout: 0);
+        var codesAndDates = _financialsConn.Query<CodeAndDates>(
+            //var sql = $"{_financialsCtx.Sql.Splits.Fetch} WHERE source = @Source";
+            _financialDbDef.GetSql(SqlKeys.FetchAdjustedCodesAndDates), commandTimeout: 0);
 
         Dictionary<string, string[]> codesBySourceDictionary = [];
 
         foreach (var source in codesAndDates.Select(c => c.Source).Distinct())
         {
-            codesBySourceDictionary.Add(source, codesAndDates.Where(c => c.Source.Equals(source))
-                .Select(c => c.CommonCode).Distinct().ToArray());
+            codesBySourceDictionary.Add(source, [.. codesAndDates.Where(c => c.Source.Equals(source))
+                .Select(c => c.CommonCode).Distinct()]);
         }
 
         List<string> headers = new(5) { "Code", "Date" };
@@ -100,7 +102,7 @@ public sealed partial class ReportService
             }
             else
             {
-                commonCodes = commonCodes.Intersect(codesBySourceDictionary[key]).ToList();
+                commonCodes = [.. commonCodes.Intersect(codesBySourceDictionary[key])];
             }
         }
 
@@ -194,8 +196,7 @@ public sealed partial class ReportService
 
     private static string DetermineInconsistentSource(string[] sources, decimal[] closes)
     {
-        decimal[] roundedCloses = closes.Select(c => Math.Round(c, 2, MidpointRounding.ToZero))
-            .ToArray();
+        decimal[] roundedCloses = [.. closes.Select(c => Math.Round(c, 2, MidpointRounding.ToZero))];
 
         var distinctCloses = roundedCloses.Distinct().ToArray();
 

@@ -2,6 +2,7 @@
 
 internal sealed record class Dividend : DaoBase
 {
+    public Dividend() : this(source: "", code: "", type: "") { }
     public Dividend(string source, string code, string type, Guid? processId = null) : base(processId)
     {
         Source = source;
@@ -16,8 +17,6 @@ internal sealed record class Dividend : DaoBase
         DateOnly? recordDate,
         int? frequency,
         decimal amount,
-        long createdTicksUtc,
-        long updatedTicksUtc,
         Guid? processId = null) : base(processId)
     {
         Source = source;
@@ -29,8 +28,6 @@ internal sealed record class Dividend : DaoBase
         RecordDate = recordDate;
         Frequency = frequency;
         Amount = amount;
-        CreatedTicksUtc = createdTicksUtc;
-        UpdatedTicksUtc = updatedTicksUtc;
     }
 
     public string Source { get; init; }

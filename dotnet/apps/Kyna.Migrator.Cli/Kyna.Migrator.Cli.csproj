@@ -10,14 +10,6 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-	  <PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="9.0.0" />
-	  <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="9.0.0" />
-	  <PackageReference Include="Microsoft.Extensions.Logging" Version="9.0.0" />
-	  <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="9.0.0" />
-	  <PackageReference Include="Npgsql" Version="9.0.2" />
-	</ItemGroup>
-
-	<ItemGroup>
 		<ProjectReference Include="..\..\libs\Kyna.ApplicationServices\Kyna.ApplicationServices.csproj" />
 	</ItemGroup>
 
@@ -26,10 +18,10 @@
 			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</None>
 		<None Update="configs\test-yahoo.json">
-		  <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
 		</None>
 		<None Update="configs\test-polygon.json">
-		  <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
 		</None>
 		<None Update="configs\test-eodhd.json">
 			<CopyToOutputDirectory>Always</CopyToOutputDirectory>

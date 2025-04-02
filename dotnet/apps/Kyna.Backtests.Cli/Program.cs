@@ -173,7 +173,7 @@ void ShowHelp()
         new CliArg(["-l", "--list"], [], false, "List process identifiers."),
         new CliArg(["-d", "--delete"], ["process id"], false, "Delete backtest, results, and stats for specified process id.")    ];
 
-    CliArg[] args = localArgs.Union(CliHelper.GetDefaultArgDescriptions()).ToArray();
+    CliArg[] args = [.. localArgs.Union(CliHelper.GetDefaultArgDescriptions())];
 
     Communicate($"{config.AppName} {config.AppVersion}".Trim(), true);
     Communicate(null, true);
@@ -276,9 +276,12 @@ void Configure()
 
     var dbDefs = CliHelper.GetDbDefs(configuration);
 
-    var logDef = dbDefs.FirstOrDefault(d => d.Name == ConfigKeys.DbKeys.Logs);
-    var finDef = dbDefs.FirstOrDefault(d => d.Name == ConfigKeys.DbKeys.Financials);
-    var bckDef = dbDefs.FirstOrDefault(d => d.Name == ConfigKeys.DbKeys.Backtests);
+    var logDef = dbDefs.FirstOrDefault(d => d.Name == ConfigKeys.DbKeys.Logs)
+        ?? throw new Exception("Logging db could not be defined.");
+    var finDef = dbDefs.FirstOrDefault(d => d.Name == ConfigKeys.DbKeys.Financials)
+        ?? throw new Exception("Financials db could not be defined.");
+    var bckDef = dbDefs.FirstOrDefault(d => d.Name == ConfigKeys.DbKeys.Backtests)
+        ?? throw new Exception("Backtest db could not be defined.");
 
     backtestingService = new BacktestingService(finDef, bckDef);
     if (backtestingService == null)

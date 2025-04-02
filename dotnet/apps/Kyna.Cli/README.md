@@ -1,6 +1,6 @@
 # Kyna
 
-Kyna is a command and control CLI for entry into the other Kyna applications.
+`kyna` is a command and control CLI for entry into the other Kyna CLI applications.
 
 ## Help Text
 
@@ -14,10 +14,12 @@ Control CLI for Kyna applications.
 
 
 Commands:
-        backtest   | backtests  | backtesting
-        import     | importer   | imports
-        migrate    | migrator   | migrates
-        report     | reports    | reporting
+        Alias 1     | Alias 2     | Alias 3     | Command Name
+----------------------------------------------------------------------
+        backtest    | backtests   | backtesting | kyna-backtest.exe
+        import      | importer    | imports     | kyna-importer.exe
+        migrate     | migrator    | migrates    | kyna-migrator.exe
+        report      | reports     | reporting   | kyna-report.exe
 ```
 
 You can get command-specific help by either passing the command to the `help` argument or by passing `--help` to the command argument.
@@ -28,10 +30,10 @@ kyna help import
 kyna importer --help
 ```
 
-Any arguments provided after the command are passed to that command. For example:
+Any arguments provided after the command are passed to that command's CLI.
+For example, the following two commands are equivalent.
 
 ```bash
 kyna migrate -v -f ./configs/test.json
+kyna-migrator -v -f ./configs/test.json
 ```
-
-The above command invokes the `kyna-migrator` app with the arguments `-v -f ./configs/test.json`.

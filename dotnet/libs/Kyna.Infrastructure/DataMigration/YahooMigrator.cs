@@ -1,7 +1,5 @@
-﻿using Kyna.Infrastructure.Events;
-using Kyna.DataProviders.EodHistoricalData.Models;
-using Kyna.Infrastructure.Database;
-using System;
+﻿using Kyna.Infrastructure.Database;
+using Kyna.Infrastructure.Events;
 using System.Diagnostics;
 using System.Text;
 using System.Text.Json.Serialization;
@@ -153,7 +151,7 @@ internal sealed class YahooMigrator(DbDef sourceDef, DbDef targetDef,
         Communicate?.Invoke(this, new CommunicationEventArgs($"Processing {file.FullName}", nameof(YahooMigrator)));
         var ticker = GetTickerFromFileName(file.Name);
         var lines = File.ReadAllLines(file.FullName);
-        var priceDaos = new Database.DataAccessObjects.AdjustedEodPrice[lines.Length - 1];
+        var priceDaos = new Database.DataAccessObjects.EodAdjustedPrice[lines.Length - 1];
         for (int i = 1; i < lines.Length; i++)
         {
             var split = lines[i].Split(',');
@@ -186,7 +184,7 @@ internal sealed class YahooMigrator(DbDef sourceDef, DbDef targetDef,
                 throw new Exception($"Could not parse volume from line {i} in file {file.Name}");
             }
 
-            priceDaos[i - 1] = new Database.DataAccessObjects.AdjustedEodPrice(SourceName, ticker, _processId)
+            priceDaos[i - 1] = new Database.DataAccessObjects.EodAdjustedPrice(SourceName, ticker, _processId)
             {
                 Open = open,
                 High = high,
@@ -202,7 +200,7 @@ internal sealed class YahooMigrator(DbDef sourceDef, DbDef targetDef,
         int index = 0;
         foreach (var chunk in priceDaos.Chunk(sizeOfChunk))
         {
-            tasks[index++] = _targetContext.ExecuteAsync(_targetContext.Sql.AdjustedEodPrices.Upsert, chunk);
+            tasks[index++] = _targetContext.ExecuteAsync(_targetDbDef.GetSql(SqlKeys.UpsertAdjustedEodPrice), chunk);
         }
         Task.WaitAll(tasks);
 
@@ -251,8 +249,8 @@ internal sealed class YahooMigrator(DbDef sourceDef, DbDef targetDef,
             });
         }
 
-        await _targetContext.ExecuteAsync(_targetContext.Sql.Splits.Upsert, splitDaos);
-        
+        await _targetContext.ExecuteAsync(_targetDbDef.GetSql(SqlKeys.UpsertSplit), splitDaos);
+
         if (_configuration.SourceDeletionMode == SourceDeletionMode.All)
         {
             file.Delete();
@@ -287,7 +285,7 @@ internal sealed class YahooMigrator(DbDef sourceDef, DbDef targetDef,
                 DeclarationDate = date,
             };
         }
-        await _targetContext.ExecuteAsync(_targetContext.Sql.Dividends.Upsert, dividendDaos);
+        await _targetContext.ExecuteAsync(_targetDbDef.GetSql(SqlKeys.UpsertDividend), dividendDaos);
 
         if (_configuration.SourceDeletionMode == SourceDeletionMode.All)
         {

@@ -5,6 +5,8 @@ namespace Kyna.Infrastructure.Database.DataAccessObjects;
 
 internal sealed record class Split : DaoBase
 {
+    public Split() : this(source: "", code: "") { }
+
     public Split(string source, string code, Guid? processId = null) : base(processId)
     {
         Source = source;
@@ -13,7 +15,6 @@ internal sealed record class Split : DaoBase
 
     public Split(string source, string code,
         DateOnly splitDate, double before, double after,
-        long createdTicksUtc, long updatedTicksUtc,
         Guid? processId = null)
         : base(processId)
     {
@@ -22,8 +23,6 @@ internal sealed record class Split : DaoBase
         SplitDate = splitDate;
         Before = before;
         After = after;
-        CreatedTicksUtc = createdTicksUtc;
-        UpdatedTicksUtc = updatedTicksUtc;
     }
 
     public Split(string source, string code, DateOnly splitDate,
@@ -43,7 +42,7 @@ internal sealed record class Split : DaoBase
     public double After { get; init; }
     public double Factor => Before == 0 ? 1 : (After / Before);
 
-    public Analysis.Split ToDomainSplit() => new()
+    public Analysis.Split ToAnalysisSplit() => new()
     {
         Source = Source,
         Code = Code,
@@ -73,7 +72,7 @@ internal static class SplitAdjustedPriceCalculator
         return (1, 1);
     }
 
-    public static IEnumerable<AdjustedEodPrice> Calculate(IEnumerable<EodPrice> prices, IEnumerable<Split> splits)
+    public static IEnumerable<EodAdjustedPrice> Calculate(IEnumerable<EodPrice> prices, IEnumerable<Split> splits)
     {
         var orderedPrices = prices.OrderBy(s => s.DateEod).ToArray();
 
@@ -85,7 +84,7 @@ internal static class SplitAdjustedPriceCalculator
         {
             for (int i = 0; i < orderedPrices.Length; i++)
             {
-                yield return new AdjustedEodPrice(orderedPrices[i]);
+                yield return new EodAdjustedPrice(orderedPrices[i]);
             }
         }
         else
@@ -102,7 +101,6 @@ internal static class SplitAdjustedPriceCalculator
                 prev = factors[i].Factor;
             }
 
-            // This check is required because the dates don't always line up.
             // Move the factor date to the next valid eod price date.
             // A scenario was found in which there were large gaps in the prices and multiple
             // splits between those gaps. This is the reason for this 'j' variable; if the first match
@@ -137,17 +135,17 @@ internal static class SplitAdjustedPriceCalculator
                     // the stock price on the day of the split will reflect the split,
                     // but it also needs to reflect the next split.
                     f++;
-                    yield return new AdjustedEodPrice(orderedPrices[i], factors[f].Factor);
+                    yield return new EodAdjustedPrice(orderedPrices[i], factors[f].Factor);
                 }
                 else if (f == factors.Length - 1 && orderedPrices[i].DateEod >= factors[f].Date)
                 {
                     // we're past the final split.
-                    yield return new AdjustedEodPrice(orderedPrices[i]);
+                    yield return new EodAdjustedPrice(orderedPrices[i]);
                 }
                 else if (orderedPrices[i].DateEod < factors[f].Date)
                 {
                     // we're less than the "next" factor.
-                    yield return new AdjustedEodPrice(orderedPrices[i], factors[f].Factor);
+                    yield return new EodAdjustedPrice(orderedPrices[i], factors[f].Factor);
                 }
                 else
                 {

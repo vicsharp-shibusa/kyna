@@ -1,19 +1,19 @@
 ﻿using Kyna.Analysis.Technical.Signals;
 using Kyna.Backtests.AlphaModel;
 using Kyna.Common;
-using Kyna.Infrastructure.Events;
 using Kyna.Infrastructure.Database;
+using Kyna.Infrastructure.Events;
+using System.Data;
 using System.Diagnostics;
-using static Kyna.ApplicationServices.Reports.ReportService;
 
 namespace Kyna.ApplicationServices.Backtests.Runners;
 
 public sealed class BacktestingService(DbDef finDef, DbDef backtestDef) : IDisposable
 {
-    private readonly IDbContext _backtestsCtx = DbContextFactory.Create(backtestDef);
+    private readonly DbDef _finDef = finDef;
+    private readonly DbDef _bckDef = backtestDef;
+    private readonly IDbConnection _backtestConn = backtestDef.GetConnection();
     private IBacktestRunner? _backtestRunner;
-    private bool _disposedValue;
-    private DbDef _finDef = finDef, _bckDef = backtestDef;
 
     public event EventHandler<CommunicationEventArgs>? Communicate;
 
@@ -23,19 +23,19 @@ public sealed class BacktestingService(DbDef finDef, DbDef backtestDef) : IDispo
     }
 
     public Task<IEnumerable<ProcessIdInfo>> GetBacktestProcessesAsync() =>
-        _backtestsCtx.QueryAsync<ProcessIdInfo>(_backtestsCtx.Sql.Backtests.FetchProcessIdInfo);
+        _backtestConn.QueryAsync<ProcessIdInfo>(
+            _bckDef.GetSql(SqlKeys.FetchBacktestsProcessIdInfo));
 
     public async Task DeleteProcessesAsync(params Guid[] processIds)
     {
         foreach (var pid in processIds)
         {
-            await _backtestsCtx.ExecuteAsync(_backtestsCtx.Sql.Backtests.DeleteForProcessId,
+            await _backtestConn.ExecuteAsync(_bckDef.GetSql(SqlKeys.DeleteBacktestsForProcessId),
                 new { ProcessId = pid });
         }
     }
 
-    public Task ExecuteAsync(FileInfo configFile) =>
-        ExecuteAsync([configFile]);
+    public Task ExecuteAsync(FileInfo configFile) => ExecuteAsync([configFile]);
 
     public Task ExecuteAsync(FileInfo[] configFiles)
     {
@@ -53,26 +53,13 @@ public sealed class BacktestingService(DbDef finDef, DbDef backtestDef) : IDispo
         return _backtestRunner!.ExecuteAsync(configFiles, cts.Token);
     }
 
-    private void Dispose(bool disposing)
-    {
-        if (!_disposedValue)
-        {
-            if (disposing)
-            {
-                if (_backtestRunner != null)
-                {
-                    _backtestRunner.Communicate -= BacktestRunner_Communicate;
-                }
-            }
-
-            _disposedValue = true;
-        }
-    }
-
     public void Dispose()
     {
-        Dispose(disposing: true);
-        GC.SuppressFinalize(this);
+        if (_backtestRunner != null)
+        {
+            _backtestRunner.Communicate -= BacktestRunner_Communicate;
+        }
+        _backtestConn?.Dispose();
     }
 }
 

@@ -1,5 +1,4 @@
-﻿using Kyna.Infrastructure.Logging;
-using Microsoft.Extensions.Logging;
+﻿using Microsoft.Extensions.Logging;
 
 namespace Kyna.Infrastructure.Logging.PostgreSQL;
 
@@ -8,13 +7,13 @@ internal sealed class Logger(LoggerProvider loggerProvider,
     Func<string, LogLevel, bool>? filter = null) : ILogger
 {
     private LogScope? _scope = null;
-    
+
     private readonly Func<string, LogLevel, bool>? _filter = filter;
-    
+
     private readonly string _categoryName = string.IsNullOrWhiteSpace(categoryName)
-        ? throw new ArgumentNullException(nameof(categoryName)) 
+        ? throw new ArgumentNullException(nameof(categoryName))
         : categoryName;
-    
+
     private readonly LoggerProvider _loggerProvider = loggerProvider ?? throw new ArgumentNullException(nameof(loggerProvider));
 
     IDisposable ILogger.BeginScope<TState>(TState state)
@@ -32,7 +31,8 @@ internal sealed class Logger(LoggerProvider loggerProvider,
         Exception? exception,
         Func<TState, Exception?, string> formatter)
     {
-        if (!IsEnabled(logLevel)) { return; }
+        if (!IsEnabled(logLevel))
+        { return; }
 
         if (state is null && exception is null)
         {
@@ -43,7 +43,7 @@ internal sealed class Logger(LoggerProvider loggerProvider,
 
         if (state is not null)
         {
-            logItem = state is LogItem 
+            logItem = state is LogItem
                 ? state as LogItem
                 : new LogItem(state.ToString(), logLevel, _scope?.ScopeMessage);
         }
@@ -89,26 +89,11 @@ internal sealed class Logger(LoggerProvider loggerProvider,
 
     private class LogScope(object? state) : IDisposable
     {
-        private bool _disposed = false;
-
         public string? ScopeMessage { get; protected set; } = state?.ToString();
-
-        protected virtual void Dispose(bool disposing)
-        {
-            if (!_disposed)
-            {
-                if (disposing)
-                {
-                    ScopeMessage = null;
-                }
-
-                _disposed = true;
-            }
-        }
 
         public void Dispose()
         {
-            Dispose(true);
+            ScopeMessage = null;
         }
     }
 }

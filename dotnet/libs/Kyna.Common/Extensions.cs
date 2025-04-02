@@ -104,7 +104,6 @@ public static class DateOnlyExtensions
             return 0;
 
         DateOnly start = includeFirstDay ? startDate : startDate.AddDays(endDate > startDate ? 1 : -1);
-        DateOnly end = endDate;
 
         int weeks = totalDays / 7;
         int remainder = totalDays % 7;
@@ -166,7 +165,7 @@ public static class StreamExtensions
     /// <summary>
     /// Writes a message with a newline at the end.
     /// </summary>
-    public static void WriteLine(this Stream stream, string message = null)
+    public static void WriteLine(this Stream stream, string? message = null)
     {
         Write(stream, $"{message ?? string.Empty}{Environment.NewLine}");
     }

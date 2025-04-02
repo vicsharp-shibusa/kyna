@@ -1,33 +1,15 @@
 ﻿using Kyna.Infrastructure.Database;
 using Kyna.Infrastructure.Database.DataAccessObjects;
-using Microsoft.Extensions.Configuration;
-using System.Diagnostics;
 
 namespace Kyna.Infrastructure.Tests.Database;
 
-public class PostgreSqlRemoteFileTests
+public class PostgreSqlRemoteFileTests : IClassFixture<PostgreSqlTestFixture>
 {
-    private PostgreSqlContext? _context;
-    private const string DbName = "Imports";
+    private readonly PostgreSqlTestFixture _fixture;
 
-    public PostgreSqlRemoteFileTests()
+    public PostgreSqlRemoteFileTests(PostgreSqlTestFixture fixture)
     {
-        Configure();
-        Debug.Assert(_context != null);
-    }
-
-    private void Configure()
-    {
-        IConfigurationBuilder builder = new ConfigurationBuilder()
-            .SetBasePath(AppDomain.CurrentDomain.BaseDirectory)
-            .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
-            .AddJsonFile("secrets.json", optional: false, reloadOnChange: true);
-
-        var configuration = builder.Build();
-
-        Debug.Assert(configuration != null);
-
-        _context = new PostgreSqlContext(new DbDef(DbName, DatabaseEngine.PostgreSql, configuration.GetConnectionString(DbName)!));
+        _fixture = fixture;
     }
 
     [Fact]
@@ -35,19 +17,22 @@ public class PostgreSqlRemoteFileTests
     {
         var remoteFileDao = CreateRemoteFile(Guid.NewGuid());
 
-        _context!.Execute(_context.Sql.RemoteFiles.DeleteForSource, new { Source = "Test" });
+        using var context = _fixture.Imports.GetConnection();
+        Assert.NotNull(context);
 
-        _context.Execute(_context.Sql.RemoteFiles.Upsert, remoteFileDao);
+        context!.Execute(_fixture.Logs.GetSql(SqlKeys.DeleteRemoteFilesForSource), new { Source = "Test" });
 
-        string sql = $"{_context.Sql.RemoteFiles.Fetch} WHERE process_id = @ProcessId";
+        context.Execute(_fixture.Logs.GetSql(SqlKeys.UpsertRemoteFile), remoteFileDao);
 
-        var actual = _context.QueryFirstOrDefault<RemoteFile>(sql, new { remoteFileDao.ProcessId });
+        var sql = _fixture.Logs.GetSql(SqlKeys.FetchRemoteFiles, "process_id = @ProcessId");
+
+        var actual = context.QueryFirstOrDefault<RemoteFile>(sql, new { remoteFileDao.ProcessId });
 
         Assert.Equal(remoteFileDao, actual);
     }
 
     private static RemoteFile CreateRemoteFile(Guid? processId = null) =>
-        new RemoteFile()
+        new()
         {
             Source = "Test",
             Location = "FlatFiles",

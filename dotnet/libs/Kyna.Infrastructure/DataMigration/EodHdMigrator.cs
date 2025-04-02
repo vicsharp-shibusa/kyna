@@ -1,10 +1,10 @@
 ﻿using Kyna.Common;
-using Kyna.Infrastructure.Events;
-using Kyna.Infrastructure.Logging;
 using Kyna.DataProviders.EodHistoricalData.Models;
 using Kyna.Infrastructure.Database;
 using Kyna.Infrastructure.Database.DataAccessObjects;
 using Kyna.Infrastructure.DataImport;
+using Kyna.Infrastructure.Events;
+using Kyna.Infrastructure.Logging;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Text;
@@ -13,16 +13,21 @@ using System.Text.Json.Serialization;
 
 namespace Kyna.Infrastructure.DataMigration;
 
-internal sealed class EodHdMigrator(DbDef sourceDef, DbDef targetDef,
-    EodHdMigrator.MigrationConfiguration configuration, Guid? processId = null, bool dryRun = false)
-    : ImportsMigratorBase(sourceDef, targetDef, processId, dryRun), IImportsMigrator
+internal sealed class EodHdMigrator : ImportsMigratorBase, IImportsMigrator
 {
     public override string Source => SourceName;
     public const string SourceName = "eodhd.com";
 
     public event EventHandler<CommunicationEventArgs>? Communicate;
 
-    private readonly MigrationConfiguration _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
+    private readonly MigrationConfiguration _configuration;
+
+    public EodHdMigrator(DbDef sourceDef, DbDef targetDef,
+        MigrationConfiguration configuration, Guid? processId = null, bool dryRun = false)
+        : base(sourceDef, targetDef, processId, dryRun)
+    {
+        _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
+    }
 
     public async Task<TimeSpan> MigrateAsync(CancellationToken cancellationToken = default)
     {
@@ -118,7 +123,8 @@ internal sealed class EodHdMigrator(DbDef sourceDef, DbDef targetDef,
 
                     if (!_dryRun)
                     {
-                        string sql = $"{_sourceContext.Sql.ApiTransactions.Delete} WHERE id = @Id";
+
+                        string sql = $"{_sourceDbDef.GetSql(SqlKeys.DeleteApiTransactions, "id = @Id")}";
                         await _sourceContext.ExecuteAsync(sql, new { item.Id },
                             cancellationToken: cancellationToken).ConfigureAwait(false);
                     }
@@ -128,22 +134,23 @@ internal sealed class EodHdMigrator(DbDef sourceDef, DbDef targetDef,
 
         Communicate?.Invoke(this, new CommunicationEventArgs(timer.Elapsed.ConvertToText(), null));
         Communicate?.Invoke(this, new CommunicationEventArgs("Hydrating missing entities", nameof(EodHdMigrator)));
-        await _targetContext.ExecuteAsync(_targetContext.Sql.Fundamentals.HydrateMissingEntities, commandTimeout: 0,
-            cancellationToken: cancellationToken).ConfigureAwait(false);
+        await _targetContext.ExecuteAsync(_targetDbDef.GetSql(SqlKeys.HydrateMissingEntities),
+            commandTimeout: 0, cancellationToken: cancellationToken).ConfigureAwait(false);
 
         Communicate?.Invoke(this, new CommunicationEventArgs(timer.Elapsed.ConvertToText(), null));
+
         Communicate?.Invoke(this, new CommunicationEventArgs("Setting split indicator for entities", nameof(EodHdMigrator)));
-        await _targetContext.ExecuteAsync(_targetContext.Sql.Fundamentals.SetSplitIndicatorForEntities, commandTimeout: 0,
-            cancellationToken: cancellationToken).ConfigureAwait(false);
+        await _targetContext.ExecuteAsync(_targetDbDef.GetSql(SqlKeys.SetSplitIndicatorForEntities),
+            commandTimeout: 0, cancellationToken: cancellationToken).ConfigureAwait(false);
 
         Communicate?.Invoke(this, new CommunicationEventArgs(timer.Elapsed.ConvertToText(), null));
         Communicate?.Invoke(this, new CommunicationEventArgs("Setting price action indicator for entities", nameof(EodHdMigrator)));
-        await _targetContext.ExecuteAsync(_targetContext.Sql.Fundamentals.SetPriceActionIndicatorForEntities, commandTimeout: 0,
-            cancellationToken: cancellationToken).ConfigureAwait(false);
+        await _targetContext.ExecuteAsync(_targetDbDef.GetSql(SqlKeys.SetPriceActionIndicatorForEntities),
+            commandTimeout: 0, cancellationToken: cancellationToken).ConfigureAwait(false);
 
         Communicate?.Invoke(this, new CommunicationEventArgs(timer.Elapsed.ConvertToText(), null));
         Communicate?.Invoke(this, new CommunicationEventArgs("Setting last price actions for entities", nameof(EodHdMigrator)));
-        await _targetContext.ExecuteAsync(_targetContext.Sql.Fundamentals.SetLastPriceActionForEntities, commandTimeout: 0,
+        await _targetContext.ExecuteAsync(_targetDbDef.GetSql(SqlKeys.SetLastPriceActionForEntities), commandTimeout: 0,
             cancellationToken: cancellationToken).ConfigureAwait(false);
 
         timer.Stop();
@@ -168,7 +175,7 @@ internal sealed class EodHdMigrator(DbDef sourceDef, DbDef targetDef,
         cancellationToken.ThrowIfCancellationRequested();
 
         var responseBody = _sourceContext.QueryFirstOrDefault<string>(
-            _sourceContext.Sql.ApiTransactions.FetchResponseBodyForId,
+            _sourceDbDef.GetSql(SqlKeys.FetchApiResponseBodyForId),
             new { item.Id });
 
         if (!string.IsNullOrWhiteSpace(responseBody) &&
@@ -210,17 +217,19 @@ internal sealed class EodHdMigrator(DbDef sourceDef, DbDef targetDef,
             new { _configuration.Source, _configuration.Categories });
     }
 
-    private string BuildFetchForMigrationSql()
+    private string? BuildFetchForMigrationSql()
     {
-        StringBuilder sb = new(_sourceContext.Sql.ApiTransactions.FetchForMigration);
-        sb.AppendLine();
-        sb.AppendLine("WHERE source = @Source");
+        List<string> whereClauses = new(3)
+        {
+            "source = @Source",
+            "response_status_code = '200'"
+        };
         if ((_configuration.Categories?.Length ?? 0) > 0)
         {
-            sb.AppendLine($"AND category {_sourceContext.Sql.GetInCollectionSql("Categories")}");
+            whereClauses.Add($"category {SqlFactory.GetSqlSyntaxForInCollection("Categories")}");
         }
-        sb.AppendLine($"AND response_status_code = '200'");
-        return sb.ToString();
+
+        return _sourceDbDef.GetSql(SqlKeys.FetchApiTransactionsForMigration, [.. whereClauses]);
     }
 
     private async Task MigrateEodPricesAsync(ApiTransactionForMigration item, string responseBody)
@@ -235,31 +244,28 @@ internal sealed class EodHdMigrator(DbDef sourceDef, DbDef targetDef,
                 var eodPrices = eodPriceActions!.Select(p => new EodPrice(item.Source,
                         item.SubCategory,
                         p.Date, p.Open, p.High, p.Low, p.Close, p.Volume,
-                        DateTime.UtcNow.Ticks,
-                        DateTime.UtcNow.Ticks,
                         _processId)).ToArray();
 
                 if (_configuration.PriceMigrationMode.HasFlag(PriceMigrationMode.Raw))
                 {
-                    await _targetContext.ExecuteAsync(_targetContext.Sql.EodPrices.Upsert, eodPrices).ConfigureAwait(false);
+                    await _targetContext.ExecuteAsync(_targetDbDef.GetSql(SqlKeys.UpsertEodPrice), eodPrices).ConfigureAwait(false);
                 }
 
-                var adjPrices = Array.Empty<AdjustedEodPrice>();
+                var adjPrices = Array.Empty<EodAdjustedPrice>();
                 if (_configuration.PriceMigrationMode.HasFlag(PriceMigrationMode.Adjusted))
                 {
-                    string splitSql = $"{_targetContext.Sql.Splits.Fetch} WHERE source = @Source AND code = @Code";
+                    string splitSql = $"{_targetDbDef.GetSql(SqlKeys.FetchSplits, "source = @Source", "code = @Code")}";
                     var splits = _targetContext.Query<Database.DataAccessObjects.Split>(splitSql, new
                     {
                         item.Source,
                         Code = item.SubCategory
                     }).ToArray();
 
-                    adjPrices = SplitAdjustedPriceCalculator.Calculate(eodPrices, splits).ToArray();
+                    adjPrices = [.. SplitAdjustedPriceCalculator.Calculate(eodPrices, splits)];
 
                     if (adjPrices.Length > 0)
                     {
-                        await _targetContext.ExecuteAsync(_targetContext.Sql.AdjustedEodPrices.Upsert, adjPrices)
-                            .ConfigureAwait(false);
+                        await _targetContext.ExecuteAsync(_targetDbDef.GetSql(SqlKeys.UpsertAdjustedEodPrice), adjPrices).ConfigureAwait(false);
                     }
                 }
             }
@@ -273,7 +279,7 @@ internal sealed class EodHdMigrator(DbDef sourceDef, DbDef targetDef,
 
         if ((splits?.Length ?? 0) > 0)
         {
-            return _targetContext.ExecuteAsync(_targetContext.Sql.Splits.Upsert,
+            return _targetContext.ExecuteAsync(_targetDbDef.GetSql(SqlKeys.UpsertSplit),
                 splits!.Select(s => new Database.DataAccessObjects.Split(item.Source, item.SubCategory,
                 s.Date, s.SplitText, _processId)));
         }
@@ -288,7 +294,7 @@ internal sealed class EodHdMigrator(DbDef sourceDef, DbDef targetDef,
 
         if ((dividends?.Length ?? 0) > 0)
         {
-            return _targetContext.ExecuteAsync(_targetContext.Sql.Dividends.Upsert,
+            return _targetContext.ExecuteAsync(_targetDbDef.GetSql(SqlKeys.UpsertDividend),
                 dividends!.Select(s => new Database.DataAccessObjects.Dividend(item.Source, item.SubCategory,
                 "CD", _processId)
                 {
@@ -331,7 +337,7 @@ internal sealed class EodHdMigrator(DbDef sourceDef, DbDef targetDef,
 
             if (!string.IsNullOrWhiteSpace(fundamentals.General.Code))
             {
-                await _targetContext.ExecuteAsync(_targetContext.Sql.Fundamentals.UpsertEntity,
+                await _targetContext.ExecuteAsync(_targetDbDef.GetSql(SqlKeys.UpsertEntity),
                     new Entity(item.Source, item.SubCategory)
                     {
                         Country = fundamentals.General.CountryName ?? "USA",
@@ -372,7 +378,7 @@ internal sealed class EodHdMigrator(DbDef sourceDef, DbDef targetDef,
 
             if (!string.IsNullOrWhiteSpace(fundamentals.General.Code))
             {
-                await _targetContext.ExecuteAsync(_targetContext.Sql.Fundamentals.UpsertEntity,
+                await _targetContext.ExecuteAsync(_targetDbDef.GetSql(SqlKeys.UpsertEntity),
                     new Entity(item.Source, item.SubCategory)
                     {
                         Country = fundamentals.General.CountryName ?? "USA",

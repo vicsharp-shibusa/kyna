@@ -1,7 +1,13 @@
 ﻿namespace Kyna.Infrastructure.Database.DataAccessObjects;
 
-internal sealed record class RemoteFile
+internal sealed record class RemoteFile : DaoBase
 {
+    public RemoteFile() : base() { }
+
+    public RemoteFile(Guid? processId = null) : base(processId)
+    {
+    }
+
     public string? Source { get; init; }
     public string? Provider { get; init; }
     public string? Location { get; init; }
@@ -9,7 +15,4 @@ internal sealed record class RemoteFile
     public DateOnly? UpdateDate { get; init; }
     public long? Size { get; init; }
     public string? HashCode { get; init; }
-    public Guid? ProcessId { get; init; }
-    public long CreatedTicksUtc { get; init; } = DateTime.UtcNow.Ticks;
-    public long UpdatedTicksUtc { get; init; } = DateTime.UtcNow.Ticks;
 }

@@ -155,7 +155,7 @@ void ShowHelp()
         new CliArg(["-d", "--delete"], ["process id"], false, "Delete backtest, results, and stats for specified process id.")
     ];
 
-    CliArg[] args = localArgs.Union(CliHelper.GetDefaultArgDescriptions()).ToArray();
+    CliArg[] args = [.. localArgs.Union(CliHelper.GetDefaultArgDescriptions())];
 
     Communicate($"{config.AppName} {config.AppVersion}".Trim(), true);
     Communicate(null, true);
@@ -278,6 +278,15 @@ void Configure()
     var logDef = dbDefs.FirstOrDefault(d => d.Name == ConfigKeys.DbKeys.Logs);
     var finDef = dbDefs.FirstOrDefault(d => d.Name == ConfigKeys.DbKeys.Financials);
     var bckDef = dbDefs.FirstOrDefault(d => d.Name == ConfigKeys.DbKeys.Backtests);
+
+    if (logDef == null)
+        throw new Exception($"Unable to create {nameof(ConfigKeys.DbKeys.Logs)} db connection; no '{ConfigKeys.DbKeys.Logs}' key found.");
+
+    if (bckDef == null)
+        throw new Exception($"Unable to create {nameof(ConfigKeys.DbKeys.Backtests)} db connection; no '{ConfigKeys.DbKeys.Backtests}' key found.");
+
+    if (finDef == null)
+        throw new Exception($"Unable to create {nameof(ConfigKeys.DbKeys.Financials)} db connection; no '{ConfigKeys.DbKeys.Financials}' key found.");
 
     logger = Kyna.ApplicationServices.Logging.LoggerFactory.Create<Program>(logDef);
     KLogger.SetLogger(logger);

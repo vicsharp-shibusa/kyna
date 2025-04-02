@@ -3,8 +3,7 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 CREATE TABLE IF NOT EXISTS public.logs
 (
     id serial NOT NULL,
-    ticks_utc BIGINT NOT NULL,
-    timestamp_utc TIMESTAMP WITH TIME ZONE GENERATED ALWAYS AS (to_timestamp((ticks_utc - 621355968000000000) / 10000000)) STORED,
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL,
     process_id UUID NULL,
     log_level TEXT NULL,
     message TEXT NULL,
@@ -16,8 +15,7 @@ CREATE TABLE IF NOT EXISTS public.logs
 CREATE TABLE IF NOT EXISTS public.app_events
 (
     id serial NOT NULL,
-    ticks_utc BIGINT NOT NULL,
-    timestamp_utc TIMESTAMP WITH TIME ZONE GENERATED ALWAYS AS (to_timestamp((ticks_utc - 621355968000000000) / 10000000)) STORED,
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL,
     process_id UUID NULL,
     event_id INTEGER NOT NULL,
     event_name TEXT NULL,

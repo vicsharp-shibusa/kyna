@@ -1,18 +1,44 @@
 ﻿namespace Kyna.Infrastructure.Database.DataAccessObjects;
 
-internal abstract record class DaoBase
+internal abstract record class AuditBase
 {
-    // Number of places to the right of the decimal point in money calculations.
-    protected const int MoneyPrecision = 4;
-
-    public DaoBase(Guid? processId = null)
+    public AuditBase() : this(Guid.NewGuid())
     {
-        ProcessId = processId;
     }
 
-    public long CreatedTicksUtc { get; init; } = DateTime.UtcNow.Ticks;
-    public DateTime CreatedUtc => new(CreatedTicksUtc, DateTimeKind.Utc);
-    public long UpdatedTicksUtc { get; init; } = DateTime.UtcNow.Ticks;
-    public DateTime UpdatedUtc => new(UpdatedTicksUtc, DateTimeKind.Utc);
+    public AuditBase(Guid? processId = null)
+    {
+        ProcessId = processId;
+        _createdAtUnixMs = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+    }
+
     public Guid? ProcessId { get; init; }
+
+    private long _createdAtUnixMs;
+    public long CreatedAtUnixMs { get => _createdAtUnixMs; init => _createdAtUnixMs = value; }
+
+    public DateTimeOffset CreatedAt
+    {
+        get => DateTimeOffset.FromUnixTimeMilliseconds(_createdAtUnixMs).ToLocalTime();
+        set => _createdAtUnixMs = value.ToUnixTimeMilliseconds();
+    }
+}
+
+internal abstract record class DaoBase : AuditBase
+{
+    public DaoBase() : this((Guid?)null) { }
+
+    public DaoBase(Guid? processId = null) : base(processId)
+    {
+        _updatedAtUnixMs = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+    }
+
+    private long _updatedAtUnixMs;
+    public long UpdatedAtUnixMs { get => _updatedAtUnixMs; init => _updatedAtUnixMs = value; }
+
+    public DateTimeOffset UpdatedAt
+    {
+        get => DateTimeOffset.FromUnixTimeMilliseconds(_updatedAtUnixMs).ToLocalTime();
+        set => _updatedAtUnixMs = value.ToUnixTimeMilliseconds();
+    }
 }

@@ -1,8 +1,8 @@
 ﻿using Kyna.Common;
-using Kyna.Infrastructure.Events;
-using Kyna.Infrastructure.Logging;
 using Kyna.DataProviders.EodHistoricalData.Models;
 using Kyna.Infrastructure.Database;
+using Kyna.Infrastructure.Events;
+using Kyna.Infrastructure.Logging;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Reflection;
@@ -15,8 +15,6 @@ namespace Kyna.Infrastructure.DataImport;
 
 internal sealed class EodHdImporter : HttpImporterBase, IExternalDataImporter
 {
-    private readonly IDbContext _dbContext;
-
     private readonly Lock _locker = new();
 
     private int _usage = 0;
@@ -37,7 +35,6 @@ internal sealed class EodHdImporter : HttpImporterBase, IExternalDataImporter
 
     public EodHdImporter(DbDef dbDef, string apiKey, Guid? processId = null) : base(dbDef, Constants.Uris.Base, apiKey, processId)
     {
-        _dbContext = DbContextFactory.Create(dbDef);
         _importActions = [];
         var dict = new Dictionary<string, string[]>();
         _exchanges = new ReadOnlyDictionary<string, string[]>(dict);
@@ -54,8 +51,6 @@ internal sealed class EodHdImporter : HttpImporterBase, IExternalDataImporter
         {
             throw new ArgumentException($"{nameof(EodHdImporter)} can only be called with an import configuration containing a source name of {Source}");
         }
-
-        _dbContext = DbContextFactory.Create(dbDef);
 
         _importActions = ExtractImportActions(importConfig);
 
@@ -150,7 +145,7 @@ internal sealed class EodHdImporter : HttpImporterBase, IExternalDataImporter
 
             foreach (var item in _concurrentBag)
             {
-                await InvokeApiCallAsync(item.Uri, item.Category, item.SubCategory, 
+                await InvokeApiCallAsync(item.Uri, item.Category, item.SubCategory,
                     cancellationToken: cancellationToken).ConfigureAwait(false);
             }
         }
@@ -269,8 +264,8 @@ internal sealed class EodHdImporter : HttpImporterBase, IExternalDataImporter
             {
                 CommunicateAction(Constants.Actions.Purge);
 
-                return _dbContext.ExecuteAsync(_dbContext.Sql.ApiTransactions.DeleteForSource, new { Source },
-                    cancellationToken: cancellationToken);
+                return _connection.ExecuteAsync(_dbDef.GetSql(SqlKeys.DeleteApiTransactionsForSource),
+                    new { Source }, cancellationToken: cancellationToken);
             }
         }
 
@@ -948,7 +943,7 @@ internal sealed class EodHdImporter : HttpImporterBase, IExternalDataImporter
 
         if (_exchanges.TryGetValue(exchange, out string[]? value))
         {
-            return symbols.Where(s => value.Contains(s.Exchange)).ToArray();
+            return [.. symbols.Where(s => value.Contains(s.Exchange))];
         }
 
         return [];
@@ -963,7 +958,7 @@ internal sealed class EodHdImporter : HttpImporterBase, IExternalDataImporter
 
         if (_symbolTypes.TryGetValue(exchange, out string[]? value))
         {
-            return symbols.Where(s => value.Contains(s.Type)).ToArray();
+            return [.. symbols.Where(s => value.Contains(s.Type))];
         }
 
         return [];
@@ -989,7 +984,7 @@ internal sealed class EodHdImporter : HttpImporterBase, IExternalDataImporter
                         $"Reducing number of symbols for {caller} from {symbols.Length} to {numToTake}.",
                         nameof(EodHdImporter)));
 
-                return symbols.Take(numToTake).ToArray();
+                return [.. symbols.Take(numToTake)];
             }
         }
 

@@ -1,10 +1,11 @@
 ﻿using Kyna.Analysis.Technical;
 using Kyna.Backtests.AlphaModel;
 using Kyna.Common;
-using Kyna.Infrastructure.Events;
 using Kyna.Infrastructure.Database;
 using Kyna.Infrastructure.Database.DataAccessObjects;
+using Kyna.Infrastructure.Events;
 using System.Collections.Concurrent;
+using System.Data;
 using System.Text;
 using System.Text.Json;
 
@@ -12,8 +13,10 @@ namespace Kyna.ApplicationServices.Backtests.Runners;
 
 internal abstract class RunnerBase
 {
-    protected readonly IDbContext _finDbContext;
-    protected readonly IDbContext _backtestDbContext;
+    protected readonly IDbConnection _finDbContext;
+    protected readonly IDbConnection _backtestDbContext;
+    protected readonly DbDef _finDbDef;
+    protected readonly DbDef _backtestDbDef;
     protected readonly ActivityCounts _activityCounts;
     protected readonly Guid _processId = Guid.NewGuid();
     private readonly ConcurrentQueue<BacktestResultDetail> _resultDetails;
@@ -21,10 +24,12 @@ internal abstract class RunnerBase
 
     public event EventHandler<CommunicationEventArgs>? Communicate;
 
-    public RunnerBase(DbDef? finDef, DbDef? backtestsDef)
+    public RunnerBase(DbDef finDef, DbDef backtestsDef)
     {
-        _finDbContext = DbContextFactory.Create(finDef ?? throw new ArgumentNullException(nameof(finDef)));
-        _backtestDbContext = DbContextFactory.Create(backtestsDef ?? throw new ArgumentNullException(nameof(backtestsDef)));
+        _finDbDef = finDef;
+        _backtestDbDef = backtestsDef;
+        _finDbContext = finDef.GetConnection();
+        _backtestDbContext = backtestsDef.GetConnection();
         _resultDetails = new();
         _activityCounts = new();
         RunResultDetailDequeue();
@@ -84,8 +89,8 @@ internal abstract class RunnerBase
     {
         OnCommunicate(new CommunicationEventArgs("Fetching data to backtest ...", null));
         return _finDbContext.QueryAsync<CodesAndCounts>(
-            _finDbContext.Sql.AdjustedEodPrices.FetchCodesAndCounts, new { source },
-            0, cancellationToken);
+            _finDbDef.GetSql(SqlKeys.FetchAdjustedCodesAndCounts), new { source },
+            commandTimeout: 0, cancellationToken: cancellationToken);
     }
 
     protected virtual async Task<Guid> CreateBacktestingRecord(BacktestingConfiguration configuration,
@@ -93,7 +98,7 @@ internal abstract class RunnerBase
     {
         Guid backtestId = Guid.NewGuid();
         OnCommunicate(new CommunicationEventArgs("Creating backtest record...", null));
-        await _backtestDbContext.ExecuteAsync(_finDbContext.Sql.Backtests.UpsertBacktest,
+        await _backtestDbContext.ExecuteAsync(_backtestDbDef.GetSql(SqlKeys.UpsertBacktest),
             new Backtest(backtestId,
                 configuration.Name,
                 configuration.Type.GetEnumDescription(),
@@ -104,8 +109,6 @@ internal abstract class RunnerBase
                 configuration.TargetUp.PricePoint.GetEnumDescription(),
                 configuration.TargetDown.Value,
                 configuration.TargetDown.PricePoint.GetEnumDescription(),
-                DateTime.UtcNow.Ticks,
-                DateTime.UtcNow.Ticks,
                 _processId), cancellationToken: cancellationToken);
         return backtestId;
     }
@@ -142,7 +145,7 @@ internal abstract class RunnerBase
                             $"{resultDetail.SignalName}\t{resultDetail.Code}\t{resultDetail.Entry.Date:yyyy-MM-dd}", null));
                         try
                         {
-                            _backtestDbContext.Execute(_backtestDbContext.Sql.Backtests.UpsertBacktestResult,
+                            _backtestDbContext.Execute(_backtestDbDef.GetSql(SqlKeys.UpsertBacktestResult),
                                 new Infrastructure.Database.DataAccessObjects.BacktestResult(
                                     resultDetail.Id,
                                     resultDetail.BacktestId,
@@ -161,9 +164,7 @@ internal abstract class RunnerBase
                                     resultDetail.Down?.Price,
                                     resultDetail.WinnerText,
                                     resultDetail.WinnerDurationTradingDays,
-                                    resultDetail.WinnerDurationCalendarDays,
-                                    DateTime.UtcNow.Ticks,
-                                    DateTime.UtcNow.Ticks));
+                                    resultDetail.WinnerDurationCalendarDays));
 
                             lock (_activityCounts)
                             {

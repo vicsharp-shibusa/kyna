@@ -1,4 +1,5 @@
 ﻿using Kyna.Analysis.Technical.Charts;
+using Kyna.Common;
 
 namespace Kyna.Infrastructure.Database.DataAccessObjects;
 
@@ -9,11 +10,15 @@ internal sealed record class EodPrice : DaoBase
     private decimal _low;
     private decimal _close;
 
+    public EodPrice() : this(source: "", code: "",
+        dateEod: DateOnly.MinValue,
+        open: 0M, high: 0M, low: 0M, close: 0M, volume: 0L)
+    { }
+
     public EodPrice(string source, string code,
         DateOnly dateEod,
         decimal open, decimal high, decimal low, decimal close,
         long volume,
-        long createdTicksUtc, long updatedTicksUtc,
         Guid? processId = null) : base(processId)
     {
         Source = source;
@@ -24,12 +29,9 @@ internal sealed record class EodPrice : DaoBase
         Low = low;
         Close = close;
         Volume = volume;
-        CreatedTicksUtc = createdTicksUtc;
-        UpdatedTicksUtc = updatedTicksUtc;
     }
 
-    public EodPrice(string source, string code, Guid? processId = null)
-        : base(processId)
+    public EodPrice(string source, string code, Guid? processId = null) : base(processId)
     {
         Source = source;
         Code = code;
@@ -38,29 +40,35 @@ internal sealed record class EodPrice : DaoBase
     public string Source { get; init; }
     public string Code { get; init; }
     public DateOnly DateEod { get; init; }
-    public decimal Open { get => _open; init => _open = Math.Round(value, MoneyPrecision); }
-    public decimal High { get => _high; init => _high = Math.Round(value, MoneyPrecision); }
-    public decimal Low { get => _low; init => _low = Math.Round(value, MoneyPrecision); }
-    public decimal Close { get => _close; init => _close = Math.Round(value, MoneyPrecision); }
+    public decimal Open { get => _open; init => _open = Math.Round(value, Constants.MoneyPrecision); }
+    public decimal High { get => _high; init => _high = Math.Round(value, Constants.MoneyPrecision); }
+    public decimal Low { get => _low; init => _low = Math.Round(value, Constants.MoneyPrecision); }
+    public decimal Close { get => _close; init => _close = Math.Round(value, Constants.MoneyPrecision); }
     public long Volume { get; init; }
 
     public Ohlc ToOhlc() =>
         new(Code, DateEod, Open, High, Low, Close, Volume, 1D);
 }
 
-internal sealed record class AdjustedEodPrice : DaoBase
+internal sealed record class EodAdjustedPrice : DaoBase
 {
     private decimal _open;
     private decimal _high;
     private decimal _low;
     private decimal _close;
-    
-    public AdjustedEodPrice(string source, string code,
+
+    public EodAdjustedPrice() : this(
+        source: "",
+        code: "",
+        dateEod: DateOnly.MinValue,
+        open: 0M, high: 0M, low: 0M, close: 0M, volume: 0L, factor: 0D)
+    { }
+
+    public EodAdjustedPrice(string source, string code,
         DateOnly dateEod,
         decimal open, decimal high, decimal low, decimal close,
         long volume,
         double factor,
-        long createdTicksUtc, long updatedTicksUtc,
         Guid? processId = null) : base(processId)
     {
         Source = source;
@@ -72,18 +80,16 @@ internal sealed record class AdjustedEodPrice : DaoBase
         Close = close;
         Volume = volume;
         Factor = factor;
-        CreatedTicksUtc = createdTicksUtc;
-        UpdatedTicksUtc = updatedTicksUtc;
     }
 
-    internal AdjustedEodPrice(string source, string code, Guid? processId = null)
+    internal EodAdjustedPrice(string source, string code, Guid? processId = null)
         : base(processId)
     {
-        Source= source;
+        Source = source;
         Code = code;
     }
 
-    public AdjustedEodPrice(EodPrice eodPrice, double factor = 1D)
+    public EodAdjustedPrice(EodPrice eodPrice, double factor = 1D)
         : base(eodPrice.ProcessId)
     {
         Source = eodPrice.Source;
@@ -95,17 +101,15 @@ internal sealed record class AdjustedEodPrice : DaoBase
         Close = eodPrice.Close / (decimal)factor;
         Volume = Convert.ToInt64(eodPrice.Volume * factor);
         Factor = factor;
-        CreatedTicksUtc = eodPrice.CreatedTicksUtc;
-        UpdatedTicksUtc = eodPrice.UpdatedTicksUtc;
     }
 
     public string Source { get; init; }
     public string Code { get; init; }
     public DateOnly DateEod { get; init; }
-    public decimal Open { get => _open; init => _open = Math.Round(value, MoneyPrecision); }
-    public decimal High { get => _high; init => _high = Math.Round(value, MoneyPrecision); }
-    public decimal Low { get => _low; init => _low = Math.Round(value, MoneyPrecision); }
-    public decimal Close { get => _close; init => _close = Math.Round(value, MoneyPrecision); }
+    public decimal Open { get => _open; init => _open = Math.Round(value, Constants.MoneyPrecision); }
+    public decimal High { get => _high; init => _high = Math.Round(value, Constants.MoneyPrecision); }
+    public decimal Low { get => _low; init => _low = Math.Round(value, Constants.MoneyPrecision); }
+    public decimal Close { get => _close; init => _close = Math.Round(value, Constants.MoneyPrecision); }
     public long Volume { get; init; }
     public double Factor { get; init; } = 1D;
 

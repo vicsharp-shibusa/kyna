@@ -1,7 +1,5 @@
 ﻿using Kyna.Analysis.Technical.Charts;
-using System.Runtime.CompilerServices;
 
-[assembly: InternalsVisibleTo("Kyna.Analysis.Tests")]
 namespace Kyna.Analysis.Technical.Trends;
 
 public class ExtremeTrend(Ohlc[] prices) : TrendBase(prices?.Length ?? 0), ITrend

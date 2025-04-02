@@ -1,4 +1,5 @@
 ﻿using Kyna.Common;
+using Kyna.Infrastructure.Database;
 using Kyna.Infrastructure.Database.DataAccessObjects;
 using Kyna.Infrastructure.Database.DataAccessObjects.Reports;
 using System.Diagnostics;
@@ -9,16 +10,16 @@ public sealed partial class ReportService
 {
     public IEnumerable<string> CreateBacktestingCsvReports(Guid processId, string outputDir)
     {
-        string sql = $@"{_backtestsCtx.Sql.Backtests.FetchBacktest}
-WHERE process_id = @ProcessId";
+        //TODO: there's a #fail here - the where clause is db specific (see the '_').
+        string sql = $@"{_backtestDbDef.Sql.GetFormattedSqlWithWhereClause(SqlKeys.FetchBacktest, whereClauses: ["process_id = @ProcessId"])}";
 
-        var backtestDaos = _backtestsCtx.Query<Backtest>(
-            sql, new { processId }).ToArray();
+        var backtestDaos = _backtestConn.Query<Backtest>(sql, new { processId }).ToArray();
 
         Debug.Assert(backtestDaos != null);
 
-        var counts = _backtestsCtx.Query<SignalCounts>(
-            _backtestsCtx.Sql.Backtests.FetchBacktestSignalCounts, new { processId }).ToArray();
+        var counts = _backtestConn.Query<SignalCounts>(
+            _backtestDbDef.GetSql(SqlKeys.FetchBacktestSignalCounts),
+            new { processId }).ToArray();
 
         var signalNames = counts.Select(c => c.SignalName).Distinct().ToArray();
 
@@ -68,7 +69,8 @@ WHERE process_id = @ProcessId";
                     "Name", "Category", "Sub Category",
                     "Number Signals", "Success %", "Avg Duration");
 
-                var summary = _backtestsCtx.Query<SignalSummaryDetails>(_backtestsCtx.Sql.Backtests.FetchBacktestSignalSummary,
+                var summary = _backtestConn.Query<SignalSummaryDetails>(
+                    _backtestDbDef.GetSql(SqlKeys.FetchBacktestSignalSummary),
                     new { BacktestId = btDao.Id, signalName });
 
                 foreach (var item in summary.Where(d => d.NumberSignals >= (_reportOptions.Stats?.MinimumSignals ?? 0)))
@@ -83,8 +85,8 @@ WHERE process_id = @ProcessId";
 
                 signalSummaryReport = null;
 
-                var details = _backtestsCtx.Query<SignalDetails>(
-                    _backtestsCtx.Sql.Backtests.FetchBacktestSignalDetails,
+                var details = _backtestConn.Query<SignalDetails>(
+                    _backtestDbDef.GetSql(SqlKeys.FetchBacktestSignalDetails),
                     new { BacktestId = btDao.Id, processId, signalName });
 
                 var signalDetailReport = CreateReport(
@@ -114,11 +116,10 @@ WHERE process_id = @ProcessId";
 
     public IEnumerable<string> CreateBacktestingXlsxReports(Guid processId, string outputDir)
     {
-        string sql = $@"{_backtestsCtx.Sql.Backtests.FetchBacktest}
-WHERE process_id = @ProcessId";
+        string sql = $@"{_backtestDbDef.Sql.GetFormattedSqlWithWhereClause(SqlKeys.FetchBacktest,
+            whereClauses: ["process_id = @ProcessId"])}";
 
-        var backtests = _backtestsCtx.Query<Infrastructure.Database.DataAccessObjects.Backtest>(
-            sql, new { processId }).ToArray();
+        var backtests = _backtestConn.Query<Backtest>(sql, new { processId }).ToArray();
 
         Debug.Assert(backtests != null);
 
@@ -131,7 +132,7 @@ WHERE process_id = @ProcessId";
             map.Add(b.Id, (num, $"backtest_stats_{processId.First()}_{num}.xlsx"));
         }
 
-        List<Report> reports = new(2);
+        List<Report> reports = [];
 
         List<string> headers = new(backtests.Length + 1) { "Details" };
         headers.AddRange(backtests.Select(b => map[b.Id].Num).OrderBy(b => b));
@@ -142,7 +143,7 @@ WHERE process_id = @ProcessId";
         var types = backtests.OrderBy(b => b.Id.ToString()).Select(b => b.Type).ToList();
         var sources = backtests.OrderBy(b => b.Id.ToString()).Select(b => b.Source).ToList();
         var descriptions = backtests.OrderBy(b => b.Id.ToString()).Select(b => b.Description).ToList();
-        var timestamps = backtests.OrderBy(b => b.Id.ToString()).Select(b => b.CreatedUtc.ToLocalTime().ToString("yyyy-MM-dd HH:mm")).ToList();
+        var timestamps = backtests.OrderBy(b => b.Id.ToString()).Select(b => b.CreatedAt.ToLocalTime().ToString("yyyy-MM-dd HH:mm")).ToList();
         var processIds = backtests.OrderBy(b => b.Id.ToString()).Select(b => b.ProcessId.ToString()).ToList();
         var backtestIds = backtests.OrderBy(b => b.Id.ToString()).Select(b => b.Id.ToString()).ToList();
         var fileNames = backtests.OrderBy(b => b.Id.ToString()).Select(b => map[b.Id].FileName).ToList();
@@ -167,8 +168,8 @@ WHERE process_id = @ProcessId";
 
         reports.Add(summaryReport);
 
-        var counts = _backtestsCtx.Query<SignalCounts>(
-            _backtestsCtx.Sql.Backtests.FetchBacktestSignalCounts,
+        var counts = _backtestConn.Query<SignalCounts>(
+            _backtestDbDef.GetSql(SqlKeys.FetchBacktestSignalCounts),
             new { processId });
 
         var scReport = CreateReport("Signal Counts", "Number",
@@ -226,7 +227,8 @@ WHERE process_id = @ProcessId";
                     "Name", "Category", "Sub Category",
                     "Number Signals", "Success %", "Avg Duration");
 
-                var summary = _backtestsCtx.Query<SignalSummaryDetails>(_backtestsCtx.Sql.Backtests.FetchBacktestSignalSummary,
+                var summary = _backtestConn.Query<SignalSummaryDetails>(
+                    _backtestDbDef.GetSql(SqlKeys.FetchBacktestSignalSummary),
                     new { backtestId, signalName });
 
                 foreach (var item in summary.Where(d => d.NumberSignals >= (_reportOptions.Stats?.MinimumSignals ?? 0)))
@@ -245,7 +247,8 @@ WHERE process_id = @ProcessId";
                     "Result Down Date", "Result Down Price Point", "Result Down Price",
                     "Result Direction", "Trading Days", "Calendar Days");
 
-                var details = _backtestsCtx.Query<SignalDetails>(_backtestsCtx.Sql.Backtests.FetchBacktestSignalDetails,
+                var details = _backtestConn.Query<SignalDetails>(
+                    _backtestDbDef.GetSql(SqlKeys.FetchBacktestSignalDetails),
                     new { backtestId, processId, signalName });
 
                 foreach (var item in details)
@@ -268,26 +271,17 @@ WHERE process_id = @ProcessId";
     }
 
     public Task<IEnumerable<ProcessIdInfo>> GetBacktestProcessesAsync() =>
-        _backtestsCtx.QueryAsync<ProcessIdInfo>(_backtestsCtx.Sql.Backtests.FetchProcessIdInfo);
+        _backtestConn.QueryAsync<ProcessIdInfo>(
+            _backtestDbDef.GetSql(SqlKeys.FetchBacktestsProcessIdInfo));
 
     public async Task DeleteProcessesAsync(params Guid[] processIds)
     {
         foreach (var pid in processIds)
         {
-            await _backtestsCtx.ExecuteAsync(_backtestsCtx.Sql.Backtests.DeleteForProcessId,
+            await _backtestConn.ExecuteAsync(
+                _backtestDbDef.GetSql(SqlKeys.DeleteBacktestsForProcessId),
                 new { ProcessId = pid });
         }
-    }
-
-    public struct ProcessIdInfo
-    {
-        public Guid ProcessId;
-        public int BacktestCount;
-        public DateTime MinDate;
-        public DateTime MaxDate;
-
-        public override readonly string ToString() =>
-            $"{ProcessId} | {BacktestCount,4} | {MinDate:yyyy-MM-dd HH:mm} | {MaxDate:yyyy-MM-dd HH:mm}";
     }
 }
 

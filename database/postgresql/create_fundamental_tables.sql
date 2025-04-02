@@ -27,9 +27,7 @@ CREATE TABLE IF NOT EXISTS public.entities
   gic_sub_industry TEXT NULL,
   web_url TEXT NULL,
   phone TEXT NULL,
-  created_ticks_utc BIGINT NOT NULL,
-  updated_ticks_utc BIGINT NOT NULL,
-  created_utc TIMESTAMP WITH TIME ZONE GENERATED ALWAYS AS (to_timestamp((created_ticks_utc - 621355968000000000) / 10000000)) STORED,
-  updated_utc TIMESTAMP WITH TIME ZONE GENERATED ALWAYS AS (to_timestamp((updated_ticks_utc - 621355968000000000) / 10000000)) STORED,
+  created_at TIMESTAMP WITH TIME ZONE NOT NULL,
+  updated_at TIMESTAMP WITH TIME ZONE NOT NULL,
   PRIMARY KEY (source, code)
 );

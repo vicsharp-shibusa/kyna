@@ -8,19 +8,25 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<PackageReference Include="Dapper" Version="2.1.35" />
-		<PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="9.0.0" />
-		<PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="9.0.0" />
-		<PackageReference Include="Npgsql" Version="9.0.2" />
-		<PackageReference Include="Polly" Version="8.5.0" />
+		<PackageReference Include="Microsoft.Data.SqlClient" Version="6.0.1" />
+		<PackageReference Include="Microsoft.Data.Sqlite" Version="9.0.3" />
+		<PackageReference Include="MySqlConnector" Version="2.4.0" />
+		<PackageReference Include="Npgsql" Version="9.0.3" />
+		<PackageReference Include="Polly" Version="8.5.2" />
 		<PackageReference Include="Polly.Contrib.WaitAndRetry" Version="1.1.1" />
+		<PackageReference Include="System.Linq.Async" Version="6.0.1" />
 		<PackageReference Include="YahooFinanceApi" Version="2.3.3" />
-		<PackageReference Include="AWSSDK.S3" Version="3.7.410.11" />
+		<PackageReference Include="AWSSDK.S3" Version="3.7.416.5" />
 	</ItemGroup>
 
 	<ItemGroup>
 		<ProjectReference Include="..\Kyna.Backtests\Kyna.Backtests.csproj" />
 		<ProjectReference Include="..\Kyna.DataProviders\Kyna.DataProviders.csproj" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<InternalsVisibleTo Include="Kyna.ApplicationServices" />
+		<InternalsVisibleTo Include="Kyna.Infrastructure.Tests" />
 	</ItemGroup>
 
 </Project>

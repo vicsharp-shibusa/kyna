@@ -1,8 +1,8 @@
 ﻿using Kyna.Common;
-using Kyna.Infrastructure.Events;
 using Kyna.Infrastructure.Database;
 using Kyna.Infrastructure.Database.DataAccessObjects;
 using Kyna.Infrastructure.DataImport;
+using Kyna.Infrastructure.Events;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.IO.Compression;
@@ -118,7 +118,7 @@ internal sealed class PolygonMigrator(DbDef sourceDef, DbDef targetDef,
 
                     if (!_dryRun)
                     {
-                        string sql = $"{_sourceContext.Sql.ApiTransactions.Delete} WHERE id = @Id";
+                        string sql = $"{_sourceDbDef.GetSql(SqlKeys.DeleteApiTransactions, "id = @Id")}";
                         await _sourceContext.ExecuteAsync(sql, new { item.Id },
                             cancellationToken: cancellationToken).ConfigureAwait(false);
                     }
@@ -134,27 +134,27 @@ internal sealed class PolygonMigrator(DbDef sourceDef, DbDef targetDef,
 
         Communicate?.Invoke(this, new CommunicationEventArgs(timer.Elapsed.ConvertToText(), null));
         Communicate?.Invoke(this, new CommunicationEventArgs("Hydrating missing entities", nameof(PolygonMigrator)));
-        await _targetContext.ExecuteAsync(_targetContext.Sql.Fundamentals.HydrateMissingEntities, commandTimeout: 0,
+        await _targetContext.ExecuteAsync(_targetDbDef.GetSql(SqlKeys.HydrateMissingEntities), commandTimeout: 0,
             cancellationToken: cancellationToken).ConfigureAwait(false);
 
         Communicate?.Invoke(this, new CommunicationEventArgs(timer.Elapsed.ConvertToText(), null));
         Communicate?.Invoke(this, new CommunicationEventArgs("Setting split indicator for entities", nameof(PolygonMigrator)));
-        await _targetContext.ExecuteAsync(_targetContext.Sql.Fundamentals.SetSplitIndicatorForEntities, commandTimeout: 0,
+        await _targetContext.ExecuteAsync(_targetDbDef.GetSql(SqlKeys.SetSplitIndicatorForEntities), commandTimeout: 0,
             cancellationToken: cancellationToken).ConfigureAwait(false);
 
         Communicate?.Invoke(this, new CommunicationEventArgs(timer.Elapsed.ConvertToText(), null));
         Communicate?.Invoke(this, new CommunicationEventArgs("Setting price action indicator for entities", nameof(PolygonMigrator)));
-        await _targetContext.ExecuteAsync(_targetContext.Sql.Fundamentals.SetPriceActionIndicatorForEntities, commandTimeout: 0,
+        await _targetContext.ExecuteAsync(_targetDbDef.GetSql(SqlKeys.SetPriceActionIndicatorForEntities), commandTimeout: 0,
             cancellationToken: cancellationToken).ConfigureAwait(false);
 
         Communicate?.Invoke(this, new CommunicationEventArgs(timer.Elapsed.ConvertToText(), null));
         Communicate?.Invoke(this, new CommunicationEventArgs("Setting last price actions for entities", nameof(PolygonMigrator)));
-        await _targetContext.ExecuteAsync(_targetContext.Sql.Fundamentals.SetLastPriceActionForEntities, commandTimeout: 0,
+        await _targetContext.ExecuteAsync(_targetDbDef.GetSql(SqlKeys.SetLastPriceActionForEntities), commandTimeout: 0,
             cancellationToken: cancellationToken).ConfigureAwait(false);
 
         Communicate?.Invoke(this, new CommunicationEventArgs(timer.Elapsed.ConvertToText(), null));
         Communicate?.Invoke(this, new CommunicationEventArgs("Cleaning up entities", nameof(PolygonMigrator)));
-        await _targetContext.ExecuteAsync(_targetContext.Sql.Fundamentals.DeleteEntitiesWithoutTypesOrPriceActions,
+        await _targetContext.ExecuteAsync(_targetDbDef.GetSql(SqlKeys.DeleteEntitiesWithoutTypesOrPriceActions),
             new { Source },
             commandTimeout: 0,
             cancellationToken: cancellationToken).ConfigureAwait(false);
@@ -180,7 +180,7 @@ internal sealed class PolygonMigrator(DbDef sourceDef, DbDef targetDef,
         cancellationToken.ThrowIfCancellationRequested();
 
         var responseBody = _sourceContext.QueryFirstOrDefault<string>(
-            _sourceContext.Sql.ApiTransactions.FetchResponseBodyForId,
+            _sourceDbDef.GetSql(SqlKeys.FetchApiResponseBodyForId),
             new { item.Id });
 
         if (!string.IsNullOrWhiteSpace(responseBody) &&
@@ -208,17 +208,19 @@ internal sealed class PolygonMigrator(DbDef sourceDef, DbDef targetDef,
             new { _configuration.Source, _configuration.Categories });
     }
 
-    private string BuildFetchForMigrationSql()
+    private string? BuildFetchForMigrationSql()
     {
-        StringBuilder sb = new(_sourceContext.Sql.ApiTransactions.FetchForMigration);
-        sb.AppendLine();
-        sb.AppendLine("WHERE source = @Source");
+        List<string> whereClauses = new(3)
+        {
+            "source = @Source",
+            "response_status_code = '200'"
+        };
         if ((_configuration.Categories?.Length ?? 0) > 0)
         {
-            sb.AppendLine($"AND category {_sourceContext.Sql.GetInCollectionSql("Categories")}");
+            whereClauses.Add($"category {SqlFactory.GetSqlSyntaxForInCollection("Categories")}");
         }
-        sb.AppendLine($"AND response_status_code = '200'");
-        return sb.ToString();
+
+        return _sourceDbDef.GetSql(SqlKeys.FetchApiTransactionsForMigration, [.. whereClauses]);
     }
 
     private async Task MigrateFlatFilesAsync(CancellationToken cancellationToken)
@@ -267,36 +269,34 @@ internal sealed class PolygonMigrator(DbDef sourceDef, DbDef targetDef,
                         {
                             flatFileLines[i - 1] = new DataProviders.Polygon.Models.FlatFile(lines[i]);
                         }
-                        await _targetContext.ExecuteAsync(_targetContext.Sql.EodPrices.Upsert, flatFileLines.Select(f => new EodPrice(SourceName, f.Code, _processId)
-                        {
-                            Open = f.Open,
-                            High = f.High,
-                            Low = f.Low,
-                            Close = f.Close,
-                            Volume = f.Volume,
-                            DateEod = f.Date,
-                            CreatedTicksUtc = DateTime.UtcNow.Ticks,
-                            UpdatedTicksUtc = DateTime.UtcNow.Ticks
-                        }), cancellationToken: cancellationToken).ConfigureAwait(false);
+                        await _targetContext.ExecuteAsync(_targetDbDef.GetSql(SqlKeys.UpsertEodPrice),
+                            flatFileLines.Select(f => new EodPrice(SourceName, f.Code, _processId)
+                            {
+                                Open = f.Open,
+                                High = f.High,
+                                Low = f.Low,
+                                Close = f.Close,
+                                Volume = f.Volume,
+                                DateEod = f.Date,
+                            }), cancellationToken: cancellationToken).ConfigureAwait(false);
                     }
                 }
             }
 
-            await _targetContext.ExecuteAsync(_targetContext.Sql.EodPrices.CopyPricesWithoutSplitsToAdjustedPrices,
+            await _targetContext.ExecuteAsync(_targetDbDef.GetSql(SqlKeys.CopyPricesWithoutSplitsToAdjustedPrices),
                 commandTimeout: 0, cancellationToken: cancellationToken).ConfigureAwait(false);
 
             Communicate?.Invoke(this, new CommunicationEventArgs($"Adjusting prices for tickers without splits.", nameof(PolygonMigrator)));
             var codesWithSplits = (await _targetContext.QueryAsync<string>(
-                _targetContext.Sql.EodPrices.FetchCodesWithSplits, new { Source },
+                _targetDbDef.GetSql(SqlKeys.FetchCodesWithSplits), new { Source },
                 cancellationToken: cancellationToken).ConfigureAwait(false)).ToArray();
 
+            var whereClauses = new string[] { "source = @Source", "code = @Code" };
             foreach (var code in codesWithSplits)
             {
                 Communicate?.Invoke(this, new CommunicationEventArgs($"Adjusting prices for {code}.", nameof(PolygonMigrator)));
-                var chartSql = @$"{_targetContext.Sql.EodPrices.Fetch}
-WHERE source = @Source AND code = @Code";
-                var splitSql = @$"{_targetContext.Sql.Splits.Fetch}
-WHERE source = @Source and code = @Code";
+                var chartSql = _targetDbDef.GetSql(SqlKeys.FetchEodPrices, whereClauses);
+                var splitSql = _targetDbDef.GetSql(SqlKeys.FetchSplits, whereClauses);
                 var splits = await _targetContext.QueryAsync<Split>(splitSql,
                     new { Source, code }, cancellationToken: cancellationToken).ConfigureAwait(false);
 
@@ -305,7 +305,7 @@ WHERE source = @Source and code = @Code";
 
                 var adjustedChart = SplitAdjustedPriceCalculator.Calculate(chart, splits).ToArray();
 
-                await _targetContext.ExecuteAsync(_targetContext.Sql.AdjustedEodPrices.Upsert,
+                await _targetContext.ExecuteAsync(_targetDbDef.GetSql(SqlKeys.UpsertAdjustedEodPrice),
                     adjustedChart, cancellationToken: cancellationToken).ConfigureAwait(false);
             }
         }
@@ -318,9 +318,9 @@ WHERE source = @Source and code = @Code";
 
         if (splitResponse.Results.Length > 0)
         {
-            return _targetContext.ExecuteAsync(_targetContext.Sql.Splits.Upsert,
+            return _targetContext.ExecuteAsync(_targetDbDef.GetSql(SqlKeys.UpsertSplit),
                 splitResponse.Results.Select(s => new Split(item.Source, item.SubCategory,
-                s.ExecutionDate, s.SplitFrom, s.SplitTo, DateTime.UtcNow.Ticks, DateTime.UtcNow.Ticks, _processId)));
+                s.ExecutionDate, s.SplitFrom, s.SplitTo, _processId)));
         }
 
         return Task.CompletedTask;
@@ -333,10 +333,10 @@ WHERE source = @Source and code = @Code";
 
         if (dividendResponse.Results.Length > 0)
         {
-            return _targetContext.ExecuteAsync(_targetContext.Sql.Dividends.Upsert,
+            return _targetContext.ExecuteAsync(_targetDbDef.GetSql(SqlKeys.UpsertDividend),
                 dividendResponse.Results.Select(d => new Dividend(item.Source, item.SubCategory,
                 d.Type, d.DeclarationDate, d.ExDividendDate, d.PayDate, d.RecordDate, d.Frequency,
-                d.CashAmount, DateTime.UtcNow.Ticks, DateTime.UtcNow.Ticks, item.ProcessId)));
+                d.CashAmount, item.ProcessId)));
         }
 
         return Task.CompletedTask;
@@ -349,7 +349,7 @@ WHERE source = @Source and code = @Code";
 
         if ("OK".Equals(detailResponse.Status, StringComparison.OrdinalIgnoreCase))
         {
-            return _targetContext.ExecuteAsync(_targetContext.Sql.Fundamentals.UpsertEntity,
+            return _targetContext.ExecuteAsync(_targetDbDef.GetSql(SqlKeys.UpsertEntity),
                 new
                 {
                     item.Source,
@@ -386,7 +386,7 @@ WHERE source = @Source and code = @Code";
 
             if (!string.IsNullOrWhiteSpace(fundamentals.General.Code))
             {
-                await _targetContext.ExecuteAsync(_targetContext.Sql.Fundamentals.UpsertEntity,
+                await _targetContext.ExecuteAsync(_targetDbDef.GetSql(SqlKeys.UpsertEntity),
                     new Entity(item.Source, item.SubCategory)
                     {
                         Country = fundamentals.General.CountryName ?? "USA",
@@ -427,7 +427,7 @@ WHERE source = @Source and code = @Code";
 
             if (!string.IsNullOrWhiteSpace(fundamentals.General.Code))
             {
-                await _targetContext.ExecuteAsync(_targetContext.Sql.Fundamentals.UpsertEntity,
+                await _targetContext.ExecuteAsync(_targetDbDef.GetSql(SqlKeys.UpsertEntity),
                     new Entity(item.Source, item.SubCategory)
                     {
                         Country = fundamentals.General.CountryName ?? "USA",

@@ -9,11 +9,6 @@
 
 	<ItemGroup>
 		<PackageReference Include="ClosedXML" Version="0.104.2" />
-		<PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="9.0.0" />
-		<PackageReference Include="Microsoft.Extensions.Logging" Version="9.0.0" />
-		<PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="9.0.0" />
-		<PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="9.0.0" />
-		<PackageReference Include="Npgsql" Version="9.0.2" />
 	</ItemGroup>
 
 	<ItemGroup>

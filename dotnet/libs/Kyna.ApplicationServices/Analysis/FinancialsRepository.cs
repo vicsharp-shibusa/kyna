@@ -1,22 +1,25 @@
 ﻿using Kyna.Analysis.Technical.Charts;
 using Kyna.Infrastructure.Database;
 using Kyna.Infrastructure.Database.DataAccessObjects;
+using System.Data;
 
 namespace Kyna.ApplicationServices.Analysis;
 
 public sealed class FinancialsRepository
 {
-    private readonly IDbContext _dbContext;
+    private readonly DbDef _dbDef;
+    private readonly IDbConnection _dbContext;
 
     public FinancialsRepository(DbDef finDef)
     {
-        _dbContext = DbContextFactory.Create(finDef);
+        _dbDef = finDef;
+        _dbContext = _dbDef.GetConnection();
     }
 
     public Task<IEnumerable<string>> GetAllAdjustedSymbolsForSourceAsync(string source)
     {
         return _dbContext.QueryAsync<string>(
-            _dbContext.Sql.AdjustedEodPrices.FetchAllAdjustedSymbolsForSource, new { source });
+            _dbDef.GetSql(SqlKeys.FetchAllAdjustedSymbolsForSource), new { source });
     }
 
     public async Task<IEnumerable<Ohlc>> GetOhlcForSourceAndCodeAsync(string source, string code,
@@ -27,7 +30,7 @@ public sealed class FinancialsRepository
 
         if (useAdjusted)
         {
-            var prices = (await _dbContext.QueryAsync<AdjustedEodPrice>(sql, 
+            var prices = (await _dbContext.QueryAsync<EodAdjustedPrice>(sql,
                 new { source, code, start, Finish = end }).ConfigureAwait(false))
                 .ToArray();
 
@@ -48,11 +51,26 @@ public sealed class FinancialsRepository
 
     private string BuildSql(bool useAdjusted, DateOnly? start = null, DateOnly? end = null)
     {
-        var whereClause = BuildDateRangeWhereClause(start, end);
+        List<string> whereClauses =
+        [
+            "source = @Source",
+            "code = @Code"
+        ];
+
+        if (start.HasValue)
+        {
+            whereClauses.Add("date_eod >= @Start");
+        }
+
+        if (end.HasValue)
+        {
+            whereClauses.Add("date_eod <= @Finish");
+        }
+
 
         return useAdjusted
-            ? $"{_dbContext.Sql.AdjustedEodPrices.Fetch} WHERE source = @Source AND code = @Code {whereClause}".Trim()
-            : $"{_dbContext.Sql.EodPrices.Fetch} WHERE source = @Source AND code = @Code {whereClause}".Trim();
+            ? $"{_dbDef.GetSql(SqlKeys.FetchAdjustedEodPrices, [.. whereClauses])}".Trim()
+            : $"{_dbDef.GetSql(SqlKeys.FetchEodPrices, [.. whereClauses])}".Trim();
     }
 
     private static string BuildDateRangeWhereClause(DateOnly? start = null, DateOnly? end = null)

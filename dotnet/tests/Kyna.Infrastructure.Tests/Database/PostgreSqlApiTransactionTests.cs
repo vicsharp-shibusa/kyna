@@ -1,33 +1,17 @@
 ﻿using Kyna.Infrastructure.Database;
 using Kyna.Infrastructure.Database.DataAccessObjects;
-using Microsoft.Extensions.Configuration;
+using System.Data;
 using System.Diagnostics;
 
 namespace Kyna.Infrastructure.Tests.Database;
 
-public class PostgreSqlApiTransactionTests
+public class PostgreSqlApiTransactionTests : IClassFixture<PostgreSqlTestFixture>
 {
-    private PostgreSqlContext? _context;
-    private const string DbName = "Imports";
+    private readonly PostgreSqlTestFixture _fixture;
 
-    public PostgreSqlApiTransactionTests()
+    public PostgreSqlApiTransactionTests(PostgreSqlTestFixture fixture)
     {
-        Configure();
-        Debug.Assert(_context != null);
-    }
-
-    private void Configure()
-    {
-        IConfigurationBuilder builder = new ConfigurationBuilder()
-            .SetBasePath(AppDomain.CurrentDomain.BaseDirectory)
-            .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
-            .AddJsonFile("secrets.json", optional: false, reloadOnChange: true);
-
-        var configuration = builder.Build();
-
-        Debug.Assert(configuration != null);
-
-        _context = new PostgreSqlContext(new DbDef(DbName, DatabaseEngine.PostgreSql, configuration.GetConnectionString(DbName)!));
+        _fixture = fixture;
     }
 
     [Fact]
@@ -35,13 +19,16 @@ public class PostgreSqlApiTransactionTests
     {
         var transactionDao = CreateApiTransaction(Guid.NewGuid().ToString());
 
-        _context!.Execute(_context.Sql.ApiTransactions.Insert, transactionDao);
+        using var context = _fixture.Imports.GetConnection();
+        Debug.Assert(context != null);
 
-        string sql = $"{_context.Sql.ApiTransactions.Fetch} WHERE sub_category = @SubCategory";
+        context.Execute(_fixture.Imports.GetSql(SqlKeys.InsertApiTransaction), transactionDao);
 
-        var actual = _context.QueryFirstOrDefault<ApiTransaction>(
-            sql, new { transactionDao.SubCategory });
+        var sql = _fixture.Imports.GetSql(SqlKeys.FetchApiTransaction, "sub_category = @SubCategory");
 
+        var actual = context.QueryFirstOrDefault<ApiTransaction>(sql, new { transactionDao.SubCategory });
+
+        Assert.NotNull(actual);
         Assert.Equal(transactionDao, actual);
     }
 
@@ -60,17 +47,21 @@ public class PostgreSqlApiTransactionTests
             apiTransactions[i] = CreateApiTransaction("Two");
         }
 
-        _context!.Execute(_context.Sql.ApiTransactions.Insert, apiTransactions);
+        using var context = _fixture.Imports.GetConnection();
+        Debug.Assert(context != null);
+
+        context.Execute(_fixture.Imports.GetSql(SqlKeys.InsertApiTransaction), apiTransactions);
 
         string sql = "SELECT MAX(id) FROM api_transactions where sub_category = @Sub";
 
-        int maxOneId = _context.QueryFirstOrDefault<int>(sql, new { Sub = "One" });
-        int maxTwoId = _context.QueryFirstOrDefault<int>(sql, new { Sub = "Two" });
+        int maxOneId = context.QueryFirstOrDefault<int>(sql, new { Sub = "One" });
+        int maxTwoId = context.QueryFirstOrDefault<int>(sql, new { Sub = "Two" });
 
         string[] categories = ["Price Action"];
 
-        var itemsToMigrate = _context.Query<ApiTransactionForMigration>(
-                $"{_context.Sql.ApiTransactions.FetchForMigration} WHERE source = @Source AND category {_context.Sql.GetInCollectionSql("Categories")}",
+        var itemsToMigrate = context.Query<ApiTransactionForMigration>(
+            _fixture.Imports.GetSql(SqlKeys.FetchApiTransactionsForMigration, "source = @Source",
+            $"category {SqlFactory.GetSqlSyntaxForInCollection("Categories")}"),
                 new { Source = "Test", categories });
 
         Assert.NotEmpty(itemsToMigrate);

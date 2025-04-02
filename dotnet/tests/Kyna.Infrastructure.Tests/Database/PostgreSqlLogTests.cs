@@ -1,33 +1,14 @@
 ﻿using Kyna.Infrastructure.Database;
-using Microsoft.Extensions.Configuration;
-using System.Diagnostics;
-
+using Kyna.Infrastructure.Database.DataAccessObjects;
 namespace Kyna.Infrastructure.Tests.Database;
 
-public class PostgreSqlLogTests
+public class PostgreSqlLogTests : IClassFixture<PostgreSqlTestFixture>
 {
-    private const string DbName = "Logs";
+    private readonly PostgreSqlTestFixture _fixture;
 
-    private PostgreSqlContext? _context;
-
-    public PostgreSqlLogTests()
+    public PostgreSqlLogTests(PostgreSqlTestFixture fixture)
     {
-        Configure();
-        Debug.Assert(_context != null);
-    }
-
-    private void Configure()
-    {
-        IConfigurationBuilder builder = new ConfigurationBuilder()
-            .SetBasePath(AppDomain.CurrentDomain.BaseDirectory)
-            .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
-            .AddJsonFile("secrets.json", optional: false, reloadOnChange: true);
-
-        var configuration = builder.Build();
-
-        Debug.Assert(configuration != null);
-
-        _context = new PostgreSqlContext(new DbDef(DbName, DatabaseEngine.PostgreSql, configuration.GetConnectionString(DbName)!));
+        _fixture = fixture;
     }
 
     [Fact]
@@ -35,11 +16,15 @@ public class PostgreSqlLogTests
     {
         var logDao = CreateLog();
 
-        _context!.Execute(_context.Sql.Logs.Insert, logDao);
+        using var context = _fixture.Logs.GetConnection();
+        Assert.NotNull(context);
 
-        string sql = $"{_context.Sql.Logs.Fetch} WHERE message = @Message";
+        context!.Execute(_fixture.Logs.GetSql(SqlKeys.InsertLog), logDao);
 
-        var actual = _context.QueryFirstOrDefault<Infrastructure.Database.DataAccessObjects.Log>(sql, new { logDao.Message });
+        var sql = _fixture.Logs.GetSql(SqlKeys.FetchLogs, "message = @Message");
+
+        var actual = context.QueryFirstOrDefault<Log>(sql,
+            new { logDao.Message });
 
         Assert.NotNull(actual);
         Assert.Equal(logDao, actual);
@@ -50,11 +35,14 @@ public class PostgreSqlLogTests
     {
         var logDao = CreateLog();
 
-        await _context!.ExecuteAsync(_context.Sql.Logs.Insert, logDao);
+        using var context = _fixture.Logs.GetConnection();
+        Assert.NotNull(context);
 
-        string sql = $"{_context.Sql.Logs.Fetch} WHERE message = @Message";
+        await context!.ExecuteAsync(_fixture.Logs.GetSql(SqlKeys.InsertLog), logDao);
 
-        var actual = await _context.QueryFirstOrDefaultAsync<Infrastructure.Database.DataAccessObjects.Log>(sql, new { logDao.Message });
+        var sql = _fixture.Logs.GetSql(SqlKeys.FetchLogs, "message = @Message");
+
+        var actual = await context.QueryFirstOrDefaultAsync<Log>(sql, new { logDao.Message });
 
         Assert.NotNull(actual);
         Assert.Equal(logDao, actual);
@@ -66,16 +54,20 @@ public class PostgreSqlLogTests
         var logDao1 = CreateLog();
         var logDao2 = CreateLog();
 
-        var t = _context!.GetOpenConnection().BeginTransaction();
+        using var context = _fixture.Logs.GetConnection();
+        Assert.NotNull(context);
 
-        _context.Execute(_context.Sql.Logs.Insert, logDao1, t);
-        _context.Execute(_context.Sql.Logs.Insert, logDao2, t);
+        context.EnsureOpenConnection();
+        var t = context.BeginTransaction();
+
+        context.Execute(_fixture.Logs.GetSql(SqlKeys.InsertLog), logDao1, transaction: t);
+        context.Execute(_fixture.Logs.GetSql(SqlKeys.InsertLog), logDao2, transaction: t);
 
         t.Commit();
         t.Connection?.Close();
 
-        var actuals = _context.Query<Infrastructure.Database.DataAccessObjects.Log>(
-            _context.Sql.Logs.Fetch);
+        var actuals = context.Query<Log>(
+            _fixture.Logs.GetSql(SqlKeys.FetchLogs));
 
         var match1 = actuals.FirstOrDefault(a => a.ProcessId.Equals(logDao1.ProcessId));
         var match2 = actuals.FirstOrDefault(a => a.ProcessId.Equals(logDao2.ProcessId));
@@ -90,16 +82,20 @@ public class PostgreSqlLogTests
         var logDao1 = CreateLog();
         var logDao2 = CreateLog();
 
-        var t = (await _context!.GetOpenConnectionAsync()).BeginTransaction();
+        using var context = _fixture.Logs.GetConnection();
+        Assert.NotNull(context);
 
-        await _context.ExecuteAsync(_context.Sql.Logs.Insert, logDao1, t);
-        await _context.ExecuteAsync(_context.Sql.Logs.Insert, logDao2, t);
+        context.EnsureOpenConnection();
+        using var t = context.BeginTransaction();
+
+        await context.ExecuteAsync(_fixture.Logs.GetSql(SqlKeys.InsertLog), logDao1, transaction: t);
+        await context.ExecuteAsync(_fixture.Logs.GetSql(SqlKeys.InsertLog), logDao2, transaction: t);
 
         t.Commit();
         t.Connection?.Close();
 
-        var actuals = await _context.QueryAsync<Infrastructure.Database.DataAccessObjects.Log>(
-            _context.Sql.Logs.Fetch);
+        var actuals = await context.QueryAsync<Log>(
+            _fixture.Logs.GetSql(SqlKeys.FetchLogs));
 
         var match1 = actuals.FirstOrDefault(a => a.ProcessId.Equals(logDao1.ProcessId));
         var match2 = actuals.FirstOrDefault(a => a.ProcessId.Equals(logDao2.ProcessId));
@@ -113,11 +109,15 @@ public class PostgreSqlLogTests
     {
         var eventDao = CreateAppEvent();
 
-        _context!.Execute(_context.Sql.AppEvents.Insert, eventDao);
+        using var context = _fixture.Logs.GetConnection();
+        Assert.NotNull(context);
 
-        string sql = $"{_context.Sql.AppEvents.Fetch} WHERE event_name = @EventName";
+        context!.Execute(_fixture.Logs.GetSql(SqlKeys.InsertAppEvent), eventDao);
 
-        var actual = _context.QueryFirstOrDefault<Infrastructure.Database.DataAccessObjects.AppEvent>(sql, new { eventDao.EventName });
+        var sql = _fixture.Logs.GetSql(SqlKeys.FetchAppEvents, "event_name = @EventName");
+
+        var actual = context.QueryFirstOrDefault<AppEvent>(sql,
+            new { eventDao.EventName });
 
         Assert.NotNull(actual);
         Assert.Equal(eventDao, actual);
@@ -128,11 +128,15 @@ public class PostgreSqlLogTests
     {
         var eventDao = CreateAppEvent();
 
-        await _context!.ExecuteAsync(_context.Sql.AppEvents.Insert, eventDao);
+        using var context = _fixture.Logs.GetConnection();
+        Assert.NotNull(context);
 
-        string sql = $"{_context.Sql.AppEvents.Fetch} WHERE event_name = @EventName";
+        await context!.ExecuteAsync(_fixture.Logs.GetSql(SqlKeys.InsertAppEvent), eventDao);
 
-        var actual = await _context.QueryFirstOrDefaultAsync<Infrastructure.Database.DataAccessObjects.AppEvent>(sql, new { eventDao.EventName });
+        var sql = _fixture.Logs.GetSql(SqlKeys.FetchAppEvents, "event_name = @EventName");
+
+        var actual = await context.QueryFirstOrDefaultAsync<AppEvent>(sql,
+            new { eventDao.EventName });
 
         Assert.NotNull(actual);
         Assert.Equal(eventDao, actual);
@@ -144,16 +148,22 @@ public class PostgreSqlLogTests
         var eventDao1 = CreateAppEvent();
         var eventDao2 = CreateAppEvent();
 
-        var t = _context!.GetOpenConnection().BeginTransaction();
+        using var context = _fixture.Logs.GetConnection();
+        Assert.NotNull(context);
 
-        _context.Execute(_context.Sql.AppEvents.Insert, eventDao1, t);
-        _context.Execute(_context.Sql.AppEvents.Insert, eventDao2, t);
+        context.EnsureOpenConnection();
+
+        context.EnsureOpenConnection();
+        var t = context.BeginTransaction();
+
+        context.Execute(_fixture.Logs.GetSql(SqlKeys.InsertAppEvent), eventDao1, transaction: t);
+        context.Execute(_fixture.Logs.GetSql(SqlKeys.InsertAppEvent), eventDao2, transaction: t);
 
         t.Commit();
         t.Connection?.Close();
 
-        var actuals = _context.Query<Infrastructure.Database.DataAccessObjects.AppEvent>(
-            _context.Sql.AppEvents.Fetch, new { eventDao1.EventName });
+        var actuals = context.Query<AppEvent>(
+            _fixture.Logs.GetSql(SqlKeys.FetchAppEvents), new { eventDao1.EventName });
 
         var match1 = actuals.FirstOrDefault(a => a.ProcessId.Equals(eventDao1.ProcessId));
         var match2 = actuals.FirstOrDefault(a => a.ProcessId.Equals(eventDao2.ProcessId));
@@ -168,16 +178,22 @@ public class PostgreSqlLogTests
         var eventDao1 = CreateAppEvent();
         var eventDao2 = CreateAppEvent();
 
-        var t = (await _context!.GetOpenConnectionAsync()).BeginTransaction();
+        using var context = _fixture.Logs.GetConnection();
+        Assert.NotNull(context);
 
-        await _context.ExecuteAsync(_context.Sql.AppEvents.Insert, eventDao1, t);
-        await _context.ExecuteAsync(_context.Sql.AppEvents.Insert, eventDao2, t);
+        context.EnsureOpenConnection();
+
+        context.EnsureOpenConnection();
+        var t = context.BeginTransaction();
+
+        context.Execute(_fixture.Logs.GetSql(SqlKeys.InsertAppEvent), eventDao1, transaction: t);
+        context.Execute(_fixture.Logs.GetSql(SqlKeys.InsertAppEvent), eventDao2, transaction: t);
 
         t.Commit();
         t.Connection?.Close();
 
-        var actuals = await _context.QueryAsync<Infrastructure.Database.DataAccessObjects.AppEvent>(
-            _context.Sql.AppEvents.Fetch, new { eventDao1.EventName });
+        var actuals = await context.QueryAsync<AppEvent>(
+            _fixture.Logs.GetSql(SqlKeys.FetchAppEvents), new { eventDao1.EventName });
 
         var match1 = actuals.FirstOrDefault(a => a.ProcessId.Equals(eventDao1.ProcessId));
         var match2 = actuals.FirstOrDefault(a => a.ProcessId.Equals(eventDao2.ProcessId));
@@ -186,9 +202,9 @@ public class PostgreSqlLogTests
         Assert.Equal(eventDao2, match2);
     }
 
-    private static Infrastructure.Database.DataAccessObjects.Log CreateLog()
+    private static Log CreateLog()
     {
-        return new Infrastructure.Database.DataAccessObjects.Log()
+        return new Log()
         {
             Exception = "exception",
             LogLevel = "Debug",
@@ -198,9 +214,9 @@ public class PostgreSqlLogTests
         };
     }
 
-    private static Infrastructure.Database.DataAccessObjects.AppEvent CreateAppEvent()
+    private static AppEvent CreateAppEvent()
     {
-        return new Infrastructure.Database.DataAccessObjects.AppEvent()
+        return new AppEvent()
         {
             ProcessId = Guid.NewGuid(),
             EventId = 1010,

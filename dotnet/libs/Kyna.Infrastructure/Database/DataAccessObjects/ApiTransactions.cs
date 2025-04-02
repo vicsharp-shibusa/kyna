@@ -1,9 +1,10 @@
 ﻿namespace Kyna.Infrastructure.Database.DataAccessObjects;
 
-internal sealed record class ApiTransaction
+internal sealed record class ApiTransaction : AuditBase
 {
-    public long TicksUtc { get; init; } = DateTime.UtcNow.Ticks;
-    public DateTime TimestampUtc => new(TicksUtc, DateTimeKind.Utc);
+    public ApiTransaction() : base() { }
+    public ApiTransaction(Guid? processId = null) : base(processId) { }
+
     public string? Source { get; init; }
     public string? Category { get; init; }
     public string? SubCategory { get; init; }
@@ -14,7 +15,6 @@ internal sealed record class ApiTransaction
     public string? ResponseHeaders { get; init; }
     public string? ResponseStatusCode { get; init; }
     public string? ResponseBody { get; init; }
-    public Guid? ProcessId { get; init; }
 }
 
 internal sealed record class ApiTransactionForMigration
