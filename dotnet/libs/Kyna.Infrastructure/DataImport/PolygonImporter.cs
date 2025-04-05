@@ -9,7 +9,6 @@ using Kyna.Infrastructure.Logging;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Reflection;
-using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
@@ -177,13 +176,18 @@ internal sealed class PolygonImporter : HttpImporterBase, IExternalDataImporter
                         var sql = $@"{_dbDef.Sql.GetFormattedSqlWithWhereClause(SqlKeys.FetchRemoteFiles,
                             LogicalOperator.And, "source = @Source", "provider = @Provider")}";
 
-                        var remoteFiles = (await _connection.QueryAsync<RemoteFile>(sql,
-                            new { Source = SourceName, Provider = "AWS" },
-                            cancellationToken: cancellationToken).ConfigureAwait(false)).ToArray();
+                        RemoteFile[]? remoteFiles;
+                        using (var conn = _dbDef.GetConnection())
+                        {
+                            remoteFiles = (await conn.QueryAsync<RemoteFile>(sql,
+                                new { Source = SourceName, Provider = "AWS" },
+                                cancellationToken: cancellationToken).ConfigureAwait(false)).ToArray();
+                            conn.Close();
+                        }
 
                         foreach (var obj in s3Objects)
                         {
-                            var rfMatch = remoteFiles.FirstOrDefault(r => r.Name != null &&
+                            var rfMatch = remoteFiles?.FirstOrDefault(r => r.Name != null &&
                                 r.HashCode != null &&
                                 r.Size.HasValue &&
                                 r.Name.Equals(obj.Key) &&
@@ -219,7 +223,8 @@ internal sealed class PolygonImporter : HttpImporterBase, IExternalDataImporter
                                 Communicate?.Invoke(this, new CommunicationEventArgs(
                                     $"{targetFileName} downloaded successfully.", nameof(PolygonImporter)));
 
-                                await _connection.ExecuteAsync(_dbDef.GetSql(SqlKeys.UpsertRemoteFile),
+                                using var conn = _dbDef.GetConnection();
+                                await conn.ExecuteAsync(_dbDef.GetSql(SqlKeys.UpsertRemoteFile),
                                     new RemoteFile()
                                     {
                                         Source = SourceName,
@@ -231,6 +236,7 @@ internal sealed class PolygonImporter : HttpImporterBase, IExternalDataImporter
                                         Size = obj.Size,
                                         UpdateDate = DateOnly.FromDateTime(obj.LastModified)
                                     }, cancellationToken: cancellationToken).ConfigureAwait(false);
+                                conn.Close();
                             }
                         }
                     }
@@ -294,11 +300,17 @@ internal sealed class PolygonImporter : HttpImporterBase, IExternalDataImporter
                     }
                 }
 
-                var t = _connection.ExecuteAsync(_dbDef.GetSql(SqlKeys.DeleteApiTransactionsForSource), new { Source },
-                    cancellationToken: cancellationToken);
-                await _connection.ExecuteAsync(_dbDef.GetSql(SqlKeys.DeleteRemoteFilesForSource),
+                using var conn1 = _dbDef.GetConnection();
+                var t = conn1.ExecuteAsync(_dbDef.GetSql(SqlKeys.DeleteApiTransactionsForSource),
                     new { Source }, cancellationToken: cancellationToken);
+
+                using var conn2 = _dbDef.GetConnection();
+                await conn2.ExecuteAsync(_dbDef.GetSql(SqlKeys.DeleteRemoteFilesForSource),
+                    new { Source }, cancellationToken: cancellationToken);
+
                 await t;
+                conn1.Close();
+                conn2.Close();
             }
         }
     }
@@ -653,27 +665,7 @@ internal sealed class PolygonImporter : HttpImporterBase, IExternalDataImporter
         }
     }
 
-    //private string GetTokenAndFormat(string format = "json") => $"{GetToken()}&{GetFormat(format)}";
-
     private string GetToken() => $"apikey={_apiKey}";
-
-    //private static string GetFormat(string format = "json") => $"fmt={format}";
-
-    //private static string BuildFromAndTo(DateOnly[] dates)
-    //{
-    //    StringBuilder sb = new();
-
-    //    if (dates.Length > 0)
-    //    {
-    //        sb.Append($"from={dates[0]:yyyy-MM-dd}");
-    //    }
-    //    if (dates.Length > 1)
-    //    {
-    //        sb.Append($"&to={dates[1]:yyyy-MM-dd}");
-    //    }
-
-    //    return sb.ToString();
-    //}
 
     private string BuildSplitsUri() =>
         $"{Constants.Uris.Base}/{Constants.Uris.Splits}?{GetToken()}";

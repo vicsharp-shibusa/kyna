@@ -86,4 +86,5 @@ public static class SqlKeys
     public const string FetchEntity = nameof(FetchEntity);
     public const string DeleteEntityForSourceAndCode = nameof(DeleteEntityForSourceAndCode);
 
+    public const string DeleteLeadingPriceGaps = nameof(DeleteLeadingPriceGaps);
 }

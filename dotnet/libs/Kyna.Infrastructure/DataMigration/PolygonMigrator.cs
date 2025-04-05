@@ -163,7 +163,7 @@ internal sealed class PolygonMigrator(DbDef sourceDef, DbDef targetDef,
         return timer.Elapsed;
     }
 
-    public Task<string> GetInfoAsync()
+    public string GetInfo()
     {
         StringBuilder result = new();
 
@@ -172,19 +172,18 @@ internal sealed class PolygonMigrator(DbDef sourceDef, DbDef targetDef,
         result.AppendLine($"Source Deletion Mode : {_configuration.SourceDeletionMode.GetEnumDescription()}");
         result.AppendLine($"Max Parallelization  : {_configuration.MaxParallelization}");
 
-        return Task.FromResult(result.ToString());
+        return result.ToString();
     }
 
     private async Task MigrateItemAsync(ApiTransactionForMigration item, CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
 
-        var responseBody = _sourceContext.QueryFirstOrDefault<string>(
+        var responseBody = await _sourceContext.QueryFirstOrDefaultAsync<string>(
             _sourceDbDef.GetSql(SqlKeys.FetchApiResponseBodyForId),
             new { item.Id });
 
-        if (!string.IsNullOrWhiteSpace(responseBody) &&
-            responseBody != "[]" && responseBody != "{}")
+        if (!string.IsNullOrWhiteSpace(responseBody) && responseBody != "[]" && responseBody != "{}")
         {
             if (item.Category.Equals(PolygonImporter.Constants.Actions.Splits))
             {
@@ -227,87 +226,100 @@ internal sealed class PolygonMigrator(DbDef sourceDef, DbDef targetDef,
     {
         cancellationToken.ThrowIfCancellationRequested();
 
-        if (!string.IsNullOrWhiteSpace(_configuration.ImportFileLocation))
+        if (string.IsNullOrWhiteSpace(_configuration.ImportFileLocation))
+            return;
+
+        DirectoryInfo importDirectory = new(_configuration.ImportFileLocation);
+
+        if (!importDirectory.Exists)
         {
-            DirectoryInfo importDirectory = new(_configuration.ImportFileLocation);
+            Communicate?.Invoke(this, new CommunicationEventArgs($"Directory not found: {importDirectory.FullName}.", nameof(PolygonMigrator)));
+            return;
+        }
 
-            if (!importDirectory.Exists)
+        Communicate?.Invoke(this, new CommunicationEventArgs("Migrating flat files.", nameof(PolygonMigrator)));
+
+        var zippedFiles = importDirectory.GetFiles("*.gz", SearchOption.TopDirectoryOnly);
+
+        foreach (var file in zippedFiles)
+        {
+            var newFileName = file.FullName[0..^3]; // removes the ".gz"
+            if (!File.Exists(newFileName))
             {
-                Communicate?.Invoke(this, new CommunicationEventArgs("No files found to import.", nameof(PolygonMigrator)));
-                return;
+                Communicate?.Invoke(this, new CommunicationEventArgs($"Unzipping {file.FullName}", nameof(PolygonMigrator)));
+                using var fs = file.OpenRead();
+                using var newFile = File.Create(newFileName);
+                using GZipStream zs = new(fs, CompressionMode.Decompress);
+                zs.CopyTo(newFile);
             }
+        }
+        zippedFiles = null;
 
-            var zippedFiles = importDirectory.GetFiles("*.gz", SearchOption.AllDirectories);
+        var csvFiles = importDirectory.GetFiles("*.csv", SearchOption.TopDirectoryOnly);
 
-            if (zippedFiles.Length > 0)
+        foreach (var file in csvFiles)
+        {
+            Communicate?.Invoke(this, new CommunicationEventArgs($"Processing {file.FullName}", nameof(PolygonMigrator)));
+            var lines = File.ReadAllLines(file.FullName);
+
+            if (lines.Length > 1)
             {
-                foreach (var file in zippedFiles)
+                DataProviders.Polygon.Models.FlatFile[] flatFileLines = new DataProviders.Polygon.Models.FlatFile[lines.Length - 1];
+                for (int i = 1; i < lines.Length; i++)
                 {
-                    Communicate?.Invoke(this, new CommunicationEventArgs(file.FullName, nameof(PolygonMigrator)));
-                    var newFileName = file.FullName[0..^3];
-                    using var fs = file.OpenRead();
-                    using var newFile = File.Create(newFileName);
-                    using GZipStream zs = new(fs, CompressionMode.Decompress);
-                    Communicate?.Invoke(this, new CommunicationEventArgs(newFileName, nameof(PolygonMigrator)));
-                    zs.CopyTo(newFile);
+                    flatFileLines[i - 1] = new DataProviders.Polygon.Models.FlatFile(lines[i]);
                 }
-            }
-
-            var csvFiles = importDirectory.GetFiles("*.csv", SearchOption.AllDirectories);
-
-            if (csvFiles.Length > 0)
-            {
-                foreach (var file in csvFiles)
-                {
-                    Communicate?.Invoke(this, new CommunicationEventArgs(file.FullName, nameof(PolygonMigrator)));
-                    var lines = File.ReadAllLines(file.FullName);
-
-                    if (lines.Length > 1)
+                await _targetContext.ExecuteAsync(_targetDbDef.GetSql(SqlKeys.UpsertEodPrice),
+                    flatFileLines.Select(f => new EodPrice(SourceName, f.Code, _processId)
                     {
-                        DataProviders.Polygon.Models.FlatFile[] flatFileLines = new DataProviders.Polygon.Models.FlatFile[lines.Length - 1];
-                        for (int i = 1; i < lines.Length; i++)
-                        {
-                            flatFileLines[i - 1] = new DataProviders.Polygon.Models.FlatFile(lines[i]);
-                        }
-                        await _targetContext.ExecuteAsync(_targetDbDef.GetSql(SqlKeys.UpsertEodPrice),
-                            flatFileLines.Select(f => new EodPrice(SourceName, f.Code, _processId)
-                            {
-                                Open = f.Open,
-                                High = f.High,
-                                Low = f.Low,
-                                Close = f.Close,
-                                Volume = f.Volume,
-                                DateEod = f.Date,
-                            }), cancellationToken: cancellationToken).ConfigureAwait(false);
-                    }
-                }
+                        Open = f.Open,
+                        High = f.High,
+                        Low = f.Low,
+                        Close = f.Close,
+                        Volume = f.Volume,
+                        DateEod = f.Date,
+                    }), cancellationToken: cancellationToken).ConfigureAwait(false);
             }
+        }
 
-            await _targetContext.ExecuteAsync(_targetDbDef.GetSql(SqlKeys.CopyPricesWithoutSplitsToAdjustedPrices),
-                commandTimeout: 0, cancellationToken: cancellationToken).ConfigureAwait(false);
+        csvFiles = null;
 
-            Communicate?.Invoke(this, new CommunicationEventArgs($"Adjusting prices for tickers without splits.", nameof(PolygonMigrator)));
-            var codesWithSplits = (await _targetContext.QueryAsync<string>(
-                _targetDbDef.GetSql(SqlKeys.FetchCodesWithSplits), new { Source },
-                cancellationToken: cancellationToken).ConfigureAwait(false)).ToArray();
+        /*
+         * For all the tickers that definitely do not have split data, just move them along.
+         */
+        Communicate?.Invoke(this, new CommunicationEventArgs($"Migrating prices for tickers without splits.", nameof(PolygonMigrator)));
+        await _targetContext.ExecuteAsync(_targetDbDef.GetSql(SqlKeys.CopyPricesWithoutSplitsToAdjustedPrices),
+            commandTimeout: 0, cancellationToken: cancellationToken).ConfigureAwait(false);
 
-            var whereClauses = new string[] { "source = @Source", "code = @Code" };
-            foreach (var code in codesWithSplits)
-            {
-                Communicate?.Invoke(this, new CommunicationEventArgs($"Adjusting prices for {code}.", nameof(PolygonMigrator)));
-                var chartSql = _targetDbDef.GetSql(SqlKeys.FetchEodPrices, whereClauses);
-                var splitSql = _targetDbDef.GetSql(SqlKeys.FetchSplits, whereClauses);
-                var splits = await _targetContext.QueryAsync<Split>(splitSql,
-                    new { Source, code }, cancellationToken: cancellationToken).ConfigureAwait(false);
+        /*
+         * Some of the inbound data has big gaps in it. Not sure why; don't care. Need consecutive data points.
+         * So, remove all the data before the last big price gap (currently set at '30 days') for any given ticker.
+         */
+        Communicate?.Invoke(this, new CommunicationEventArgs($"Deleting leading price gaps.", nameof(PolygonMigrator)));
+        await _targetContext.ExecuteAsync(_targetDbDef.GetSql(SqlKeys.DeleteLeadingPriceGaps),
+            new { _configuration.Source, ProcessId = _processId },
+            commandTimeout: 0, cancellationToken: cancellationToken).ConfigureAwait(false);
 
-                var chart = await _targetContext.QueryAsync<EodPrice>(chartSql,
-                    new { Source, code }, cancellationToken: cancellationToken).ConfigureAwait(false);
+        var codesWithSplits = (await _targetContext.QueryAsync<string>(
+            _targetDbDef.GetSql(SqlKeys.FetchCodesWithSplits), new { Source },
+            cancellationToken: cancellationToken).ConfigureAwait(false)).ToArray();
 
-                var adjustedChart = SplitAdjustedPriceCalculator.Calculate(chart, splits).ToArray();
+        var whereClauses = new string[] { "source = @Source", "code = @Code" };
+        foreach (var code in codesWithSplits)
+        {
+            Communicate?.Invoke(this, new CommunicationEventArgs($"Adjusting prices for {code}.", nameof(PolygonMigrator)));
+            var chartSql = _targetDbDef.GetSql(SqlKeys.FetchEodPrices, whereClauses);
+            var splitSql = _targetDbDef.GetSql(SqlKeys.FetchSplits, whereClauses);
+            var splits = await _targetContext.QueryAsync<Split>(splitSql,
+                new { Source, code }, cancellationToken: cancellationToken).ConfigureAwait(false);
 
-                await _targetContext.ExecuteAsync(_targetDbDef.GetSql(SqlKeys.UpsertAdjustedEodPrice),
-                    adjustedChart, cancellationToken: cancellationToken).ConfigureAwait(false);
-            }
+            var chart = await _targetContext.QueryAsync<EodPrice>(chartSql,
+                new { Source, code }, cancellationToken: cancellationToken).ConfigureAwait(false);
+
+            var adjustedChart = SplitAdjustedPriceCalculator.Calculate(chart, splits).ToArray();
+
+            await _targetContext.ExecuteAsync(_targetDbDef.GetSql(SqlKeys.UpsertAdjustedEodPrice),
+                adjustedChart, cancellationToken: cancellationToken).ConfigureAwait(false);
         }
     }
 
@@ -369,8 +381,8 @@ internal sealed class PolygonMigrator(DbDef sourceDef, DbDef targetDef,
                     GicGroup = (string?)null,
                     GicIndustry = (string?)null,
                     GicSubIndustry = (string?)null,
-                    CreatedTicksUtc = DateTime.UtcNow.Ticks,
-                    UpdatedTicksUtc = DateTime.UtcNow.Ticks
+                    CreatedAt = DateTimeOffset.Now,
+                    UpdatedAt = DateTimeOffset.Now
                 });
         }
         return Task.CompletedTask;

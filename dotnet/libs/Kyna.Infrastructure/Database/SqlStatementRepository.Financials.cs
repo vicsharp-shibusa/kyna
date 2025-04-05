@@ -55,8 +55,11 @@ SELECT
     P.source, P.code, P.date_eod, P.open, P.high, P.low, P.close, P.volume, 1,
     CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, P.process_id
 FROM public.eod_prices P
-LEFT JOIN public.splits S ON P.source = S.source AND P.code = S.code
-WHERE S.code IS NULL
+WHERE NOT EXISTS (
+    SELECT 1
+    FROM public.splits S
+    WHERE S.source = P.source AND S.code = P.code
+)
 ON CONFLICT (source, code, date_eod) DO UPDATE
 SET 
     open = EXCLUDED.open,
@@ -65,7 +68,7 @@ SET
     close = EXCLUDED.close,
     volume = EXCLUDED.volume,
     factor = 1,
-    updated_at = CURRENT_TIMESTAMP");
+    updated_at = CURRENT_TIMESTAMP;");
 
         // Fetch distinct codes without splits
         yield return new KeyValuePair<SqlRepoKey, string>(

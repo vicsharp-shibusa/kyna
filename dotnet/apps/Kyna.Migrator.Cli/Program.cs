@@ -28,7 +28,7 @@ Config? config = null;
 
 try
 {
-    HandleArguments(args);
+    ParseArguments(args);
 
     Debug.Assert(config != null);
 
@@ -45,7 +45,7 @@ try
 
         if (config.ShowInfo)
         {
-            Console.WriteLine(await migrator.GetInfoAsync());
+            Console.WriteLine(migrator.GetInfo());
         }
         else
         {
@@ -162,7 +162,7 @@ void ShowHelp()
     Communicate(CliHelper.FormatArguments(args), true);
 }
 
-void HandleArguments(string[] args)
+void ParseArguments(string[] args)
 {
     config = new Config(Assembly.GetExecutingAssembly().GetName().Name ?? nameof(Program), "v1",
         "CLI for migrating from the imports database to the financials database.");

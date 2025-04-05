@@ -40,7 +40,7 @@ internal sealed class YahooMigrator(DbDef sourceDef, DbDef targetDef,
 
     private readonly MigrationConfiguration _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
 
-    public Task<string> GetInfoAsync()
+    public string GetInfo()
     {
         StringBuilder result = new();
 
@@ -64,7 +64,7 @@ internal sealed class YahooMigrator(DbDef sourceDef, DbDef targetDef,
             result.AppendLine($"The input path, '{dirInfo.FullName}', does not exist.");
         }
 
-        return Task.FromResult(result.ToString());
+        return result.ToString();
     }
 
     public Task<TimeSpan> MigrateAsync(CancellationToken cancellationToken = default)

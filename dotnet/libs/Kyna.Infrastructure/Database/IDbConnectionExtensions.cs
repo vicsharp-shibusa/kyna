@@ -10,7 +10,7 @@ namespace Kyna.Infrastructure.Database;
 /// </summary>
 public static class IDbConnectionExtensions
 {
-    private const int DefaultTimeoutSeconds = 5;
+    private const int DefaultTimeoutSeconds = 30;
 
     /// <summary>
     /// Opens the connection if necessary and possible.
@@ -25,6 +25,9 @@ public static class IDbConnectionExtensions
 
         switch (connection.State)
         {
+            case ConnectionState.Connecting:
+                Task.Delay(10).GetAwaiter().GetResult();
+                break;
             case ConnectionState.Open:
                 break;
             case ConnectionState.Closed:
@@ -52,6 +55,22 @@ public static class IDbConnectionExtensions
         ArgumentNullException.ThrowIfNull(connection);
         cancellationToken.ThrowIfCancellationRequested();
 
+        if (connection.State == ConnectionState.Open)
+            return;
+
+        int count = 0;
+        while (connection.State == ConnectionState.Connecting)
+        {
+            count++;
+            await Task.Delay(10, cancellationToken).ConfigureAwait(false);
+            if (connection.State is not ConnectionState.Open and not ConnectionState.Connecting)
+            {
+                throw new InvalidOperationException($"Connection failed to open from Connecting state: {connection.State}");
+            }
+            if (count > 10)
+                throw new InvalidOperationException("Unreasonable wait time waiting for a connecting connection.");
+        }
+
         switch (connection.State)
         {
             case ConnectionState.Open:
@@ -60,7 +79,7 @@ public static class IDbConnectionExtensions
                 if (connection is DbConnection dbConn)
                     await dbConn.OpenAsync(cancellationToken).ConfigureAwait(false);
                 else
-                    connection.Open(); // fall back (IDbConnection doesn't have an Async method).
+                    connection.Open();
                 break;
             case ConnectionState.Broken:
                 throw new InvalidOperationException("The connection is in a broken state and cannot be used. Consider creating a new connection.");
@@ -417,22 +436,6 @@ public static class IDbConnectionExtensions
             return command.ExecuteNonQuery();
         }
     }
-    //public static int Execute(this IDbConnection connection, string? sql, object? param = null,
-    //    int commandTimeout = DefaultTimeoutSeconds,
-    //    IDbTransaction? transaction = null, string? parameterPrefix = DbDef.DefaultParmPrefix)
-    //{
-    //    ArgumentNullException.ThrowIfNull(sql);
-    //    if (commandTimeout < 0)
-    //        throw new ArgumentOutOfRangeException(nameof(commandTimeout));
-
-    //    using var command = connection.CreateCommand();
-    //    command.CommandText = sql;
-    //    command.Transaction = transaction;
-    //    command.CommandTimeout = commandTimeout;
-    //    AddParameters(command, param, parameterPrefix);
-    //    EnsureOpenConnection(connection);
-    //    return command.ExecuteNonQuery();
-    //}
 
     public static async Task<int> ExecuteAsync(this IDbConnection connection, string? sql, object? param = null,
         int commandTimeout = DefaultTimeoutSeconds, IDbTransaction? transaction = null,
@@ -472,27 +475,6 @@ public static class IDbConnectionExtensions
                 : command.ExecuteNonQuery();
         }
     }
-
-    //public static async Task<int> ExecuteAsync(this IDbConnection connection, string? sql, object? param = null,
-    //    int commandTimeout = DefaultTimeoutSeconds, IDbTransaction? transaction = null,
-    //    string? parameterPrefix = DbDef.DefaultParmPrefix,
-    //    CancellationToken cancellationToken = default)
-    //{
-    //    ArgumentNullException.ThrowIfNull(sql);
-    //    if (commandTimeout < 0)
-    //        throw new ArgumentOutOfRangeException(nameof(commandTimeout));
-    //    cancellationToken.ThrowIfCancellationRequested();
-
-    //    using var command = connection.CreateCommand();
-    //    command.CommandText = sql;
-    //    command.Transaction = transaction;
-    //    command.CommandTimeout = commandTimeout;
-    //    AddParameters(command, param, parameterPrefix);
-    //    await EnsureOpenConnectionAsync(connection, cancellationToken);
-    //    return command is DbCommand dbCmd
-    //        ? await dbCmd.ExecuteNonQueryAsync(cancellationToken)
-    //        : command.ExecuteNonQuery();
-    //}
 
     private static void AddParameters(IDbCommand command, object? param, string? parameterPrefix = DbDef.DefaultParmPrefix)
     {
@@ -564,14 +546,6 @@ public static class IDbConnectionExtensions
                             {
                                 prop.SetValue(obj, dec % 1 == 0 ? decimal.Truncate(dec) : dec);
                             }
-                            //else if (targetType == typeof(long) && prop.Name.Equals("CreatedAtTicks", StringComparison.OrdinalIgnoreCase))
-                            //{
-                            //    if (mappableProperties.TryGetValue("CreatedAt", out var createdAtProp))
-                            //    {
-                            //        var createdAt = (DateTimeOffset)createdAtProp.GetValue(obj)!;
-                            //        prop.SetValue(obj, createdAt.Ticks);
-                            //    }
-                            //}
                             else
                             {
                                 prop.SetValue(obj, Convert.ChangeType(value, targetType));
@@ -587,59 +561,6 @@ public static class IDbConnectionExtensions
             };
         });
     }
-    //private static Action<T, IDataReader> CreateMapper<T>(IDataReader reader)
-    //{
-    //    return (Action<T, IDataReader>)_mapperCache.GetOrAdd(typeof(T), type =>
-    //    {
-    //        var properties = typeof(T).GetProperties()
-    //            .Where(p => p.CanWrite)
-    //            .ToDictionary(p => p.Name, StringComparer.OrdinalIgnoreCase);
-
-    //        var columnNames = Enumerable.Range(0, reader.FieldCount)
-    //            .Select(i => reader.GetName(i))
-    //            .ToHashSet(StringComparer.OrdinalIgnoreCase);
-
-    //        var mappableProperties = properties
-    //            .Where(p => columnNames.Contains(p.Key))
-    //            .ToDictionary(p => p.Key, p => p.Value, StringComparer.OrdinalIgnoreCase);
-
-    //        return (T obj, IDataReader r) =>
-    //        {
-    //            for (int i = 0; i < r.FieldCount; i++)
-    //            {
-    //                var columnName = r.GetName(i);
-    //                if (mappableProperties.TryGetValue(columnName, out var prop) && !r.IsDBNull(i))
-    //                {
-    //                    var value = r.GetValue(i);
-    //                    var targetType = Nullable.GetUnderlyingType(prop.PropertyType) ?? prop.PropertyType;
-
-    //                    try
-    //                    {
-    //                        if (targetType == typeof(DateTimeOffset) && value is DateTime dt)
-    //                        {
-    //                            prop.SetValue(obj, new DateTimeOffset(dt));
-    //                        }
-    //                        else if (targetType == typeof(DateOnly) && value is DateTime dtdo)
-    //                        {
-    //                            // Convert DateTime to DateOnly
-    //                            prop.SetValue(obj, DateOnly.FromDateTime(dtdo));
-    //                        }
-    //                        else
-    //                        {
-    //                            prop.SetValue(obj, Convert.ChangeType(value, targetType));
-    //                        }
-    //                    }
-    //                    catch (Exception ex)
-    //                    {
-    //                        throw new InvalidOperationException(
-    //                            $"Failed to map column '{columnName}' to property '{prop.Name}' of type '{targetType.Name}': {ex.Message}", ex);
-    //                    }
-    //                }
-    //            }
-    //        };
-    //    });
-    //}
-
 
     private static T? MapScalar<T>(IDataReader reader, int columnIndex)
     {

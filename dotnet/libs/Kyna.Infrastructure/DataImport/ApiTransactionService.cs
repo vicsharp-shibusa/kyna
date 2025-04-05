@@ -8,12 +8,10 @@ namespace Kyna.Infrastructure.DataImport;
 internal sealed class ApiTransactionService : IDisposable
 {
     private readonly JsonSerializerOptions _serializerOptions = JsonSerializerOptions.Default;
-    private readonly IDbConnection _connection;
     private readonly DbDef _dbDef;
     public ApiTransactionService(DbDef dbDef)
     {
         _dbDef = dbDef;
-        _connection = dbDef.GetConnection();
     }
 
     public async Task RecordTransactionAsync(
@@ -43,7 +41,8 @@ internal sealed class ApiTransactionService : IDisposable
             ProcessId = processId
         };
 
-        await _connection.ExecuteAsync(_dbDef.GetSql(SqlKeys.InsertApiTransaction), transDao)
+        using var conn = _dbDef.GetConnection();
+        await conn.ExecuteAsync(_dbDef.GetSql(SqlKeys.InsertApiTransaction), transDao)
             .ConfigureAwait(false);
     }
 
@@ -53,12 +52,14 @@ internal sealed class ApiTransactionService : IDisposable
 
         foreach (var c in subCategories.Select(x => x.Trim()).Chunk(500))
         {
-            await _connection.ExecuteAsync(sql, new
+            using var conn = _dbDef.GetConnection();    
+            await conn.ExecuteAsync(sql, new
             {
                 source,
                 category,
                 SubCategories = c
             }).ConfigureAwait(false);
+            conn.Close();
         }
     }
 

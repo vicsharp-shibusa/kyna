@@ -2,8 +2,8 @@
 using Kyna.ApplicationServices.Configuration;
 using Kyna.ApplicationServices.DataManagement;
 using Kyna.Common;
-using Kyna.Infrastructure.Logging;
 using Kyna.Infrastructure.DataImport;
+using Kyna.Infrastructure.Logging;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using System.Diagnostics;
@@ -27,6 +27,7 @@ IExternalDataImporter? importer = null;
 Stopwatch timer = Stopwatch.StartNew();
 
 Config? config = null;
+CancellationTokenSource cts = new();
 
 try
 {
@@ -37,28 +38,26 @@ try
     if (config.ShowHelp)
     {
         ShowHelp();
+        exitCode = 0;
+        Environment.Exit(exitCode);
     }
-    else if (config.ShowInfo)
+
+    ValidateArgsAndSetDefaults();
+
+    Configure();
+
+    Debug.Assert(importer != null);
+
+    if (config.ShowInfo)
     {
-        ValidateArgsAndSetDefaults();
-
-        Configure();
-
-        Debug.Assert(importer != null);
-
         Communicate((await importer.GetInfoAsync()), true);
+        exitCode = 0;
+        Environment.Exit(exitCode);
     }
     else
     {
-        ValidateArgsAndSetDefaults();
-
-        Configure();
-
-        Debug.Assert(importer != null);
 
         KLogger.LogEvent(EventIdRepository.GetAppStartedEvent(config!), processId);
-
-        CancellationTokenSource cts = new();
 
         TimeSpan duration = TimeSpan.Zero;
 
@@ -92,39 +91,13 @@ try
         }
         else
         {
-            try
-            {
-                duration = await importer.ImportAsync(cts.Token);
-            }
-            catch (AggregateException ex)
-            {
-                cts.Cancel(true);
-
-                foreach (var e in ex.InnerExceptions)
-                {
-                    Communicate(e.ToString(), true, LogLevel.Error);
-                }
-            }
-            catch (ApiLimitReachedException)
-            {
-                Communicate("API credit limit reached; halting processing", false, LogLevel.Warning);
-            }
-            finally
-            {
-                Communicate($"{Environment.NewLine}Import for '{importer.Source}' using file '{config.ConfigFile?.Name}' completed in {duration.ConvertToText()}");
-
-                importer.Dispose();
-                cts.Dispose();
-            }
+            duration = await importer.ImportAsync(cts.Token);
         }
     }
-
     exitCode = 0;
 }
 catch (ArgumentException exc)
 {
-    exitCode = 1;
-
 #if DEBUG
     Communicate(exc.ToString(), true);
 #else
@@ -132,10 +105,25 @@ catch (ArgumentException exc)
 #endif
 
     KLogger.LogCritical(exc, appName, processId);
+    exitCode = 1;
+}
+catch (AggregateException ex)
+{
+    cts.Cancel(true);
+
+    foreach (var e in ex.InnerExceptions)
+    {
+        Communicate(e.ToString(), true, LogLevel.Error);
+    }
+    exitCode = 2;
+}
+catch (ApiLimitReachedException)
+{
+    Communicate("API credit limit reached; halting processing", false, LogLevel.Warning);
 }
 catch (Exception exc)
 {
-    exitCode = 2;
+    exitCode = 3;
 
 #if DEBUG
     Communicate(exc.ToString(), true);
@@ -150,17 +138,19 @@ finally
     if (!(config?.ShowHelp ?? false) && !(config?.ShowInfo ?? false))
         KLogger.LogEvent(EventIdRepository.GetAppFinishedEvent(config!), processId);
 
+    timer.Stop();
+
+    Communicate($"{Environment.NewLine}{appName} completed in {timer.Elapsed.ConvertToText()}");
+
+    await Task.Delay(200); // give the logger a chance to catch up
+
     if (importer != null)
     {
         importer.Communicate -= Importer_Communicate;
         importer.Dispose();
     }
 
-    timer.Stop();
-
-    Communicate($"{Environment.NewLine}{appName} completed in {timer.Elapsed.ConvertToText()}");
-
-    await Task.Delay(200); // give the logger a chance to catch up
+    cts.Dispose();
 
     Environment.Exit(exitCode);
 }

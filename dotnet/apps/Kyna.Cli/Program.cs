@@ -36,7 +36,7 @@ try
             ProcessStartInfo processStartInfo = new()
             {
                 WindowStyle = ProcessWindowStyle.Hidden,
-                FileName = GetSubcommandFilename(config.HelpArg),
+                FileName = commandDict[config.HelpArg].FullPath,
                 Arguments = childArgs.Length != 0 ? GetChildArgsString(childArgs) : "--help"
             };
             var process = Process.Start(processStartInfo);
@@ -46,7 +46,7 @@ try
     }
     else
     {
-        string filename = GetSubcommandFilename(config.Subcommand);
+        var filename = commandDict.FirstOrDefault(k => k.Value.Aliases.Contains(config.Subcommand, StringComparer.OrdinalIgnoreCase)).Value.FullPath;
 
         if (string.IsNullOrWhiteSpace(filename))
         {
@@ -171,7 +171,8 @@ void ParseArguments(string[] args, out string[] childArgs)
                 {
                     if (a < args.Length - 1)
                     {
-                        config.HelpArg = args[++a];
+                        var alias = args[++a];
+                        config.HelpArg = commandDict.FirstOrDefault(k => k.Value.Aliases.Contains(alias)).Key;
                     }
                     config.ShowHelp = true;
                 }
@@ -243,7 +244,7 @@ string GetSubcommandFilename(string? commandName)
 
 #if DEBUG
     // Map this to your local dev directory to make this work with an IDE.
-    dir = new DirectoryInfo(Path.Combine("/", "repos", "kyna", "dotnet", "apps"));
+    dir = new DirectoryInfo(Path.Combine(Path.DirectorySeparatorChar.ToString(), "repos", "kyna", "dotnet", "apps"));
 #endif
 
     Debug.Assert(dir != null);

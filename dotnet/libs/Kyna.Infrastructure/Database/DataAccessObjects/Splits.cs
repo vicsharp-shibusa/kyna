@@ -77,8 +77,8 @@ internal static class SplitAdjustedPriceCalculator
         var orderedPrices = prices.OrderBy(s => s.DateEod).ToArray();
 
         var orderedSplits = splits.OrderBy(s => s.SplitDate)
-            .Where(s => s.SplitDate >= orderedPrices[0].DateEod &&
-                s.SplitDate <= orderedPrices[^1].DateEod).ToArray();
+            .Where(s => s.SplitDate > orderedPrices[0].DateEod &&
+                s.SplitDate < orderedPrices[^1].DateEod).ToArray();
 
         if (orderedSplits.Length == 0)
         {
@@ -90,20 +90,21 @@ internal static class SplitAdjustedPriceCalculator
         else
         {
             var factors = new (DateOnly Date, double Factor)[orderedSplits.Length];
-            double prev = 1D;
+            double previousFactor = 1D;
 
             // loop backwards through the splits and create tuples of date/factor.
-            // Factor is always multipled by the previous factor - where previous
-            // is the next split chronologically and where previous starts at 1.
+            // Factor is always multipled by the previous factor - where "previous"
+            // is the next split chronologically and where previous factor starts at 1.
             for (int i = orderedSplits.Length - 1; i >= 0; i--)
             {
-                factors[i] = (orderedSplits[i].SplitDate, prev * orderedSplits[i].Factor);
-                prev = factors[i].Factor;
+                factors[i] = (orderedSplits[i].SplitDate, previousFactor * orderedSplits[i].Factor);
+                previousFactor = factors[i].Factor;
             }
 
             // Move the factor date to the next valid eod price date.
             // A scenario was found in which there were large gaps in the prices and multiple
-            // splits between those gaps. This is the reason for this 'j' variable; if the first match
+            // splits between those gaps. (It's a problem with the source data).
+            // This is the reason for this 'j' variable; if the first match
             // is already present in our factors array, we simply replace that existing value with the new
             // split value.
             int j = 0;
@@ -116,8 +117,7 @@ internal static class SplitAdjustedPriceCalculator
                     {
                         j--;
                     }
-                    factors[j].Date = firstMatch?.DateEod ?? factors[i].Date;
-                    j++;
+                    factors[j++].Date = firstMatch?.DateEod ?? factors[i].Date;
                 }
             }
 
@@ -125,33 +125,27 @@ internal static class SplitAdjustedPriceCalculator
             factors = factors[..j];
 
             int f = 0;
-
-            // loop through the prices.
-            // Each price is multipled by the closest future factor.
             for (int i = 0; i < orderedPrices.Length; i++)
             {
                 if (factors[f].Date.Equals(orderedPrices[i].DateEod) && f < factors.Length - 1)
                 {
-                    // the stock price on the day of the split will reflect the split,
-                    // but it also needs to reflect the next split.
-                    f++;
-                    yield return new EodAdjustedPrice(orderedPrices[i], factors[f].Factor);
+                    yield return new EodAdjustedPrice(orderedPrices[i], factors[++f].Factor);
                 }
                 else if (f == factors.Length - 1 && orderedPrices[i].DateEod >= factors[f].Date)
                 {
-                    // we're past the final split.
                     yield return new EodAdjustedPrice(orderedPrices[i]);
                 }
                 else if (orderedPrices[i].DateEod < factors[f].Date)
                 {
-                    // we're less than the "next" factor.
                     yield return new EodAdjustedPrice(orderedPrices[i], factors[f].Factor);
                 }
-                else
+                else if (f < factors.Length - 1 && orderedPrices[i].DateEod > factors[f].Date)
                 {
-                    KLogger.LogDebug($"logic error on {orderedPrices[0].Code}");
+                    yield return new EodAdjustedPrice(orderedPrices[i], factors[f + 1].Factor);
+                    f++;
                 }
             }
+
             // Make sure we didn't skip any entries.
             Debug.Assert(f == factors.Length - 1);
         }

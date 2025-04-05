@@ -53,7 +53,6 @@ internal sealed class SqlFactory : ISqlRepository
         }
 
         return result.ToString();
-
     }
 
     public bool TryGetSql(string key, out string? statement, bool formatSql = false)
@@ -197,15 +196,18 @@ internal sealed class SqlFactory : ISqlRepository
          * A "tick" is short-hand for a single quote (i.e., ').
          */
         var tickCount = clause.ToCharArray().Count(c => c == '\'');
-        if (tickCount > 0 && tickCount % 2 == 0)
+        if (tickCount > 0)
         {
             var matches = _sqlLiteralsRegex.Matches(clause);
 
             if (matches.Count > 0)
             {
                 var key = new byte[8];
-                var d = new Dictionary<string, string>();
+                var d = new Dictionary<string, string>(matches.Count);
 
+                // strip away the literals and replace them with random strings.
+                // Use the random string as the key and the original value as the value
+                // in the dictionary.
                 foreach (Match m in matches)
                 {
                     Random.Shared.NextBytes(key);
@@ -214,15 +216,19 @@ internal sealed class SqlFactory : ISqlRepository
                     clause = clause.Replace(m.Value, k);
                 }
 
+                // Now any conditional operations can be seen without the literals creating false positives.
                 containsConditionals = clause.Contains(" and ", StringComparison.OrdinalIgnoreCase) ||
                     clause.Contains(" or ", StringComparison.OrdinalIgnoreCase);
 
+                // put the original values back.
                 foreach (var kvp in d)
                 {
                     clause = clause.Replace(kvp.Key, kvp.Value);
                 }
             }
         }
+
+        // wrap any clause with conditional with '()'
         if (containsConditionals)
             clause = $"({clause})";
 

@@ -157,7 +157,7 @@ internal sealed class EodHdMigrator : ImportsMigratorBase, IImportsMigrator
         return timer.Elapsed;
     }
 
-    public Task<string> GetInfoAsync()
+    public string GetInfo()
     {
         StringBuilder result = new();
 
@@ -167,7 +167,7 @@ internal sealed class EodHdMigrator : ImportsMigratorBase, IImportsMigrator
         result.AppendLine($"Source Deletion Mode : {_configuration.SourceDeletionMode.GetEnumDescription()}");
         result.AppendLine($"Max Parallelization  : {_configuration.MaxParallelization}");
 
-        return Task.FromResult(result.ToString());
+        return result.ToString();
     }
 
     private async Task MigrateItemAsync(ApiTransactionForMigration item, CancellationToken cancellationToken)
@@ -213,6 +213,8 @@ internal sealed class EodHdMigrator : ImportsMigratorBase, IImportsMigrator
     }
     private IEnumerable<ApiTransactionForMigration> GetTransactionsToMigrate()
     {
+        var sql = _sourceDbDef.GetSql(SqlKeys.FetchApiTransactionsForMigration,
+            "source = @Source", "response_status_code = '200'");
         return _sourceContext.Query<ApiTransactionForMigration>(BuildFetchForMigrationSql(),
             new { _configuration.Source, _configuration.Categories });
     }
@@ -226,7 +228,7 @@ internal sealed class EodHdMigrator : ImportsMigratorBase, IImportsMigrator
         };
         if ((_configuration.Categories?.Length ?? 0) > 0)
         {
-            whereClauses.Add($"category {SqlFactory.GetSqlSyntaxForInCollection("Categories")}");
+            whereClauses.Add($"category {SqlFactory.GetSqlSyntaxForInCollection("Categories", _sourceDbDef.Engine)}");
         }
 
         return _sourceDbDef.GetSql(SqlKeys.FetchApiTransactionsForMigration, [.. whereClauses]);

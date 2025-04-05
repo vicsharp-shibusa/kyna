@@ -7,5 +7,5 @@ public interface IImportsMigrator
     event EventHandler<CommunicationEventArgs>? Communicate;
     string Source { get; }
     Task<TimeSpan> MigrateAsync(CancellationToken cancellationToken = default);
-    Task<string> GetInfoAsync();
+    string GetInfo();
 }

@@ -16,7 +16,8 @@ internal static partial class SqlStatementRepository
             .Union(GetSplitsSql())
             .Union(GetDividendsSql())
             .Union(GetFundamentalsSql())
-            .Union(GetBacktestSql()))
+            .Union(GetBacktestSql())
+            .Union(GetMigrationsSql()))
         {
             _ = _sqlDictionary.TryAdd(kvp.Key, kvp.Value);
         }

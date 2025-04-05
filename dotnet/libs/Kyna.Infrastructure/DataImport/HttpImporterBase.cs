@@ -22,7 +22,6 @@ internal abstract class HttpImporterBase : IDisposable
     protected readonly ConcurrentBag<(string Uri, string Category, string? SubCategory)> _concurrentBag;
 
     protected readonly DbDef _dbDef;
-    protected readonly IDbConnection _connection;
 
     protected HttpImporterBase(DbDef dbDef, string baseUri, string? apiKey = null, Guid? processId = null)
     {
@@ -38,7 +37,6 @@ internal abstract class HttpImporterBase : IDisposable
         };
         _apiKey = apiKey;
         _concurrentBag = [];
-        _connection = dbDef.GetConnection();
     }
 
     public void Dispose()
