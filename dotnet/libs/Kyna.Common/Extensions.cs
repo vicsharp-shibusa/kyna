@@ -65,6 +65,14 @@ public static class DateTimeExtensions
         }
         return date;
     }
+
+    public static DateTime FindFirstWeekday(this DateTime date)
+    {
+        var answer = new DateOnly(date.Year, date.Month, date.Day).FindFirstWeekday();
+
+        return new DateTime(answer.Year, answer.Month, answer.Day,
+            date.Hour, date.Minute, date.Second, date.Millisecond, date.Kind);
+    }
 }
 
 public static class DateOnlyExtensions
@@ -118,6 +126,16 @@ public static class DateOnlyExtensions
         }
 
         return weekdays;
+    }
+
+    public static DateOnly FindFirstWeekday(this DateOnly date)
+    {
+        var dt = DateOnly.FromDayNumber(date.DayNumber);
+
+        while (!IsWeekday(dt))
+            dt = dt.AddDays(1);
+
+        return dt;
     }
 
     private static bool IsWeekday(DateOnly date) =>

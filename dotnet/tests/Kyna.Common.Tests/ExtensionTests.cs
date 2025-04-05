@@ -193,6 +193,17 @@ public class ExtensionTests
     }
 
     [Fact]
+    public void DateTime_FindFirstWeekday_FromWeekend_FindsMonday()
+    {
+        DateTime saturday = new(2021, 10, 2);
+        Assert.Equal(DayOfWeek.Saturday, saturday.DayOfWeek);
+        var monday = saturday.FindFirstWeekday();
+        Assert.Equal(DayOfWeek.Monday, monday.DayOfWeek);
+        var ts = monday - saturday;
+        Assert.Equal(2, ts.Days);
+    }
+
+    [Fact]
     public void DateOnly_AddWeekday_Forward_1()
     {
         DateOnly saturday = new(2021, 10, 2);
@@ -229,6 +240,25 @@ public class ExtensionTests
         Assert.Equal(DayOfWeek.Monday, previousWeekday.DayOfWeek);
         DateOnly expected = new(2021, 9, 20);
         Assert.Equal(expected, previousWeekday);
+    }
+
+    [Fact]
+    public void DateOnly_FindFirstWeekday_FromWeekend_FindsMonday()
+    {
+        DateOnly saturday = new(2021, 10, 2);
+        Assert.Equal(DayOfWeek.Saturday, saturday.DayOfWeek);
+        var monday = saturday.FindFirstWeekday();
+        Assert.Equal(DayOfWeek.Monday, monday.DayOfWeek);
+        Assert.Equal(2, monday.DayNumber - saturday.DayNumber);
+    }
+
+    [Fact]
+    public void DateOnly_FindFirstWeekday_FromWeekday_FindsSelf()
+    {
+        DateOnly monday = new(2021, 10, 4);
+        Assert.Equal(DayOfWeek.Monday, monday.DayOfWeek);
+        var sameDay = monday.FindFirstWeekday();
+        Assert.Equal(monday,sameDay);
     }
 
     private enum NoDescription

@@ -17,6 +17,10 @@ public class ReportServiceTests
         {
             fileInfo.Delete();
         }
+        Assert.False(fileInfo.Exists);
         ReportService.CreateSpreadsheet(fileInfo.FullName, report);
+
+        fileInfo.Refresh();
+        Assert.True(fileInfo.Exists);
     }
 }
