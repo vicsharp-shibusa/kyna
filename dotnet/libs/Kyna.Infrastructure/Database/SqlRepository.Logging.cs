@@ -1,6 +1,6 @@
 ﻿namespace Kyna.Infrastructure.Database;
 
-internal static partial class SqlStatementRepository
+internal static partial class SqlRepository
 {
     private static IEnumerable<KeyValuePair<SqlRepoKey, string>> GetLoggingSql()
     {

@@ -2,11 +2,11 @@
 
 namespace Kyna.Infrastructure.Database;
 
-internal static partial class SqlStatementRepository
+internal static partial class SqlRepository
 {
     private static readonly Dictionary<SqlRepoKey, string> _sqlDictionary = new(100);
 
-    static SqlStatementRepository()
+    static SqlRepository()
     {
         foreach (var kvp in GetApiTransactionSql()
             .Union(GetLoggingSql())
@@ -36,7 +36,7 @@ internal static partial class SqlStatementRepository
             if (missingKeys.Length > 0)
             {
                 var sb = new StringBuilder();
-                sb.Append(nameof(SqlStatementRepository));
+                sb.Append(nameof(SqlRepository));
                 sb.Append('.');
                 sb.Append(nameof(BuildDictionary));
                 sb.Append($" missing keys for: {string.Join(", ", missingKeys)}");

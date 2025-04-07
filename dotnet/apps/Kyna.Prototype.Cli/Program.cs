@@ -170,20 +170,20 @@ catch (ArgumentException exc)
 {
     exitCode = 1;
     Communicate(exc.ToString(), true);
-    KLogger.LogCritical(exc, defaultScope, processId);
+    KyLogger.LogCritical(exc, defaultScope, processId);
 }
 catch (Exception exc)
 {
     exitCode = 2;
     Communicate(exc.ToString(), true);
-    KLogger.LogCritical(exc, defaultScope, processId);
+    KyLogger.LogCritical(exc, defaultScope, processId);
 }
 finally
 {
     if (!(config?.ShowHelp ?? false))
     {
         // test log finished event.
-        KLogger.LogEvent(EventIdRepository.GetAppFinishedEvent(config!), processId);
+        KyLogger.LogEvent(EventIdRepository.GetAppFinishedEvent(config!), processId);
     }
 
     timer.Stop();
@@ -203,7 +203,7 @@ void Communicate(string message, bool force = false, LogLevel logLevel = LogLeve
         Console.WriteLine(message);
     }
 
-    KLogger.Log(logLevel, message, scope ?? defaultScope, processId);
+    KyLogger.Log(logLevel, message, scope ?? defaultScope, processId);
 }
 
 void ShowHelp()
@@ -255,7 +255,7 @@ void Configure()
         throw new Exception($"Unable to create {nameof(ConfigKeys.DbKeys.Financials)} db connection; no '{ConfigKeys.DbKeys.Financials}' key found.");
 
     logger = Kyna.ApplicationServices.Logging.LoggerFactory.Create<Program>(logDef);
-    KLogger.SetLogger(logger);
+    KyLogger.SetLogger(logger);
 
     dbLogService = new(logDef);
 }

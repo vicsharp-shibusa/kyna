@@ -67,7 +67,7 @@ internal static class SplitAdjustedPriceCalculator
             return (before, after);
         }
 
-        KLogger.LogWarning($"Could not properly parse '{text}'", nameof(SplitAdjustedPriceCalculator));
+        KyLogger.LogWarning($"Could not properly parse '{text}'", nameof(SplitAdjustedPriceCalculator));
 
         return (1, 1);
     }

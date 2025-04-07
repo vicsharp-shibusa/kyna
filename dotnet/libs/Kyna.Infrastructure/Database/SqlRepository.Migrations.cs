@@ -1,6 +1,6 @@
 ﻿namespace Kyna.Infrastructure.Database;
 
-internal partial class SqlStatementRepository
+internal partial class SqlRepository
 {
     private static IEnumerable<KeyValuePair<SqlRepoKey, string>> GetMigrationsSql()
     {

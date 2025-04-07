@@ -49,7 +49,7 @@ try
         }
         else
         {
-            KLogger.LogEvent(EventIdRepository.GetAppStartedEvent(config!), processId);
+            KyLogger.LogEvent(EventIdRepository.GetAppStartedEvent(config!), processId);
 
             CancellationTokenSource cts = new();
 
@@ -93,7 +93,7 @@ catch (ArgumentException exc)
     Communicate(exc.Message, true);
 #endif
 
-    KLogger.LogCritical(exc, appName, processId);
+    KyLogger.LogCritical(exc, appName, processId);
 }
 catch (Exception exc)
 {
@@ -105,13 +105,13 @@ catch (Exception exc)
     Communicate(exc.Message, true);
 #endif
 
-    KLogger.LogCritical(exc, appName, processId);
+    KyLogger.LogCritical(exc, appName, processId);
 }
 finally
 {
     if (!(config?.ShowHelp ?? false))
     {
-        KLogger.LogEvent(EventIdRepository.GetAppFinishedEvent(config!), processId);
+        KyLogger.LogEvent(EventIdRepository.GetAppFinishedEvent(config!), processId);
     }
 
     if (migrator != null)
@@ -138,7 +138,7 @@ void Communicate(string? message, bool force = false, LogLevel logLevel = LogLev
 
     if (!string.IsNullOrEmpty(message))
     {
-        KLogger.Log(logLevel, message, scope ?? appName, processId);
+        KyLogger.Log(logLevel, message, scope ?? appName, processId);
     }
 }
 
@@ -244,7 +244,7 @@ void Configure()
         throw new Exception($"Unable to create {nameof(ConfigKeys.DbKeys.Financials)} db connection; no '{ConfigKeys.DbKeys.Financials}' key found.");
 
     logger = Kyna.ApplicationServices.Logging.LoggerFactory.Create<Program>(logDef);
-    KLogger.SetLogger(logger);
+    KyLogger.SetLogger(logger);
 
     migrator = MigratorFactory.Create(importDef, finDef, config.ConfigFile!, processId, config.DryRun);
 

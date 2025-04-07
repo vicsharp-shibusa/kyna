@@ -57,7 +57,7 @@ try
     else
     {
 
-        KLogger.LogEvent(EventIdRepository.GetAppStartedEvent(config!), processId);
+        KyLogger.LogEvent(EventIdRepository.GetAppStartedEvent(config!), processId);
 
         TimeSpan duration = TimeSpan.Zero;
 
@@ -104,7 +104,7 @@ catch (ArgumentException exc)
     Communicate(exc.Message, true);
 #endif
 
-    KLogger.LogCritical(exc, appName, processId);
+    KyLogger.LogCritical(exc, appName, processId);
     exitCode = 1;
 }
 catch (AggregateException ex)
@@ -131,12 +131,12 @@ catch (Exception exc)
     Communicate(exc.Message, true);
 #endif
 
-    KLogger.LogCritical(exc, appName, processId);
+    KyLogger.LogCritical(exc, appName, processId);
 }
 finally
 {
     if (!(config?.ShowHelp ?? false) && !(config?.ShowInfo ?? false))
-        KLogger.LogEvent(EventIdRepository.GetAppFinishedEvent(config!), processId);
+        KyLogger.LogEvent(EventIdRepository.GetAppFinishedEvent(config!), processId);
 
     timer.Stop();
 
@@ -162,7 +162,7 @@ void Communicate(string? message, bool force = false, LogLevel logLevel = LogLev
         Console.WriteLine(message);
 
     if (!string.IsNullOrEmpty(message))
-        KLogger.Log(logLevel, message, scope ?? appName, processId);
+        KyLogger.Log(logLevel, message, scope ?? appName, processId);
 }
 
 void ShowHelp()
@@ -268,7 +268,7 @@ void Configure()
         throw new Exception($"Unable to create {nameof(ConfigKeys.DbKeys.Imports)} db connection; no '{ConfigKeys.DbKeys.Imports}' key found.");
 
     logger = Kyna.ApplicationServices.Logging.LoggerFactory.Create<Program>(logDef);
-    KLogger.SetLogger(logger);
+    KyLogger.SetLogger(logger);
 
     config.ApiKey = configuration.GetSection($"ApiKeys:{source}").Value;
     config.AccessKey = configuration.GetSection($"AccessKeys:{source}").Value;

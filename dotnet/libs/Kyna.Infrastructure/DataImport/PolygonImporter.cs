@@ -243,11 +243,11 @@ internal sealed class PolygonImporter : HttpImporterBase, IExternalDataImporter
                 }
                 catch (AmazonS3Exception e)
                 {
-                    KLogger.LogError(e, nameof(PolygonImporter), _processId);
+                    KyLogger.LogError(e, nameof(PolygonImporter), _processId);
                 }
                 catch (Exception e)
                 {
-                    KLogger.LogError(e, nameof(PolygonImporter), _processId);
+                    KyLogger.LogError(e, nameof(PolygonImporter), _processId);
                 }
             }
         }
@@ -330,7 +330,7 @@ internal sealed class PolygonImporter : HttpImporterBase, IExternalDataImporter
 
             if (!Constants.Actions.ValueExists(kvp.Key))
             {
-                KLogger.LogWarning($"Attempted to instantiate {nameof(PolygonImporter)} with an invalid action of {kvp.Key}.");
+                KyLogger.LogWarning($"Attempted to instantiate {nameof(PolygonImporter)} with an invalid action of {kvp.Key}.");
                 continue;
             }
 

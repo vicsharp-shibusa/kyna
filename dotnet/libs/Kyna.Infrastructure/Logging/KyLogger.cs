@@ -2,7 +2,7 @@
 
 namespace Kyna.Infrastructure.Logging;
 
-public static class KLogger
+public static class KyLogger
 {
     private static ILogger? _logger = null;
 

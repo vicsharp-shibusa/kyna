@@ -829,7 +829,7 @@ internal sealed class EodHdImporter : HttpImporterBase, IExternalDataImporter
 
             if (!Constants.Actions.ValueExists(kvp.Key))
             {
-                KLogger.LogWarning($"Attempted to instantiate {nameof(EodHdImporter)} with an invalid action of {kvp.Key}.");
+                KyLogger.LogWarning($"Attempted to instantiate {nameof(EodHdImporter)} with an invalid action of {kvp.Key}.");
                 continue;
             }
 

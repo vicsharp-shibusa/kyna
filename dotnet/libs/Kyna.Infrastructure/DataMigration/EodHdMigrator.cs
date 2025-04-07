@@ -204,7 +204,7 @@ internal sealed class EodHdMigrator : ImportsMigratorBase, IImportsMigrator
                     {
                         if (!await TryMigrateFundamentalsForEtf(item, responseBody).ConfigureAwait(false))
                         {
-                            KLogger.LogError($"Unable to process {item.Category} for {item.SubCategory}");
+                            KyLogger.LogError($"Unable to process {item.Category} for {item.SubCategory}");
                         }
                     }
                 }

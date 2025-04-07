@@ -106,7 +106,7 @@ catch (ArgumentException exc)
     Communicate(exc.Message, true);
 #endif
 
-    KLogger.LogCritical(exc, appName, processId);
+    KyLogger.LogCritical(exc, appName, processId);
 }
 catch (Exception exc)
 {
@@ -118,7 +118,7 @@ catch (Exception exc)
     Communicate(exc.Message, true);
 #endif
 
-    KLogger.LogCritical(exc, appName, processId);
+    KyLogger.LogCritical(exc, appName, processId);
 }
 finally
 {
@@ -139,7 +139,7 @@ void Communicate(string? message, bool force = false, LogLevel logLevel = LogLev
 
     if (!string.IsNullOrEmpty(message))
     {
-        KLogger.Log(logLevel, message, scope ?? appName, processId);
+        KyLogger.Log(logLevel, message, scope ?? appName, processId);
     }
 }
 
@@ -289,7 +289,7 @@ void Configure()
         throw new Exception($"Unable to create {nameof(ConfigKeys.DbKeys.Financials)} db connection; no '{ConfigKeys.DbKeys.Financials}' key found.");
 
     logger = Kyna.ApplicationServices.Logging.LoggerFactory.Create<Program>(logDef);
-    KLogger.SetLogger(logger);
+    KyLogger.SetLogger(logger);
 
     reportService = new ReportService(bckDef, finDef, reportOptions);
     reportService.Communicate += ReportService_Communicate;

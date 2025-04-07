@@ -64,7 +64,7 @@ try
 
         if (config.ConfigDir != null || config.ConfigFile != null)
         {
-            KLogger.LogEvent(EventIdRepository.GetAppStartedEvent(config!), processId);
+            KyLogger.LogEvent(EventIdRepository.GetAppStartedEvent(config!), processId);
         }
 
         CancellationTokenSource cts = new();
@@ -114,7 +114,7 @@ catch (ArgumentException exc)
     Communicate(exc.Message, true);
 #endif
 
-    KLogger.LogCritical(exc, appName, processId);
+    KyLogger.LogCritical(exc, appName, processId);
 }
 catch (Exception exc)
 {
@@ -126,13 +126,13 @@ catch (Exception exc)
     Communicate(exc.Message, true);
 #endif
 
-    KLogger.LogCritical(exc, appName, processId);
+    KyLogger.LogCritical(exc, appName, processId);
 }
 finally
 {
     if (config?.ConfigDir != null || config?.ConfigFile != null)
     {
-        KLogger.LogEvent(EventIdRepository.GetAppFinishedEvent(config!), processId);
+        KyLogger.LogEvent(EventIdRepository.GetAppFinishedEvent(config!), processId);
     }
 
     if (backtestingService != null)
@@ -161,7 +161,7 @@ void Communicate(string? message, bool force = false, LogLevel logLevel = LogLev
 
     if (!string.IsNullOrEmpty(message))
     {
-        KLogger.Log(logLevel, message, scope ?? appName, processId);
+        KyLogger.Log(logLevel, message, scope ?? appName, processId);
     }
 }
 
@@ -291,7 +291,7 @@ void Configure()
     backtestingService.Communicate += Backtests_Communicate;
 
     logger = Kyna.ApplicationServices.Logging.LoggerFactory.Create<Program>(logDef);
-    KLogger.SetLogger(logger);
+    KyLogger.SetLogger(logger);
 }
 
 void Backtests_Communicate(object? sender, Kyna.Infrastructure.Events.CommunicationEventArgs e)

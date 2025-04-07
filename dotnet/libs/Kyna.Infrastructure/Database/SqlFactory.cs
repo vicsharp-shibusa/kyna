@@ -8,7 +8,7 @@ internal sealed class SqlFactory : ISqlRepository
 {
     private readonly Dictionary<string, string> _sqlStatements;
 
-    public SqlFactory(DatabaseEngine engine) : this(SqlStatementRepository.BuildDictionary(engine))
+    public SqlFactory(DatabaseEngine engine) : this(SqlRepository.BuildDictionary(engine))
     {
     }
 
