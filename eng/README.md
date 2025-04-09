@@ -2,24 +2,21 @@
 
 ## Local Deployment
 
-The **deploy-folder.sh** script takes a source and a target directory and copies from one to the other.
-This is not the most useful of scripts since it can be replaced with a `cp` command.
-
 The **deploy-from-local.sh** script can be used to deploy the *kyna/dotnet/app* CLI applications to a target directory.
 The script takes two arguments:
 
 1. A path to the apps, e.g., **kyna/dotnet/apps**.
 2. A path to the target location, e.g., **/c/bin**
 
-```
+```bash
 ./eng/deploy-from-local.sh ./dotnet/apps /c/bin
 ```
 
 The above script will:
 
-1. Find all the `secrets.json` files in the target directory structure and copy them off.
-2. Perform a **Release** build of the Kyna applications and deploy them to the target directory.
-3. Move the `secrets.json` files back to their original locations.
+1. Find all the `secrets.json` files in the target directory structure and copy them to a temp location.
+2. Perform a **Release** build of the Kyna applications and deploy them to their respective target directories.
+3. Move the `secrets.json` files back to their original locations and delete the temp location.
 
 By adding `/c/bin/kyna` to your $PATH, you can then execute the kyna applications from anywhere.
 
@@ -65,7 +62,8 @@ To avoid entering your database password multiple times, run the following comma
 export PGPASSWORD=MyPassword
 ```
 
-If you encounter an error about the database being in use, it's likely the result of some database administration tool (e.g., pgAdmin) being open and connected to your database. You can try to disconnect; I close pgAdmin when this happens - that seems to resolve the issue.
+If you encounter an error about the database being in use, it's likely the result of some database administration tool (e.g., pgAdmin) being open and connected to your database.
+I close pgAdmin when this happens - that seems to resolve the issue.
 
 If the script will not run on your local machine, it may be related to permissions. From the `eng` folder, try:
 

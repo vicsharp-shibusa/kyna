@@ -16,7 +16,7 @@ Each implementation of `IExternalDataImporter` must contain some sort of configu
 
 The `ImportAction` instances inform the `ImportAsync` function what to do to complete the import task.
 
-Each `IExternalDataImporter` implementation should inherit from `DataImporterBase`, which contains references to `ApiTransactionService` (which writes to the `imports.api_transactions` table) and an `HttpClient` instance, which is responsible for communicating with the third-party API.
+Each `IExternalDataImporter` implementation should inherit from `HttpImporterBase`, which contains references to `ApiTransactionService` (which writes to the `imports.api_transactions` table) and an `HttpClient` instance, which is responsible for communicating with the third-party API.
 
 ```csharp
 public interface IExternalDataImporter
@@ -28,6 +28,8 @@ public interface IExternalDataImporter
     event EventHandler<CommunicationEventArgs>? Communicate;
 
     Task<string> GetInfoAsync();
+
+    (bool IsDangerous, string[] DangerMessages) ContainsDanger();
 
     void Dispose();
 }
@@ -55,13 +57,13 @@ An example of the `secret.json`:
 
 The name of the key, `eodhd.com` in the `ApiKeys` section above must correspond to the `Source` property of your `IExternalDataImport` implementation and, of course, the value must be a valid key.
 
-The `DataImportConfiguration` class is a deserialized implementation of a JSON file passed into the `kyna-importer` application using the `-f <file name>` argument. 
+The `DataImportConfiguration` class is a deserialized implementation of a JSON file passed into the `kyna-importer` application using the `-f <file name>` argument.
 
 The configuration file is passed on the command line, deserialized into the appropriate class, and then used in the instantiation of your `IExternalDataImporter` implementation. See the `ConfigureImporter` function in the `Program.cs` in the `Kyna.FinancialDataImport.Cli` project.
 
 ### Creating a new `IExternalDataImporter` Implementation
 
-1. Create a new class that inherits from `DataImportBase` and implements `IExternalDataImporter`.
+1. Create a new class that inherits from `HttpImporterBase` and implements `IExternalDataImporter`.
 1. Create a class that represents the input configuration and will cover your input needs. Consider housing this class within your importer.
 1. Build a constructor that takes in the configuration class from the step above and in that constructor, convert your nested class into a collection of `ImportAction` instances (and other stuff as needed).
 1. Write the `ImportAsync` function to perform your import tasks based on those `ImportAction` instances (and any other configuration that you want to include.)
@@ -69,7 +71,7 @@ The configuration file is passed on the command line, deserialized into the appr
 
 #### Notes
 
-The abstract class, `DataImportBase` contains a few `protected virtual` functions that you can use or override.
+The abstract class, `HttpImporterBase` contains a few `protected virtual` functions that you can use or override.
 
 The first is `HideToken`, which is used to obfuscate your secret key when writing to the `imports.api_transactions` table. This prevents your secret key from leaking.
 
@@ -93,7 +95,7 @@ The migration flow, however, is a bit more complicated, as shown here:
 
 There are three `enum`s to consider and they are defined in the `MigrationConfiguration.cs` file.
 
-The first is `MigrationMode`, which has two possible values:
+The first is `MigrationSourceMode`, which has two possible values:
 
 | Mode    | Meaning                                                                                                                                |
 | ------- | -------------------------------------------------------------------------------------------------------------------------------------- |
@@ -108,38 +110,16 @@ The second enum is `SourceDeletionMode`. This enum relates to the deletion of `a
 | All             | All records that were migrated will be deleted.                          |
 | AllExceptLatest | All migrated records except the last (by `created_utc`) will be deleted. |
 
-The final relevant enum is `AdjustedPriceModes` which has the `[Flags]` attribute, allowing for multiple selections with the `|` operator.
+The final relevant enum is `PriceMigrationMode` which has the `[Flags]` attribute, allowing for multiple selections with the `|` operator.
+This enum controls whether and how prices are migrated.
 This enum controls both the creation and the deletion of records within the `financials.eod_prices` table.
 
-| Flag             | Meaning                                                                               |
-| ---------------- | ------------------------------------------------------------------------------------- |
-| OnlySplits       | Only codes (tickers) with split data are migrated to the `eod_adjusted_prices` table. |
-| All              | Price data with zero splits are also migrated to the `eod_adjusted_prices` table.     |
-| DeleteFromSource | Records in `eod_prices` with corresponding `eod_adjusted_prices` records are deleted. |
+| Flag     | Meaning                                          |
+| -------- | ------------------------------------------------ |
+| None     | No prices are migrated.                          |
+| Raw      | Only the "raw" (unadjusted) prices are migrated. |
+| Adjusted | Price adjusted prices are migrated.              |
 
-These `enum`s are set via the `MigrationConfiguration` file, as demonstrated in these examples.
-
-The following file will:
-
-1. migrate the **latest** price and split data from `imports.api_transactions` to `financials.eod_prices` where the source is `eodhd.com`;
-2. **not** delete any `api_transactions` records;
-3. migrate all `eod_prices` records to `eod_adjusted_prices` (regardless of whether splits exist);
-4.  **delete** all migrated records from `eod_prices`;
-5.  and constrain **parallelization** to no more than 5 threads.
-
-```json
-{
-  "Source": "eodhd.com",
-  "Categories": [
-    "EOD Prices",
-    "Splits"
-  ],
-  "Mode": "Latest",
-  "Source Deletion Mode": "None",
-  "Adjusted Price Mode":  "All, Delete From Source",
-  "MaxParallelization": 5
-}
-```
 
 When building your configuration file, you can use either the `enum` string value or the value from the `Description` attribute.
 
@@ -157,6 +137,7 @@ public enum AdjustedPriceModes
     DeleteFromSource = 1 << 2
 }
 ```
+
 means that these two lines (in your JSON file) are equivalent:
 
 ```json

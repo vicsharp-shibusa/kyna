@@ -8,14 +8,11 @@ Check the `eng` folder on the root of the project for scripts that automate the 
 
 ### Ticks for Timestamps
 
-When putting a `DateTime` into the database and then fetching it out, there was a small discrepancy (milliseconds), but the discrepancy caused equality operations to fail. By storing ticks as a `BIGINT`, the values going in and out of the database do not change. However, we also want to be able to see and filter by timestamps when querying the database, hence this construct:
-
-```sql
-    ticks_utc BIGINT NOT NULL,
-    timestamp_utc TIMESTAMP WITH TIME ZONE GENERATED ALWAYS AS (to_timestamp((ticks_utc - 621355968000000000) / 10000000)) STORED,
-```
-
-I found this solution on [this StackOverflow post](https://stackoverflow.com/questions/9056193/how-to-convert-a-sql-field-stored-as-a-tick-into-a-date).
+The database tables have timestamp columns like `created_at` and `updated_at` but also contain `bigint` values that store the Unix milliseconds.
+These columns exist to overcome a precision difference that results in undesirable behavior.
+If you take a `record` object and set a timestamp, save it to the database, pull it back out and then compare the fetched version with the original version, you get an equality mismatch.
+This is because the timestamp changes ever so slightly as a result of more precision in the database engine than in the .NET code base.
+To overcome this problem, we preserve the timestamp as Unix milliseconds and use that value to hydrate the dates when deserializing into C# objects.
 
 ### Storing Money
 

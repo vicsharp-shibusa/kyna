@@ -32,22 +32,41 @@ Kyna is intended to be a suite of software tools that
 
 ### Current Project Phase
 
-It's been a minute since I worked on this project, but I think I'm ready for another round with it.
-I've been thinking about it.
+I left the project stale for about a year.
+The first thing I wanted to do upon returning to the project was dust off the cobwebs and get the thing running again.
 
-I spent some time last year toying with the idea of a "game version" in which "players" could be constructed with different goals and strategies.
-The "game board" would be a set of stocks over a period of time and the winner would be the player with the most money at the end.
-Players would, of course, have equal account values at the start (i.e., the same amount of "money").
-I still think this is a good idea, but it's a massive undertaking.
-Buying strategies are not too difficult, but selling strategies are another level.
-And trying to manage a portfolio (e.g., making decisions about when to sell X in order to afford buying Y) is another level beyond.
+#### Good News
 
-So, back to earth.
-The next test is going to be built around "swing trading" with a 3-week prologue and epilogue.
+The good news is that I've completed that task.
+I've overhauled the data access layer, pulled out `Dapper`, and hardened the connection management scenarios.
+
+I also ported an "accounting" subsystem from another branch of code I had (the so-called "game" branch, in which I experimented with how to _gamify_ the back-testing.
+My efforts failed because of the layers of complexity in determining when to sell.)
+Choosing when to buy from a signal is pretty easy, but choosing when to sell is not.
+
+#### Bad News
+
+The bad news is that I wasn't able to maintain backward compatibility.
+Because I no longer have an [EOD Historical Data](https://eodhd.com/) account, I wasn't able to test the changes I made around the data access layer.
+Consequently, there my be small defects in the eodhd importer and migrator.
+Sorry in advance if this causes you trouble.
+If you want to get a copy of the eodhd importer and migrator when they almost definitely worked, revert to the following commit.
+This had a working version of an eodhd.com client.
+
+```bash
+commit e7249ee3f202e407b3f80808722f116f03d956f7 (tag: v0.0.11)
+Author: Vic Sharp <vicsharp@shibusa.io>
+Date:   Thu Dec 26 10:57:06 2024 -0600
+
+    Consolidated some code and renamed a few things to prepare for upcoming backtesting refactor.
+```
+
+---
+
+The work underway is built around "swing trading" with a 3-week prologue and epilogue.
+
 See [the project on GitHub](https://github.com/users/vicsharp-shibusa/projects/5).
 The plan is to work out the test using stocks, develop some very specific sell rules, and then see if we can't also work in option data analysis as a _stretch goal_.
-I want to accomplish this without disturbing the existing code, meaning preserving backward compatibility.
-At least for now - if the model that is the output from this phase accomplishes its goals, we could sunset the existing model without losing the ability to re-create its outputs.
 
 The big thrust of the current phase is _more signals_.
 I'll resurrect the `ChartReader` concept where each `ChartReader` instance reads a `Chart` for a specific thing and offers up `IEnumerable<Signal>` or some such thing.
@@ -56,6 +75,8 @@ It's a good chance to work on _parallelization_.
 There's probably a lot more Python in this phase - to take advantage of its ability to generate charts.
 I believe we'll want to see charts overlayed with the _signals_ collected.
 I'm going to use the existing dotnet framework (and the existing database) I've built to collect and organize the data for easy access from Python.
+
+---
 
 ### Project History
 
@@ -98,12 +119,18 @@ This importer, `YahooImporter` follows a simpler path than the `EodHdImporter` i
 
 [Phase 1.7](https://github.com/vicsharp-shibusa/kyna/milestone/11) was the stretch in which we added [polygon.io](https://polygon.io/) support. Polygon.io is a data provider for historical and real-time stock, options, indices, and crypto data.
 
+[Phase 2.0](https://github.com/vicsharp-shibusa/kyna/milestone/15) is a second round of development currently underway.
+
 The Kyna MVP project has come to a close. A lot of good work was done, many lessons were learned, and the project's output will be useful in the upcoming project(s).
+
+---
 
 ### YouTube
 
 This project's progress is being chronicled on a [YouTube channel Playlist](https://www.youtube.com/playlist?list=PLGw44r0iH8bayhAUZsMaK15Ny7--x8Mq_).
 For more information about the thought processes behind various choices, please subscribe to the channel.
+
+---
 
 ### Backtesting Approach
 
