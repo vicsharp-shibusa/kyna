@@ -18,7 +18,7 @@ public sealed partial class ReportService
         Debug.Assert(backtestDaos != null);
 
         var counts = _backtestConn.Query<SignalCounts>(
-            _backtestDbDef.GetSql(SqlKeys.FetchBacktestSignalCounts),
+            _backtestDbDef.Sql.GetSql(SqlKeys.FetchBacktestSignalCounts),
             new { processId }).ToArray();
 
         var signalNames = counts.Select(c => c.SignalName).Distinct().ToArray();
@@ -70,7 +70,7 @@ public sealed partial class ReportService
                     "Number Signals", "Success %", "Avg Duration");
 
                 var summary = _backtestConn.Query<SignalSummaryDetails>(
-                    _backtestDbDef.GetSql(SqlKeys.FetchBacktestSignalSummary),
+                    _backtestDbDef.Sql.GetSql(SqlKeys.FetchBacktestSignalSummary),
                     new { BacktestId = btDao.Id, signalName });
 
                 foreach (var item in summary.Where(d => d.NumberSignals >= (_reportOptions.Stats?.MinimumSignals ?? 0)))
@@ -86,7 +86,7 @@ public sealed partial class ReportService
                 signalSummaryReport = null;
 
                 var details = _backtestConn.Query<SignalDetails>(
-                    _backtestDbDef.GetSql(SqlKeys.FetchBacktestSignalDetails),
+                    _backtestDbDef.Sql.GetSql(SqlKeys.FetchBacktestSignalDetails),
                     new { BacktestId = btDao.Id, processId, signalName });
 
                 var signalDetailReport = CreateReport(
@@ -169,7 +169,7 @@ public sealed partial class ReportService
         reports.Add(summaryReport);
 
         var counts = _backtestConn.Query<SignalCounts>(
-            _backtestDbDef.GetSql(SqlKeys.FetchBacktestSignalCounts),
+            _backtestDbDef.Sql.GetSql(SqlKeys.FetchBacktestSignalCounts),
             new { processId });
 
         var scReport = CreateReport("Signal Counts", "Number",
@@ -228,7 +228,7 @@ public sealed partial class ReportService
                     "Number Signals", "Success %", "Avg Duration");
 
                 var summary = _backtestConn.Query<SignalSummaryDetails>(
-                    _backtestDbDef.GetSql(SqlKeys.FetchBacktestSignalSummary),
+                    _backtestDbDef.Sql.GetSql(SqlKeys.FetchBacktestSignalSummary),
                     new { backtestId, signalName });
 
                 foreach (var item in summary.Where(d => d.NumberSignals >= (_reportOptions.Stats?.MinimumSignals ?? 0)))
@@ -248,7 +248,7 @@ public sealed partial class ReportService
                     "Result Direction", "Trading Days", "Calendar Days");
 
                 var details = _backtestConn.Query<SignalDetails>(
-                    _backtestDbDef.GetSql(SqlKeys.FetchBacktestSignalDetails),
+                    _backtestDbDef.Sql.GetSql(SqlKeys.FetchBacktestSignalDetails),
                     new { backtestId, processId, signalName });
 
                 foreach (var item in details)
@@ -272,14 +272,14 @@ public sealed partial class ReportService
 
     public Task<IEnumerable<ProcessIdInfo>> GetBacktestProcessesAsync() =>
         _backtestConn.QueryAsync<ProcessIdInfo>(
-            _backtestDbDef.GetSql(SqlKeys.FetchBacktestsProcessIdInfo));
+            _backtestDbDef.Sql.GetSql(SqlKeys.FetchBacktestsProcessIdInfo));
 
     public async Task DeleteProcessesAsync(params Guid[] processIds)
     {
         foreach (var pid in processIds)
         {
             await _backtestConn.ExecuteAsync(
-                _backtestDbDef.GetSql(SqlKeys.DeleteBacktestsForProcessId),
+                _backtestDbDef.Sql.GetSql(SqlKeys.DeleteBacktestsForProcessId),
                 new { ProcessId = pid });
         }
     }

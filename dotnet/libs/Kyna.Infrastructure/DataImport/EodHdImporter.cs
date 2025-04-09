@@ -265,7 +265,7 @@ internal sealed class EodHdImporter : HttpImporterBase, IExternalDataImporter
                 CommunicateAction(Constants.Actions.Purge);
 
                 using var conn = _dbDef.GetConnection();
-                return conn.ExecuteAsync(_dbDef.GetSql(SqlKeys.DeleteApiTransactionsForSource),
+                return conn.ExecuteAsync(_dbDef.Sql.GetSql(SqlKeys.DeleteApiTransactionsForSource),
                     new { Source }, cancellationToken: cancellationToken);
             }
         }

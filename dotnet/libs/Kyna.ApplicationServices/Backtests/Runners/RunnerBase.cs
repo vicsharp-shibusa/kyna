@@ -89,7 +89,7 @@ internal abstract class RunnerBase
     {
         OnCommunicate(new CommunicationEventArgs("Fetching data to backtest ...", null));
         return _finDbContext.QueryAsync<CodesAndCounts>(
-            _finDbDef.GetSql(SqlKeys.FetchAdjustedCodesAndCounts), new { source },
+            _finDbDef.Sql.GetSql(SqlKeys.FetchAdjustedCodesAndCounts), new { source },
             commandTimeout: 0, cancellationToken: cancellationToken);
     }
 
@@ -98,7 +98,7 @@ internal abstract class RunnerBase
     {
         Guid backtestId = Guid.NewGuid();
         OnCommunicate(new CommunicationEventArgs("Creating backtest record...", null));
-        await _backtestDbContext.ExecuteAsync(_backtestDbDef.GetSql(SqlKeys.UpsertBacktest),
+        await _backtestDbContext.ExecuteAsync(_backtestDbDef.Sql.GetSql(SqlKeys.UpsertBacktest),
             new Backtest(backtestId,
                 configuration.Name,
                 configuration.Type.GetEnumDescription(),
@@ -145,7 +145,7 @@ internal abstract class RunnerBase
                             $"{resultDetail.SignalName}\t{resultDetail.Code}\t{resultDetail.Entry.Date:yyyy-MM-dd}", null));
                         try
                         {
-                            _backtestDbContext.Execute(_backtestDbDef.GetSql(SqlKeys.UpsertBacktestResult),
+                            _backtestDbContext.Execute(_backtestDbDef.Sql.GetSql(SqlKeys.UpsertBacktestResult),
                                 new Infrastructure.Database.DataAccessObjects.BacktestResult(
                                     resultDetail.Id,
                                     resultDetail.BacktestId,

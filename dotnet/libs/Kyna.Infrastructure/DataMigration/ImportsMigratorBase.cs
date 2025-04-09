@@ -1,4 +1,5 @@
 ﻿using Kyna.Infrastructure.Database;
+using Microsoft.Extensions.Configuration;
 using System.Data;
 
 namespace Kyna.Infrastructure.DataMigration;
@@ -8,8 +9,6 @@ internal abstract class ImportsMigratorBase
     protected Guid? _processId;
     protected readonly bool _dryRun;
 
-    private protected readonly IDbConnection _sourceContext;
-    private protected readonly IDbConnection _targetContext;
     private protected readonly DbDef _sourceDbDef;
     private protected readonly DbDef _targetDbDef;
 
@@ -20,8 +19,6 @@ internal abstract class ImportsMigratorBase
         _targetDbDef = targetDef;
         _processId = processId;
         _dryRun = dryRun;
-        _sourceContext = sourceDef.GetConnection();
-        _targetContext = targetDef.GetConnection();
     }
 
     public abstract string Source { get; }

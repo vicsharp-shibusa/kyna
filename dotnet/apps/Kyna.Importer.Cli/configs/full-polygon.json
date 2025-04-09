@@ -11,7 +11,7 @@
     "us_stocks_sip/day_aggs_v1"
   ],
   "Options": {
-    "Import File Location": "C:\\temp",
+    "Import File Location": "C:\\temp\\importer",
     "Max Parallelization": "10",
     "Years of Data": "10"
   }

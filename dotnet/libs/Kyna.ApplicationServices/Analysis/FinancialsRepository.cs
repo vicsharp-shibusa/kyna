@@ -19,7 +19,7 @@ public sealed class FinancialsRepository
     public Task<IEnumerable<string>> GetAllAdjustedSymbolsForSourceAsync(string source)
     {
         return _dbContext.QueryAsync<string>(
-            _dbDef.GetSql(SqlKeys.FetchAllAdjustedSymbolsForSource), new { source });
+            _dbDef.Sql.GetSql(SqlKeys.FetchAllAdjustedSymbolsForSource), new { source });
     }
 
     public async Task<IEnumerable<Ohlc>> GetOhlcForSourceAndCodeAsync(string source, string code,
@@ -69,8 +69,8 @@ public sealed class FinancialsRepository
 
 
         return useAdjusted
-            ? $"{_dbDef.GetSql(SqlKeys.FetchAdjustedEodPrices, [.. whereClauses])}".Trim()
-            : $"{_dbDef.GetSql(SqlKeys.FetchEodPrices, [.. whereClauses])}".Trim();
+            ? $"{_dbDef.Sql.GetSql(SqlKeys.FetchAdjustedEodPrices, [.. whereClauses])}".Trim()
+            : $"{_dbDef.Sql.GetSql(SqlKeys.FetchEodPrices, [.. whereClauses])}".Trim();
     }
 
     private static string BuildDateRangeWhereClause(DateOnly? start = null, DateOnly? end = null)

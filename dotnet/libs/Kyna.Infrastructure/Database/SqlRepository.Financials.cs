@@ -325,21 +325,18 @@ SELECT 1 WHERE FALSE");
         yield return new KeyValuePair<SqlRepoKey, string>(
             new SqlRepoKey(SqlKeys.HydrateMissingEntities, DatabaseEngine.PostgreSql),
             @"
-CREATE TEMPORARY TABLE tickers (
-    source TEXT NOT NULL,
-    code TEXT NOT NULL,
-    PRIMARY KEY (source, code)
-);
-INSERT INTO tickers
-SELECT source, code FROM public.eod_prices
-ON CONFLICT (source, code) DO NOTHING;
-INSERT INTO tickers
-SELECT source, code FROM public.eod_adjusted_prices
-ON CONFLICT (source, code) DO NOTHING;
 INSERT INTO public.entities (source, code, created_at, updated_at)
-SELECT source, code, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
-FROM tickers
-ON CONFLICT (source, code) DO NOTHING");
+SELECT DISTINCT source, code, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+FROM (
+    SELECT source, code FROM public.eod_prices
+    UNION
+    SELECT source, code FROM public.eod_adjusted_prices
+) AS combined_tickers
+WHERE NOT EXISTS (
+    SELECT 1 FROM public.entities e
+    WHERE e.source = combined_tickers.source AND e.code = combined_tickers.code
+)
+ON CONFLICT (source, code) DO NOTHING;");
 
         // Set split indicator for entities
         yield return new KeyValuePair<SqlRepoKey, string>(

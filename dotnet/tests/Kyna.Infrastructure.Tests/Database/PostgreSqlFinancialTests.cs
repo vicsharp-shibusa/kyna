@@ -23,13 +23,13 @@ public class PostgreSqlFinancialTests : IClassFixture<PostgreSqlTestFixture>
         using var context = _fixture.Financials.GetConnection();
         Assert.NotNull(context);
 
-        var sqlDelete = _fixture.Financials.GetSql(SqlKeys.DeleteEodPrices,
+        var sqlDelete = _fixture.Financials.Sql.GetSql(SqlKeys.DeleteEodPrices,
             "source = @Source", "code = @Code", "date_eod = @DateEod");
 
         context.Execute(sqlDelete, eodPriceDao);
-        context.Execute(_fixture.Financials.GetSql(SqlKeys.UpsertEodPrice), eodPriceDao);
+        context.Execute(_fixture.Financials.Sql.GetSql(SqlKeys.UpsertEodPrice), eodPriceDao);
 
-        var sql = _fixture.Financials.GetSql(SqlKeys.FetchEodPrices, "process_id = @ProcessId");
+        var sql = _fixture.Financials.Sql.GetSql(SqlKeys.FetchEodPrices, "process_id = @ProcessId");
 
         var actual = context.QueryFirstOrDefault<EodPrice>(sql, new { eodPriceDao.ProcessId });
 
@@ -42,16 +42,16 @@ public class PostgreSqlFinancialTests : IClassFixture<PostgreSqlTestFixture>
         Guid processId = Guid.NewGuid();
         var eodPriceDao = CreateAdjustedEodPricesDao(processId);
 
-        var sqlDelete = _fixture.Financials.GetSql(SqlKeys.DeleteAdjustedEodPrices,
+        var sqlDelete = _fixture.Financials.Sql.GetSql(SqlKeys.DeleteAdjustedEodPrices,
             "source = @Source", "code = @Code", "date_eod = @DateEod");
 
         using var context = _fixture.Financials.GetConnection();
         Assert.NotNull(context);
 
         context.Execute(sqlDelete, eodPriceDao);
-        context.Execute(_fixture.Financials.GetSql(SqlKeys.UpsertAdjustedEodPrice), eodPriceDao);
+        context.Execute(_fixture.Financials.Sql.GetSql(SqlKeys.UpsertAdjustedEodPrice), eodPriceDao);
 
-        var sql = _fixture.Financials.GetSql(SqlKeys.FetchAdjustedEodPrices, "process_id = @ProcessId");
+        var sql = _fixture.Financials.Sql.GetSql(SqlKeys.FetchAdjustedEodPrices, "process_id = @ProcessId");
 
         var actual = context.QueryFirstOrDefault<EodAdjustedPrice>(
             sql, new { eodPriceDao.ProcessId });
@@ -68,10 +68,10 @@ public class PostgreSqlFinancialTests : IClassFixture<PostgreSqlTestFixture>
         using var context = _fixture.Financials.GetConnection();
         Assert.NotNull(context);
 
-        context!.Execute(_fixture.Financials.GetSql(SqlKeys.DeleteSplitsForSource), splitDao);
-        context.Execute(_fixture.Financials.GetSql(SqlKeys.UpsertSplit), splitDao);
+        context!.Execute(_fixture.Financials.Sql.GetSql(SqlKeys.DeleteSplitsForSource), splitDao);
+        context.Execute(_fixture.Financials.Sql.GetSql(SqlKeys.UpsertSplit), splitDao);
 
-        var sql = _fixture.Financials.GetSql(SqlKeys.FetchSplits, "process_id = @ProcessId");
+        var sql = _fixture.Financials.Sql.GetSql(SqlKeys.FetchSplits, "process_id = @ProcessId");
 
         var actual = context.QueryFirstOrDefault<Split>(sql, new { splitDao.ProcessId });
         Assert.NotNull(actual);
@@ -87,10 +87,10 @@ public class PostgreSqlFinancialTests : IClassFixture<PostgreSqlTestFixture>
         using var context = _fixture.Financials.GetConnection();
         Assert.NotNull(context);
 
-        context!.Execute(_fixture.Financials.GetSql(SqlKeys.DeleteDividendsForSource), dividendDao);
-        context.Execute(_fixture.Financials.GetSql(SqlKeys.UpsertDividend), dividendDao);
+        context!.Execute(_fixture.Financials.Sql.GetSql(SqlKeys.DeleteDividendsForSource), dividendDao);
+        context.Execute(_fixture.Financials.Sql.GetSql(SqlKeys.UpsertDividend), dividendDao);
 
-        var sql = _fixture.Financials.GetSql(SqlKeys.FetchDividends, "process_id = @ProcessId");
+        var sql = _fixture.Financials.Sql.GetSql(SqlKeys.FetchDividends, "process_id = @ProcessId");
 
         var actual = context.QueryFirstOrDefault<Dividend>(sql, new { dividendDao.ProcessId });
         Assert.NotNull(actual);
@@ -105,12 +105,12 @@ public class PostgreSqlFinancialTests : IClassFixture<PostgreSqlTestFixture>
         using var context = _fixture.Financials.GetConnection();
         Assert.NotNull(context);
 
-        context!.Execute(_fixture.Financials.GetSql(SqlKeys.DeleteEntityForSourceAndCode),
+        context!.Execute(_fixture.Financials.Sql.GetSql(SqlKeys.DeleteEntityForSourceAndCode),
             new { entity.Source, entity.Code });
 
-        context.Execute(_fixture.Financials.GetSql(SqlKeys.InsertBasicEntity), entity);
+        context.Execute(_fixture.Financials.Sql.GetSql(SqlKeys.InsertBasicEntity), entity);
 
-        var entities = context.Query<Entity>(_fixture.Financials.GetSql(SqlKeys.FetchEntity));
+        var entities = context.Query<Entity>(_fixture.Financials.Sql.GetSql(SqlKeys.FetchEntity));
 
         Assert.NotNull(entities);
         Assert.NotEmpty(entities);
@@ -125,12 +125,12 @@ public class PostgreSqlFinancialTests : IClassFixture<PostgreSqlTestFixture>
         using var context = _fixture.Financials.GetConnection();
         Assert.NotNull(context);
 
-        context!.Execute(_fixture.Financials.GetSql(SqlKeys.DeleteEntityForSourceAndCode),
+        context!.Execute(_fixture.Financials.Sql.GetSql(SqlKeys.DeleteEntityForSourceAndCode),
             new { entity.Source, entity.Code });
 
-        context.Execute(_fixture.Financials.GetSql(SqlKeys.UpsertEntity), entity);
+        context.Execute(_fixture.Financials.Sql.GetSql(SqlKeys.UpsertEntity), entity);
 
-        var entities = context.Query<Entity>(_fixture.Financials.GetSql(SqlKeys.FetchEntity));
+        var entities = context.Query<Entity>(_fixture.Financials.Sql.GetSql(SqlKeys.FetchEntity));
 
         Assert.NotNull(entities);
         Assert.NotEmpty(entities);

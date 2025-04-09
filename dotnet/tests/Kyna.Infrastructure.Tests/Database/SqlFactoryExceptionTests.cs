@@ -9,7 +9,7 @@ public class SqlFactoryExceptionTests
     [Fact]
     public void Ctor_NullInput_Throws()
     {
-        Assert.Throws<ArgumentNullException>(() => new SqlFactory(null));
+        Assert.Throws<ArgumentNullException>(() => new SqlCollection(null));
     }
 
     [Fact]
@@ -17,14 +17,14 @@ public class SqlFactoryExceptionTests
     {
         var sut = new Dictionary<string, string>();
 
-        Assert.Throws<ArgumentException>(() => new SqlFactory(sut));
+        Assert.Throws<ArgumentException>(() => new SqlCollection(sut));
     }
 
     [Fact]
     public void GetSqlStatement_NullKey_Throws()
     {
         const string Key = "test";
-        var sut = new SqlFactory(new Dictionary<string, string>() {
+        var sut = new SqlCollection(new Dictionary<string, string>() {
             {Key,"SELECT * FROM table" }
         });
 
@@ -35,7 +35,7 @@ public class SqlFactoryExceptionTests
     public void TryGetSqlStatement_NullKey_Throws()
     {
         const string Key = "test";
-        var sut = new SqlFactory(new Dictionary<string, string>() {
+        var sut = new SqlCollection(new Dictionary<string, string>() {
             {Key,"SELECT * FROM table" }
         });
 
@@ -46,7 +46,7 @@ public class SqlFactoryExceptionTests
     public void GetSqlStatementWithWhereClause_NullKey_Throws()
     {
         const string Key = "test";
-        var sut = new SqlFactory(new Dictionary<string, string>() {
+        var sut = new SqlCollection(new Dictionary<string, string>() {
             {Key,"SELECT * FROM table" }
         });
 

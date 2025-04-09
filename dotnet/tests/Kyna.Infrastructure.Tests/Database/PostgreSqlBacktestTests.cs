@@ -25,9 +25,9 @@ public class PostgreSqlBacktestTests : IClassFixture<PostgreSqlTestFixture>
         using var context = _fixture.Backtests.GetConnection();
         Debug.Assert(context != null);
 
-        context.Execute(_fixture.Backtests.GetSql(SqlKeys.UpsertBacktest), backtest);
+        context.Execute(_fixture.Backtests.Sql.GetSql(SqlKeys.UpsertBacktest), backtest);
 
-        var sql = _fixture.Backtests.GetSql(SqlKeys.FetchBacktest, "id = @Id");
+        var sql = _fixture.Backtests.Sql.GetSql(SqlKeys.FetchBacktest, "id = @Id");
         Assert.NotNull(sql);
         var actual = context.QueryFirstOrDefault<Backtest>(sql, backtest);
         Assert.NotNull(actual);
@@ -43,9 +43,9 @@ public class PostgreSqlBacktestTests : IClassFixture<PostgreSqlTestFixture>
         using var context = _fixture.Backtests.GetConnection();
         Debug.Assert(context != null);
 
-        context.Execute(_fixture.Backtests.GetSql(SqlKeys.UpsertBacktestResult), backtestResult);
+        context.Execute(_fixture.Backtests.Sql.GetSql(SqlKeys.UpsertBacktestResult), backtestResult);
 
-        var sql = _fixture.Backtests.GetSql(SqlKeys.FetchBacktestResult, "id = @Id");
+        var sql = _fixture.Backtests.Sql.GetSql(SqlKeys.FetchBacktestResult, "id = @Id");
         var actual = context.QueryFirstOrDefault<BacktestResult>(sql, backtestResult);
         Assert.NotNull(actual);
         Assert.Equal(backtestResult, actual);
@@ -57,12 +57,12 @@ public class PostgreSqlBacktestTests : IClassFixture<PostgreSqlTestFixture>
         using var context = _fixture.Backtests.GetConnection();
         Debug.Assert(context != null);
 
-        context.Execute(_fixture.Backtests.GetSql(SqlKeys.DeleteBacktestStats));
+        context.Execute(_fixture.Backtests.Sql.GetSql(SqlKeys.DeleteBacktestStats));
         var backtestStats = CreateBacktestStats();
 
-        context.Execute(_fixture.Backtests.GetSql(SqlKeys.UpsertBacktestStats), backtestStats);
+        context.Execute(_fixture.Backtests.Sql.GetSql(SqlKeys.UpsertBacktestStats), backtestStats);
 
-        var sql = _fixture.Backtests.GetSql(SqlKeys.FetchBacktestStats, "backtest_id = @BacktestId");
+        var sql = _fixture.Backtests.Sql.GetSql(SqlKeys.FetchBacktestStats, "backtest_id = @BacktestId");
         var actual = context.QueryFirstOrDefault<BacktestStats>(sql, backtestStats);
         Assert.NotNull(actual);
         Assert.Equal(backtestStats, actual);

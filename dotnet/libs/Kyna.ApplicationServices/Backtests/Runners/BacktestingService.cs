@@ -24,13 +24,13 @@ public sealed class BacktestingService(DbDef finDef, DbDef backtestDef) : IDispo
 
     public Task<IEnumerable<ProcessIdInfo>> GetBacktestProcessesAsync() =>
         _backtestConn.QueryAsync<ProcessIdInfo>(
-            _bckDef.GetSql(SqlKeys.FetchBacktestsProcessIdInfo));
+            _bckDef.Sql.GetSql(SqlKeys.FetchBacktestsProcessIdInfo));
 
     public async Task DeleteProcessesAsync(params Guid[] processIds)
     {
         foreach (var pid in processIds)
         {
-            await _backtestConn.ExecuteAsync(_bckDef.GetSql(SqlKeys.DeleteBacktestsForProcessId),
+            await _backtestConn.ExecuteAsync(_bckDef.Sql.GetSql(SqlKeys.DeleteBacktestsForProcessId),
                 new { ProcessId = pid });
         }
     }

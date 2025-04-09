@@ -19,7 +19,7 @@ public sealed class DatabaseLogService
         start ??= new DateTime(1900, 1, 1);
         end ??= DateTime.UtcNow.AddDays(1);
 
-        var sql = _dbDef.GetSql(SqlKeys.DeleteLogs, "created_at > @Start", "created_at < @End");
+        var sql = _dbDef.Sql.GetSql(SqlKeys.DeleteLogs, "created_at > @Start", "created_at < @End");
 
         return _dbContext.ExecuteAsync(sql, new { start, end });
     }
@@ -29,7 +29,7 @@ public sealed class DatabaseLogService
         start ??= new DateTime(1900, 1, 1);
         end ??= DateTime.UtcNow.AddDays(1);
 
-        var sql = _dbDef.GetSql(SqlKeys.DeleteAppEvents, "created_at > @Start", "created_at < @End");
+        var sql = _dbDef.Sql.GetSql(SqlKeys.DeleteAppEvents, "created_at > @Start", "created_at < @End");
 
         return _dbContext.ExecuteAsync(sql, new { start, end });
     }

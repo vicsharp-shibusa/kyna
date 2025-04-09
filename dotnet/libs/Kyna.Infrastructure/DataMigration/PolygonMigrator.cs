@@ -4,6 +4,7 @@ using Kyna.Infrastructure.Database.DataAccessObjects;
 using Kyna.Infrastructure.DataImport;
 using Kyna.Infrastructure.Events;
 using System.ComponentModel;
+using System.Data;
 using System.Diagnostics;
 using System.IO.Compression;
 using System.Text;
@@ -12,17 +13,28 @@ using System.Text.Json.Serialization;
 
 namespace Kyna.Infrastructure.DataMigration;
 
-internal sealed class PolygonMigrator(DbDef sourceDef, DbDef targetDef,
-    PolygonMigrator.MigrationConfiguration configuration, Guid? processId = null, bool dryRun = false)
-    : ImportsMigratorBase(sourceDef, targetDef, processId, dryRun), IImportsMigrator
+internal sealed class PolygonMigrator : ImportsMigratorBase, IImportsMigrator
 {
+    private const int MaxDbConnections = 50;
     public override string Source => SourceName;
 
     public event EventHandler<CommunicationEventArgs>? Communicate;
 
     public const string SourceName = "polygon.io";
 
-    private readonly MigrationConfiguration _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
+    private readonly MigrationConfiguration _configuration;
+
+    private readonly SemaphoreSlim _connectionSemaphore;
+
+    public PolygonMigrator(DbDef sourceDef, DbDef targetDef,
+        MigrationConfiguration configuration, Guid? processId = null, bool dryRun = false) : base(sourceDef, targetDef, processId, dryRun)
+    {
+        _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
+        _connectionSemaphore = new SemaphoreSlim(_configuration.MaxParallelization > 0
+           ? Math.Min(_configuration.MaxParallelization, MaxDbConnections)
+           : MaxDbConnections,
+           MaxDbConnections);
+    }
 
     public async Task<TimeSpan> MigrateAsync(CancellationToken cancellationToken = default)
     {
@@ -64,25 +76,25 @@ internal sealed class PolygonMigrator(DbDef sourceDef, DbDef targetDef,
             }
         }
 
+        goto SkipStuff1;
         foreach (var actionType in new[] {
             PolygonImporter.Constants.Actions.TickerDetails,
             PolygonImporter.Constants.Actions.Splits,
             PolygonImporter.Constants.Actions.Dividends
         })
         {
-            if (_configuration.MaxParallelization > 1)
+            var itemsToProcess = actions.Where(a => a.Category.Equals(actionType) && a.DoMigrate).ToArray();
+            if (_configuration.MaxParallelization > 1 && itemsToProcess.Length > 0)
             {
-                await Parallel.ForEachAsync(actions.Where(a => a.Category.Equals(actionType) && a.DoMigrate),
-                    new ParallelOptions()
+                await Parallel.ForEachAsync(itemsToProcess,
+                    new ParallelOptions
                     {
                         MaxDegreeOfParallelism = _configuration.MaxParallelization,
                         CancellationToken = cancellationToken
                     },
                     async (item, ct) =>
                     {
-                        string msg =
-                            $"Migrate {item.Id,12}\t{item.Category,15}\t{item.SubCategory,10}\tDelete from source: {item.DeleteFromSource}";
-
+                        string msg = $"Migrate {item.Id,12}\t{item.Category,15}\t{item.SubCategory,10}\tDelete from source: {item.DeleteFromSource}";
                         Communicate?.Invoke(this, new CommunicationEventArgs(msg, nameof(PolygonMigrator)));
 
                         if (!_dryRun)
@@ -93,11 +105,9 @@ internal sealed class PolygonMigrator(DbDef sourceDef, DbDef targetDef,
             }
             else
             {
-                foreach (var item in actions.Where(a => a.Category.Equals(actionType) && a.DoMigrate))
+                foreach (var item in itemsToProcess)
                 {
-                    string msg =
-                        $"Migrate {item.Id,12}\t{item.Category,15}\t{item.SubCategory,10}\tDelete from source: {item.DeleteFromSource}";
-
+                    string msg = $"Migrate {item.Id,12}\t{item.Category,15}\t{item.SubCategory,10}\tDelete from source: {item.DeleteFromSource}";
                     Communicate?.Invoke(this, new CommunicationEventArgs(msg, nameof(PolygonMigrator)));
 
                     if (!_dryRun)
@@ -111,77 +121,112 @@ internal sealed class PolygonMigrator(DbDef sourceDef, DbDef targetDef,
             {
                 foreach (var item in actions.Where(a => a.Category.Equals(actionType) && a.DeleteFromSource))
                 {
-                    string msg =
-                        $"Delete {item.Id,12}\t{item.Category,15}\t{item.SubCategory,10}";
-
+                    string msg = $"Delete {item.Id,12}\t{item.Category,15}\t{item.SubCategory,10}";
                     Communicate?.Invoke(this, new CommunicationEventArgs(msg, nameof(PolygonMigrator)));
 
                     if (!_dryRun)
                     {
-                        string sql = $"{_sourceDbDef.GetSql(SqlKeys.DeleteApiTransactions, "id = @Id")}";
-                        await _sourceContext.ExecuteAsync(sql, new { item.Id },
-                            cancellationToken: cancellationToken).ConfigureAwait(false);
+                        string sql = $"{_sourceDbDef.Sql.GetSql(SqlKeys.DeleteApiTransactions, "id = @Id")}";
+                        await _connectionSemaphore.WaitAsync(cancellationToken).ConfigureAwait(false);
+                        try
+                        {
+                            using var srcConn = _sourceDbDef.GetConnection();
+                            await srcConn.ExecuteAsync(sql, new { item.Id }, cancellationToken: cancellationToken).ConfigureAwait(false);
+                        }
+                        finally
+                        {
+                            _connectionSemaphore.Release();
+                        }
                     }
                 }
             }
         }
 
+    SkipStuff1:
+        IDbConnection? conn = null;
+
+        goto SkipStuff2;
+        
+        // Remaining operations unchanged
         if (_configuration.Categories.Contains(PolygonImporter.Constants.Actions.FlatFiles.ToString(),
             StringComparer.OrdinalIgnoreCase))
         {
-            await MigrateFlatFilesAsync(cancellationToken);
+            if (_dryRun)
+                Communicate?.Invoke(this, new CommunicationEventArgs("Migrate flat files.", nameof(PolygonMigrator)));
+            else
+                await MigrateFlatFilesAsync(cancellationToken);
         }
 
-        Communicate?.Invoke(this, new CommunicationEventArgs(timer.Elapsed.ConvertToText(), null));
-        Communicate?.Invoke(this, new CommunicationEventArgs("Hydrating missing entities", nameof(PolygonMigrator)));
-        await _targetContext.ExecuteAsync(_targetDbDef.GetSql(SqlKeys.HydrateMissingEntities), commandTimeout: 0,
-            cancellationToken: cancellationToken).ConfigureAwait(false);
+    SkipStuff2:
 
-        Communicate?.Invoke(this, new CommunicationEventArgs(timer.Elapsed.ConvertToText(), null));
-        Communicate?.Invoke(this, new CommunicationEventArgs("Setting split indicator for entities", nameof(PolygonMigrator)));
-        await _targetContext.ExecuteAsync(_targetDbDef.GetSql(SqlKeys.SetSplitIndicatorForEntities), commandTimeout: 0,
-            cancellationToken: cancellationToken).ConfigureAwait(false);
+        if (_dryRun)
+            Communicate?.Invoke(this, new CommunicationEventArgs("Hydrate missing entities.", nameof(PolygonMigrator)));
+        else
+        {
+            Communicate?.Invoke(this, new CommunicationEventArgs("Hydrating missing entities", nameof(PolygonMigrator)));
+            conn ??= _targetDbDef.GetConnection();
+            await conn.ExecuteAsync(_targetDbDef.Sql.GetSql(SqlKeys.HydrateMissingEntities), commandTimeout: 0,
+                cancellationToken: cancellationToken).ConfigureAwait(false);
+        }
 
-        Communicate?.Invoke(this, new CommunicationEventArgs(timer.Elapsed.ConvertToText(), null));
-        Communicate?.Invoke(this, new CommunicationEventArgs("Setting price action indicator for entities", nameof(PolygonMigrator)));
-        await _targetContext.ExecuteAsync(_targetDbDef.GetSql(SqlKeys.SetPriceActionIndicatorForEntities), commandTimeout: 0,
-            cancellationToken: cancellationToken).ConfigureAwait(false);
+        if (_dryRun)
+            Communicate?.Invoke(this, new CommunicationEventArgs("Set split indicator for entities", nameof(PolygonMigrator)));
+        else
+        {
+            Communicate?.Invoke(this, new CommunicationEventArgs(timer.Elapsed.ConvertToText(), null));
+            Communicate?.Invoke(this, new CommunicationEventArgs("Setting split indicator for entities", nameof(PolygonMigrator)));
+            conn ??= _targetDbDef.GetConnection();
+            await conn.ExecuteAsync(_targetDbDef.Sql.GetSql(SqlKeys.SetSplitIndicatorForEntities), commandTimeout: 0,
+                cancellationToken: cancellationToken).ConfigureAwait(false);
+        }
 
-        Communicate?.Invoke(this, new CommunicationEventArgs(timer.Elapsed.ConvertToText(), null));
-        Communicate?.Invoke(this, new CommunicationEventArgs("Setting last price actions for entities", nameof(PolygonMigrator)));
-        await _targetContext.ExecuteAsync(_targetDbDef.GetSql(SqlKeys.SetLastPriceActionForEntities), commandTimeout: 0,
-            cancellationToken: cancellationToken).ConfigureAwait(false);
+        if (_dryRun)
+            Communicate?.Invoke(this, new CommunicationEventArgs("Set price indicator for entities", nameof(PolygonMigrator)));
+        else
+        {
+            Communicate?.Invoke(this, new CommunicationEventArgs(timer.Elapsed.ConvertToText(), null));
+            Communicate?.Invoke(this, new CommunicationEventArgs("Setting price action indicator for entities", nameof(PolygonMigrator)));
+            conn ??= _targetDbDef.GetConnection();
+            await conn.ExecuteAsync(_targetDbDef.Sql.GetSql(SqlKeys.SetPriceActionIndicatorForEntities), commandTimeout: 0,
+                cancellationToken: cancellationToken).ConfigureAwait(false);
+        }
 
-        Communicate?.Invoke(this, new CommunicationEventArgs(timer.Elapsed.ConvertToText(), null));
-        Communicate?.Invoke(this, new CommunicationEventArgs("Cleaning up entities", nameof(PolygonMigrator)));
-        await _targetContext.ExecuteAsync(_targetDbDef.GetSql(SqlKeys.DeleteEntitiesWithoutTypesOrPriceActions),
-            new { Source },
-            commandTimeout: 0,
-            cancellationToken: cancellationToken).ConfigureAwait(false);
+        if (_dryRun)
+            Communicate?.Invoke(this, new CommunicationEventArgs("Set last price action for entities", nameof(PolygonMigrator)));
+        else
+        {
+            Communicate?.Invoke(this, new CommunicationEventArgs(timer.Elapsed.ConvertToText(), null));
+            Communicate?.Invoke(this, new CommunicationEventArgs("Setting last price actions for entities", nameof(PolygonMigrator)));
+            conn ??= _targetDbDef.GetConnection();
+            await conn.ExecuteAsync(_targetDbDef.Sql.GetSql(SqlKeys.SetLastPriceActionForEntities), commandTimeout: 0,
+                cancellationToken: cancellationToken).ConfigureAwait(false);
+        }
+
+        if (_dryRun)
+            Communicate?.Invoke(this, new CommunicationEventArgs("Clean up entities", nameof(PolygonMigrator)));
+        else
+        {
+            Communicate?.Invoke(this, new CommunicationEventArgs(timer.Elapsed.ConvertToText(), null));
+            Communicate?.Invoke(this, new CommunicationEventArgs("Cleaning up entities", nameof(PolygonMigrator)));
+            conn ??= _targetDbDef.GetConnection();
+            await conn.ExecuteAsync(_targetDbDef.Sql.GetSql(SqlKeys.DeleteEntitiesWithoutTypesOrPriceActions),
+                new { Source }, commandTimeout: 0, cancellationToken: cancellationToken).ConfigureAwait(false);
+        }
 
         timer.Stop();
+        Communicate?.Invoke(this, new CommunicationEventArgs(timer.Elapsed.ConvertToText(), null));
         return timer.Elapsed;
-    }
-
-    public string GetInfo()
-    {
-        StringBuilder result = new();
-
-        result.AppendLine($"Mode                 : {_configuration.Mode.GetEnumDescription()}");
-        result.AppendLine($"Source               : {_configuration.Source}");
-        result.AppendLine($"Source Deletion Mode : {_configuration.SourceDeletionMode.GetEnumDescription()}");
-        result.AppendLine($"Max Parallelization  : {_configuration.MaxParallelization}");
-
-        return result.ToString();
     }
 
     private async Task MigrateItemAsync(ApiTransactionForMigration item, CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
 
-        var responseBody = await _sourceContext.QueryFirstOrDefaultAsync<string>(
-            _sourceDbDef.GetSql(SqlKeys.FetchApiResponseBodyForId),
+        using var srcConn = _sourceDbDef.GetConnection();
+        var responseBody = await srcConn.QueryFirstOrDefaultAsync<string>(
+            _sourceDbDef.Sql.GetSql(SqlKeys.FetchApiResponseBodyForId),
             new { item.Id });
+        srcConn.Close();
 
         if (!string.IsNullOrWhiteSpace(responseBody) && responseBody != "[]" && responseBody != "{}")
         {
@@ -201,10 +246,31 @@ internal sealed class PolygonMigrator(DbDef sourceDef, DbDef targetDef,
             }
         }
     }
+
+    public string GetInfo()
+    {
+        StringBuilder result = new();
+
+        result.AppendLine($"Mode                 : {_configuration.Mode.GetEnumDescription()}");
+        result.AppendLine($"Source               : {_configuration.Source}");
+        result.AppendLine($"Source Deletion Mode : {_configuration.SourceDeletionMode.GetEnumDescription()}");
+        result.AppendLine($"Max Parallelization  : {_configuration.MaxParallelization}");
+
+        return result.ToString();
+    }
+
     private IEnumerable<ApiTransactionForMigration> GetTransactionsToMigrate()
     {
-        return _sourceContext.Query<ApiTransactionForMigration>(BuildFetchForMigrationSql(),
-            new { _configuration.Source, _configuration.Categories });
+        var conn = _sourceDbDef.GetConnection();
+        try
+        {
+            return conn.Query<ApiTransactionForMigration>(BuildFetchForMigrationSql(),
+                new { _configuration.Source, _configuration.Categories });
+        }
+        finally
+        {
+            conn.Close();
+        }
     }
 
     private string? BuildFetchForMigrationSql()
@@ -216,10 +282,10 @@ internal sealed class PolygonMigrator(DbDef sourceDef, DbDef targetDef,
         };
         if ((_configuration.Categories?.Length ?? 0) > 0)
         {
-            whereClauses.Add($"category {SqlFactory.GetSqlSyntaxForInCollection("Categories")}");
+            whereClauses.Add($"category {SqlCollection.GetSqlSyntaxForInCollection("Categories")}");
         }
 
-        return _sourceDbDef.GetSql(SqlKeys.FetchApiTransactionsForMigration, [.. whereClauses]);
+        return _sourceDbDef.Sql.GetSql(SqlKeys.FetchApiTransactionsForMigration, [.. whereClauses]);
     }
 
     private async Task MigrateFlatFilesAsync(CancellationToken cancellationToken)
@@ -241,127 +307,220 @@ internal sealed class PolygonMigrator(DbDef sourceDef, DbDef targetDef,
 
         var zippedFiles = importDirectory.GetFiles("*.gz", SearchOption.TopDirectoryOnly);
 
-        foreach (var file in zippedFiles)
+        if (_configuration.MaxParallelization > 1 && zippedFiles.Length > 0)
         {
-            var newFileName = file.FullName[0..^3]; // removes the ".gz"
-            if (!File.Exists(newFileName))
+            Parallel.ForEach(zippedFiles,
+                new ParallelOptions
+                {
+                    MaxDegreeOfParallelism = _configuration.MaxParallelization,
+                }, (file) =>
+                {
+                    Communicate?.Invoke(this, new CommunicationEventArgs($"Unzipping {file.FullName}", nameof(PolygonMigrator)));
+                    if (TryUnzipGzFile(file, out var newFilename, false))
+                        Communicate?.Invoke(this, new CommunicationEventArgs($"{newFilename} created.", nameof(PolygonMigrator)));
+                });
+        }
+        else
+        {
+            foreach (var file in zippedFiles)
             {
                 Communicate?.Invoke(this, new CommunicationEventArgs($"Unzipping {file.FullName}", nameof(PolygonMigrator)));
-                using var fs = file.OpenRead();
-                using var newFile = File.Create(newFileName);
-                using GZipStream zs = new(fs, CompressionMode.Decompress);
-                zs.CopyTo(newFile);
+                if (TryUnzipGzFile(file, out var newFilename, false))
+                    Communicate?.Invoke(this, new CommunicationEventArgs($"{newFilename} created.", nameof(PolygonMigrator)));
             }
         }
+
         zippedFiles = null;
 
         var csvFiles = importDirectory.GetFiles("*.csv", SearchOption.TopDirectoryOnly);
 
-        foreach (var file in csvFiles)
+        if (_configuration.MaxParallelization > 1 && csvFiles.Length > 0)
         {
-            Communicate?.Invoke(this, new CommunicationEventArgs($"Processing {file.FullName}", nameof(PolygonMigrator)));
-            var lines = File.ReadAllLines(file.FullName);
-
-            if (lines.Length > 1)
-            {
-                DataProviders.Polygon.Models.FlatFile[] flatFileLines = new DataProviders.Polygon.Models.FlatFile[lines.Length - 1];
-                for (int i = 1; i < lines.Length; i++)
+            await Parallel.ForEachAsync(csvFiles,
+                new ParallelOptions
                 {
-                    flatFileLines[i - 1] = new DataProviders.Polygon.Models.FlatFile(lines[i]);
-                }
-                await _targetContext.ExecuteAsync(_targetDbDef.GetSql(SqlKeys.UpsertEodPrice),
-                    flatFileLines.Select(f => new EodPrice(SourceName, f.Code, _processId)
-                    {
-                        Open = f.Open,
-                        High = f.High,
-                        Low = f.Low,
-                        Close = f.Close,
-                        Volume = f.Volume,
-                        DateEod = f.Date,
-                    }), cancellationToken: cancellationToken).ConfigureAwait(false);
+                    MaxDegreeOfParallelism = _configuration.MaxParallelization,
+                    CancellationToken = cancellationToken
+                },
+                async (file, ct) =>
+                {
+                    await ImportCsvFileAsync(file, ct);
+                });
+        }
+        else
+        {
+            foreach (var file in csvFiles)
+            {
+                await ImportCsvFileAsync(file);
             }
         }
-
         csvFiles = null;
 
+
+        var timer = Stopwatch.StartNew();
         /*
          * For all the tickers that definitely do not have split data, just move them along.
          */
         Communicate?.Invoke(this, new CommunicationEventArgs($"Migrating prices for tickers without splits.", nameof(PolygonMigrator)));
-        await _targetContext.ExecuteAsync(_targetDbDef.GetSql(SqlKeys.CopyPricesWithoutSplitsToAdjustedPrices),
+        using var tgtConn = _targetDbDef.GetConnection();
+        await tgtConn.ExecuteAsync(_targetDbDef.Sql.GetSql(SqlKeys.CopyPricesWithoutSplitsToAdjustedPrices),
             commandTimeout: 0, cancellationToken: cancellationToken).ConfigureAwait(false);
+        timer.Stop();
+        Communicate?.Invoke(this, new CommunicationEventArgs($"Migrated prices for tickers without splits in {timer.Elapsed.ConvertToText()}", nameof(PolygonMigrator)));
 
+        timer = Stopwatch.StartNew();
         /*
          * Some of the inbound data has big gaps in it. Not sure why; don't care. Need consecutive data points.
          * So, remove all the data before the last big price gap (currently set at '30 days') for any given ticker.
          */
         Communicate?.Invoke(this, new CommunicationEventArgs($"Deleting leading price gaps.", nameof(PolygonMigrator)));
-        await _targetContext.ExecuteAsync(_targetDbDef.GetSql(SqlKeys.DeleteLeadingPriceGaps),
+        await tgtConn.ExecuteAsync(_targetDbDef.Sql.GetSql(SqlKeys.DeleteLeadingPriceGaps),
             new { _configuration.Source, ProcessId = _processId },
             commandTimeout: 0, cancellationToken: cancellationToken).ConfigureAwait(false);
+        timer.Stop();
+        Communicate?.Invoke(this, new CommunicationEventArgs($"Deleted leading price gaps in {timer.Elapsed.ConvertToText()}.", nameof(PolygonMigrator)));
 
-        var codesWithSplits = (await _targetContext.QueryAsync<string>(
-            _targetDbDef.GetSql(SqlKeys.FetchCodesWithSplits), new { Source },
+        timer = Stopwatch.StartNew();
+        Communicate?.Invoke(this, new CommunicationEventArgs($"Fetching codes with splits.", nameof(PolygonMigrator)));
+        var codesWithSplits = (await tgtConn.QueryAsync<string>(
+            _targetDbDef.Sql.GetSql(SqlKeys.FetchCodesWithSplits), new { Source },
             cancellationToken: cancellationToken).ConfigureAwait(false)).ToArray();
+        timer.Stop();
+        Communicate?.Invoke(this, new CommunicationEventArgs($"Fetched codes with splits in {timer.Elapsed.ConvertToText()}", nameof(PolygonMigrator)));
 
-        var whereClauses = new string[] { "source = @Source", "code = @Code" };
-        foreach (var code in codesWithSplits)
+        tgtConn.Close();
+
+        if (_configuration.MaxParallelization > 1 && codesWithSplits.Length > 0)
         {
-            Communicate?.Invoke(this, new CommunicationEventArgs($"Adjusting prices for {code}.", nameof(PolygonMigrator)));
-            var chartSql = _targetDbDef.GetSql(SqlKeys.FetchEodPrices, whereClauses);
-            var splitSql = _targetDbDef.GetSql(SqlKeys.FetchSplits, whereClauses);
-            var splits = await _targetContext.QueryAsync<Split>(splitSql,
-                new { Source, code }, cancellationToken: cancellationToken).ConfigureAwait(false);
-
-            var chart = await _targetContext.QueryAsync<EodPrice>(chartSql,
-                new { Source, code }, cancellationToken: cancellationToken).ConfigureAwait(false);
-
-            var adjustedChart = SplitAdjustedPriceCalculator.Calculate(chart, splits).ToArray();
-
-            await _targetContext.ExecuteAsync(_targetDbDef.GetSql(SqlKeys.UpsertAdjustedEodPrice),
-                adjustedChart, cancellationToken: cancellationToken).ConfigureAwait(false);
+            await Parallel.ForEachAsync(codesWithSplits,
+                new ParallelOptions
+                {
+                    MaxDegreeOfParallelism = _configuration.MaxParallelization,
+                    CancellationToken = cancellationToken
+                },
+                async (code, ct) => await AdjustPriceForCodeAsync(code, ct));
+        }
+        else
+        {
+            foreach (var code in codesWithSplits)
+            {
+                await AdjustPriceForCodeAsync(code, cancellationToken);
+            }
         }
     }
 
-    private Task MigrateSplitsAsync(ApiTransactionForMigration item, string responseBody)
+    private static readonly string[] _whereClauses = ["source = @Source", "code = @Code"];
+
+    private async Task AdjustPriceForCodeAsync(string code, CancellationToken cancellationToken = default)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        Communicate?.Invoke(this, new CommunicationEventArgs($"Adjusting prices for {code}.", nameof(PolygonMigrator)));
+        var chartSql = _targetDbDef.Sql.GetSql(SqlKeys.FetchEodPrices, _whereClauses);
+        var splitSql = _targetDbDef.Sql.GetSql(SqlKeys.FetchSplits, _whereClauses);
+        using var tgtConn1 = _targetDbDef.GetConnection();
+        using var tgtConn2 = _targetDbDef.GetConnection();
+        var splits = tgtConn1.QueryAsync<Split>(splitSql,
+            new { Source, code }, cancellationToken: cancellationToken).ConfigureAwait(false);
+
+        var chart = tgtConn2.QueryAsync<EodPrice>(chartSql,
+            new { Source, code }, cancellationToken: cancellationToken).ConfigureAwait(false);
+
+        var adjustedChart = SplitAdjustedPriceCalculator.Calculate(await chart, await splits).ToArray();
+
+        tgtConn2.Close();
+
+        await tgtConn1.ExecuteAsync(_targetDbDef.Sql.GetSql(SqlKeys.UpsertAdjustedEodPrice),
+            adjustedChart, cancellationToken: cancellationToken).ConfigureAwait(false);
+        tgtConn1.Close();
+    }
+
+    private async Task ImportCsvFileAsync(FileInfo file, CancellationToken cancellationToken = default)
+    {
+        Communicate?.Invoke(this, new CommunicationEventArgs($"Processing {file.FullName}", nameof(PolygonMigrator)));
+        var lines = File.ReadAllLines(file.FullName);
+
+        if (lines.Length > 1)
+        {
+            DataProviders.Polygon.Models.FlatFile[] flatFileLines = new DataProviders.Polygon.Models.FlatFile[lines.Length - 1];
+            for (int i = 1; i < lines.Length; i++)
+            {
+                flatFileLines[i - 1] = new DataProviders.Polygon.Models.FlatFile(lines[i]);
+            }
+            using var priceConn = _targetDbDef.GetConnection();
+
+            await priceConn.ExecuteAsync(_targetDbDef.Sql.GetSql(SqlKeys.UpsertEodPrice),
+                flatFileLines.Select(f => new EodPrice(SourceName, f.Code, _processId)
+                {
+                    Open = f.Open,
+                    High = f.High,
+                    Low = f.Low,
+                    Close = f.Close,
+                    Volume = f.Volume,
+                    DateEod = f.Date,
+                }), cancellationToken: cancellationToken).ConfigureAwait(false);
+
+            priceConn.Close();
+        }
+    }
+
+    private bool TryUnzipGzFile(FileInfo file, out string? newFilename, bool overwrite = false)
+    {
+        ArgumentNullException.ThrowIfNull(file);
+
+        if (!file.Extension.Equals(".gz", StringComparison.OrdinalIgnoreCase))
+            throw new ArgumentException($"File not in right format; should end with '.gz'");
+
+        newFilename = file.FullName[0..^3]; // removes the ".gz"
+        if (!File.Exists(newFilename) || overwrite)
+        {
+            Communicate?.Invoke(this, new CommunicationEventArgs($"Unzipping {file.FullName}", nameof(PolygonMigrator)));
+            using var fs = file.OpenRead();
+            using var newFile = File.Create(newFilename);
+            using GZipStream zs = new(fs, CompressionMode.Decompress);
+            zs.CopyTo(newFile);
+            return true;
+        }
+        return false;
+    }
+
+    private async Task MigrateSplitsAsync(ApiTransactionForMigration item, string responseBody)
     {
         var splitResponse = JsonSerializer.Deserialize<DataProviders.Polygon.Models.SplitResponse>(
             responseBody, JsonSerializerOptionsRepository.Custom);
 
         if (splitResponse.Results.Length > 0)
         {
-            return _targetContext.ExecuteAsync(_targetDbDef.GetSql(SqlKeys.UpsertSplit),
+            using var conn = _targetDbDef.GetConnection();
+            await conn.ExecuteAsync(_targetDbDef.Sql.GetSql(SqlKeys.UpsertSplit),
                 splitResponse.Results.Select(s => new Split(item.Source, item.SubCategory,
-                s.ExecutionDate, s.SplitFrom, s.SplitTo, _processId)));
+                s.ExecutionDate, s.SplitFrom, s.SplitTo, _processId))).ConfigureAwait(false);
         }
-
-        return Task.CompletedTask;
     }
 
-    private Task MigrateDividendsAsync(ApiTransactionForMigration item, string responseBody)
+    private async Task MigrateDividendsAsync(ApiTransactionForMigration item, string responseBody)
     {
         var dividendResponse = JsonSerializer.Deserialize<DataProviders.Polygon.Models.DividendResponse>(
             responseBody, JsonSerializerOptionsRepository.Custom);
 
         if (dividendResponse.Results.Length > 0)
         {
-            return _targetContext.ExecuteAsync(_targetDbDef.GetSql(SqlKeys.UpsertDividend),
+            using var conn = _targetDbDef.GetConnection();
+            await conn.ExecuteAsync(_targetDbDef.Sql.GetSql(SqlKeys.UpsertDividend),
                 dividendResponse.Results.Select(d => new Dividend(item.Source, item.SubCategory,
                 d.Type, d.DeclarationDate, d.ExDividendDate, d.PayDate, d.RecordDate, d.Frequency,
-                d.CashAmount, item.ProcessId)));
+                d.CashAmount, item.ProcessId))).ConfigureAwait(false);
         }
-
-        return Task.CompletedTask;
     }
 
-    private Task MigrateTickerDetailsAsync(ApiTransactionForMigration item, string responseBody)
+    private async Task MigrateTickerDetailsAsync(ApiTransactionForMigration item, string responseBody)
     {
         var detailResponse = JsonSerializer.Deserialize<DataProviders.Polygon.Models.TickerDetailResponse>(responseBody,
             JsonSerializerOptionsRepository.Custom);
 
         if ("OK".Equals(detailResponse.Status, StringComparison.OrdinalIgnoreCase))
         {
-            return _targetContext.ExecuteAsync(_targetDbDef.GetSql(SqlKeys.UpsertEntity),
+            using var conn = _targetDbDef.GetConnection();
+            await conn.ExecuteAsync(_targetDbDef.Sql.GetSql(SqlKeys.UpsertEntity),
                 new
                 {
                     item.Source,
@@ -383,9 +542,8 @@ internal sealed class PolygonMigrator(DbDef sourceDef, DbDef targetDef,
                     GicSubIndustry = (string?)null,
                     CreatedAt = DateTimeOffset.Now,
                     UpdatedAt = DateTimeOffset.Now
-                });
+                }).ConfigureAwait(false);
         }
-        return Task.CompletedTask;
     }
 
     private async Task<bool> TryMigrateFundamentalsForCommonStock(ApiTransactionForMigration item, string responseBody)
@@ -398,7 +556,8 @@ internal sealed class PolygonMigrator(DbDef sourceDef, DbDef targetDef,
 
             if (!string.IsNullOrWhiteSpace(fundamentals.General.Code))
             {
-                await _targetContext.ExecuteAsync(_targetDbDef.GetSql(SqlKeys.UpsertEntity),
+                using var conn = _targetDbDef.GetConnection();
+                await conn.ExecuteAsync(_targetDbDef.Sql.GetSql(SqlKeys.UpsertEntity),
                     new Entity(item.Source, item.SubCategory)
                     {
                         Country = fundamentals.General.CountryName ?? "USA",
@@ -417,7 +576,6 @@ internal sealed class PolygonMigrator(DbDef sourceDef, DbDef targetDef,
                         Sector = fundamentals.General.Sector,
                         ProcessId = _processId
                     }).ConfigureAwait(false);
-
                 return true;
             }
 
@@ -439,7 +597,8 @@ internal sealed class PolygonMigrator(DbDef sourceDef, DbDef targetDef,
 
             if (!string.IsNullOrWhiteSpace(fundamentals.General.Code))
             {
-                await _targetContext.ExecuteAsync(_targetDbDef.GetSql(SqlKeys.UpsertEntity),
+                using var conn = _targetDbDef.GetConnection();
+                await conn.ExecuteAsync(_targetDbDef.Sql.GetSql(SqlKeys.UpsertEntity),
                     new Entity(item.Source, item.SubCategory)
                     {
                         Country = fundamentals.General.CountryName ?? "USA",

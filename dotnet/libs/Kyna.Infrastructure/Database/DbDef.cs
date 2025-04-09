@@ -1,4 +1,5 @@
-﻿using Microsoft.Data.SqlClient;
+﻿using Kyna.Common;
+using Microsoft.Data.SqlClient;
 using Microsoft.Data.Sqlite;
 using MySqlConnector;
 using Npgsql;
@@ -6,65 +7,113 @@ using System.Data;
 
 namespace Kyna.Infrastructure.Database;
 
-public sealed class DbDef : ISqlRepository
+public sealed class DbDef
 {
     public const string DefaultParmPrefix = "@";
+    public const int MaxConnections = 50;
+
     public string Name;
     public DatabaseEngine Engine;
     public string ConnectionString;
 
-    internal SqlFactory Sql;
+    internal SqlCollection Sql { get; }
 
-    public DbDef(string name, DatabaseEngine engine, string connectionString)
+    private readonly SemaphoreSlim _connectionSemaphore;
+
+    public DbDef(string name, DatabaseEngine engine, string connectionString, int maxConnections = MaxConnections)
     {
+        ArgumentNullException.ThrowIfNull(name);
+        ArgumentNullException.ThrowIfNull(connectionString);
+        if (engine == DatabaseEngine.None)
+            throw new ArgumentException($"{nameof(engine)} cannot be {engine.GetEnumDescription()}");
+
+        if (maxConnections < 1 || maxConnections > MaxConnections)
+            throw new ArgumentOutOfRangeException($"{nameof(maxConnections)} must be between 1 and {maxConnections}");
+
         Name = name;
         Engine = engine;
         ConnectionString = connectionString;
-        Sql = new SqlFactory(engine);
+
+        if (maxConnections < 1)
+            throw new ArgumentOutOfRangeException(nameof(maxConnections), "Must be positive.");
+
+        _connectionSemaphore = new SemaphoreSlim(maxConnections, maxConnections);
+
+        Sql = new SqlCollection(SqlRepository.BuildDictionary(Engine));
     }
 
-    public string ParameterPrefix => Engine switch
-    {
-        _ => DefaultParmPrefix
-    };
+    public string ParameterPrefix => DefaultParmPrefix;
 
     public IDbConnection GetConnection()
     {
-        switch (Engine)
+        _connectionSemaphore.Wait();
+        try
         {
-            case DatabaseEngine.PostgreSql:
-                return new NpgsqlConnection(ConnectionString);
-            case DatabaseEngine.MsSqlServer:
-                return new SqlConnection(ConnectionString);
-            case DatabaseEngine.MySql:
-            case DatabaseEngine.MariaDb:
-                return new MySqlConnection(ConnectionString);
-            case DatabaseEngine.Sqlite:
-                return new SqliteConnection(ConnectionString);
-            case DatabaseEngine.None:
-            default:
-                throw new ArgumentException("Invalid or unsupported database engine.");
+            IDbConnection conn = Engine switch
+            {
+                DatabaseEngine.PostgreSql => new NpgsqlConnection(ConnectionString),
+                DatabaseEngine.MsSqlServer => new SqlConnection(ConnectionString),
+                DatabaseEngine.MySql or DatabaseEngine.MariaDb => new MySqlConnection(ConnectionString),
+                DatabaseEngine.Sqlite => new SqliteConnection(ConnectionString),
+                _ => throw new ArgumentException("Invalid or unsupported database engine.")
+            };
+
+            return new PooledConnection(conn, ReleaseConnection);
+        }
+        catch
+        {
+            _connectionSemaphore.Release();
+            throw;
         }
     }
 
-    public string? GetFormattedSqlWithWhereClause(string key,
-        LogicalOperator logOp = LogicalOperator.And, params string[] whereClauses) =>
-        Sql?.GetFormattedSqlWithWhereClause(key, logOp, whereClauses);
-
-    public string? GetSql(string sql) => Sql?.GetSql(sql);
-
-    public string? GetSql(string key, bool formatSql = false) =>
-        Sql?.GetSql(key, formatSql);
-
-    public string? GetSql(string key, LogicalOperator logOp, params string[] whereClauseKeys) =>
-        Sql?.GetSql(key, logOp, whereClauseKeys);
-
-    public string? GetSql(string key, params string[] whereClauseKeys) =>
-        Sql?.GetSql(key, whereClauseKeys);
-
-    public bool TryGetSql(string key, out string? statement, bool formatSql = false)
+    private void ReleaseConnection()
     {
-        statement = null;
-        return Sql?.TryGetSql(key, out statement, formatSql) ?? false;
+        _connectionSemaphore.Release();
+    }
+
+    private sealed class PooledConnection : IDbConnection
+    {
+        private readonly IDbConnection _innerConnection;
+        private readonly Action _releaseAction;
+
+        public PooledConnection(IDbConnection innerConnection, Action releaseAction)
+        {
+            ArgumentNullException.ThrowIfNull(innerConnection);
+            ArgumentNullException.ThrowIfNull(releaseAction);
+
+            _innerConnection = innerConnection;
+            _releaseAction = releaseAction;
+        }
+
+        public string ConnectionString
+        {
+            get => _innerConnection.ConnectionString;
+            set => _innerConnection.ConnectionString = value;
+        }
+
+        public int ConnectionTimeout => _innerConnection.ConnectionTimeout;
+
+        public string Database => _innerConnection.Database;
+
+        public ConnectionState State => _innerConnection.State;
+
+        public IDbTransaction BeginTransaction() => _innerConnection.BeginTransaction();
+
+        public IDbTransaction BeginTransaction(IsolationLevel il) => _innerConnection.BeginTransaction(il);
+
+        public void ChangeDatabase(string databaseName) => _innerConnection.ChangeDatabase(databaseName);
+
+        public void Close() => _innerConnection.Close();
+
+        public IDbCommand CreateCommand() => _innerConnection.CreateCommand();
+
+        public void Open() => _innerConnection.Open();
+
+        public void Dispose()
+        {
+            _innerConnection.Dispose();
+            _releaseAction();
+        }
     }
 }

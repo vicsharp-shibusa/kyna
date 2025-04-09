@@ -1,34 +1,23 @@
 ﻿using Kyna.Common;
+using System.Collections.ObjectModel;
 using System.Text;
 using System.Text.RegularExpressions;
 
 namespace Kyna.Infrastructure.Database;
 
-internal sealed class SqlFactory : ISqlRepository
+internal class SqlCollection : ReadOnlyDictionary<string, string>
 {
-    private readonly Dictionary<string, string> _sqlStatements;
-
-    public SqlFactory(DatabaseEngine engine) : this(SqlRepository.BuildDictionary(engine))
+    public SqlCollection(IDictionary<string, string> dictionary) : base(dictionary)
     {
-    }
-
-    internal SqlFactory(IDictionary<string, string> sqlStatements)
-    {
-        _sqlStatements = new Dictionary<string, string>(
-            sqlStatements ?? throw new ArgumentNullException(nameof(sqlStatements)),
-            StringComparer.OrdinalIgnoreCase
-        );
-
-        if (_sqlStatements.Count == 0)
-        {
-            throw new ArgumentException($"At least one key/value pair of SQL statements is required to construct a {nameof(SqlFactory)} instance");
-        }
+        ArgumentNullException.ThrowIfNull(dictionary);
+        if (Count == 0)
+            throw new ArgumentException($"At least one key/value pair of SQL statements is required to construct a {nameof(SqlCollection)} instance");
     }
 
     public string? GetSql(string key, bool formatSql = false)
     {
         ArgumentNullException.ThrowIfNull(key);
-        if (!_sqlStatements.TryGetValue(key, out var value))
+        if (!TryGetValue(key, out var value))
             return null;
         return formatSql ? FormatSql(value) : value;
     }
@@ -58,9 +47,22 @@ internal sealed class SqlFactory : ISqlRepository
     public bool TryGetSql(string key, out string? statement, bool formatSql = false)
     {
         ArgumentNullException.ThrowIfNull(key);
-        if (_sqlStatements.TryGetValue(key, out var value))
+        if (TryGetValue(key, out var value))
         {
             statement = formatSql ? FormatSql(value) : value;
+            return true;
+        }
+        statement = null;
+        return false;
+    }
+
+    public bool TryGetSqlWithWhereClause(string key, out string? statement,
+        LogicalOperator logOp = LogicalOperator.And,
+        params string[] whereClauses)
+    {
+        if (TryGetValue(key, out var sql))
+        {
+            statement = AddWhereClauseToSqlAndFormat(sql, logOp, whereClauses);
             return true;
         }
         statement = null;
@@ -72,13 +74,20 @@ internal sealed class SqlFactory : ISqlRepository
     {
         ArgumentNullException.ThrowIfNull(key);
 
-        if (!_sqlStatements.TryGetValue(key, out var sql))
+        if (!TryGetValue(key, out var sql))
             return null;
 
-        sql = FormatSql(sql, removeEndingSemicolon: true);
+        return AddWhereClauseToSqlAndFormat(sql, logOp, whereClauses);
+    }
 
+    private string? AddWhereClauseToSqlAndFormat(string sqlStatement,
+        LogicalOperator logOp = LogicalOperator.And,
+        params string[] whereClauses)
+    {
         if (whereClauses.Length == 0)
-            return sql;
+            return sqlStatement;
+
+        var sql = FormatSql(sqlStatement, removeEndingSemicolon: true);
 
         var formattedClauses = whereClauses.Select(FormatWhereClause)
             .Where(k => !string.IsNullOrWhiteSpace(k))
@@ -116,7 +125,7 @@ internal sealed class SqlFactory : ISqlRepository
         return dbEngine switch
         {
             DatabaseEngine.PostgreSql => $" = ANY({parameterName})",
-            DatabaseEngine.None => throw new Exception($"No database engine specified in {nameof(SqlFactory)}.{nameof(GetSqlSyntaxForInCollection)}"),
+            DatabaseEngine.None => throw new Exception($"No database engine specified in {nameof(SqlCollection)}.{nameof(GetSqlSyntaxForInCollection)}"),
             _ => $" IN {parameterName}"
         };
     }
@@ -235,4 +244,3 @@ internal sealed class SqlFactory : ISqlRepository
         return clause;
     }
 }
-

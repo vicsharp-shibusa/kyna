@@ -26,7 +26,7 @@ public sealed partial class ReportService
 
         foreach (var source in sources)
         {
-            var sql = _financialDbDef.GetSql(SqlKeys.FetchSplits, "source = @Source");
+            var sql = _financialDbDef.Sql.GetSql(SqlKeys.FetchSplits, "source = @Source");
             var splits = _financialsConn.Query<Split>(sql, new { source });
             if (source == EodHdImporter.SourceName)
             {
@@ -77,7 +77,7 @@ public sealed partial class ReportService
     {
         var codesAndDates = _financialsConn.Query<CodeAndDates>(
             //var sql = $"{_financialsCtx.Sql.Splits.Fetch} WHERE source = @Source";
-            _financialDbDef.GetSql(SqlKeys.FetchAdjustedCodesAndDates), commandTimeout: 0);
+            _financialDbDef.Sql.GetSql(SqlKeys.FetchAdjustedCodesAndDates), commandTimeout: 0);
 
         Dictionary<string, string[]> codesBySourceDictionary = [];
 

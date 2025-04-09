@@ -139,7 +139,7 @@ internal class CandlestickSignalRunner : RunnerBase, IBacktestRunner
         var repo = new CandlestickSignalRepository(new SignalOptions(configuration.LengthOfPrologue));
 
         var backtestResults = await _backtestDbContext.QueryAsync<BacktestResultsInfo>(
-            _backtestDbDef.GetSql(SqlKeys.FetchBacktestResultInfo),
+            _backtestDbDef.Sql.GetSql(SqlKeys.FetchBacktestResultInfo),
             new { backtestId }, cancellationToken: cancellationToken).ConfigureAwait(false);
 
         var signalNames = backtestResults.Select(b => b.SignalName).Distinct().ToArray();
@@ -176,7 +176,7 @@ internal class CandlestickSignalRunner : RunnerBase, IBacktestRunner
 
             double ratio = matchingResults.Length / (double)signalSubset.Length;
 
-            await _backtestDbContext.ExecuteAsync(_backtestDbDef.GetSql(SqlKeys.UpsertBacktestStats),
+            await _backtestDbContext.ExecuteAsync(_backtestDbDef.Sql.GetSql(SqlKeys.UpsertBacktestStats),
                     new BacktestStats(backtestId, configuration.Source,
                     name, "Overall", "All", numberEntities, signalSubset.Length, ratio, criterion,
                     Convert.ToInt32(matchingResults.Average(r => r.ResultDurationTradingDays)),
@@ -200,7 +200,7 @@ internal class CandlestickSignalRunner : RunnerBase, IBacktestRunner
                     s.ResultDirection == successResult)];
                 ratio = matchingResults.Length / (double)totalInstances;
 
-                tasks.Add(_backtestDbContext.ExecuteAsync(_backtestDbDef.GetSql(SqlKeys.UpsertBacktestStats),
+                tasks.Add(_backtestDbContext.ExecuteAsync(_backtestDbDef.Sql.GetSql(SqlKeys.UpsertBacktestStats),
                     new BacktestStats(backtestId, configuration.Source,
                     name, "Entity", ticker, 1, totalInstances, ratio, criterion,
                     Convert.ToInt32(matchingResults.Average(r => r.ResultDurationTradingDays)),
@@ -231,7 +231,7 @@ internal class CandlestickSignalRunner : RunnerBase, IBacktestRunner
                 matchingResults = [.. signalSubset.Where(s => s.Industry != null &&
                     s.Industry.Equals(industry) && s.ResultDirection == successResult)];
                 ratio = matchingResults.Length / (double)totalInstances;
-                tasks.Add(_backtestDbContext.ExecuteAsync(_backtestDbDef.GetSql(SqlKeys.UpsertBacktestStats),
+                tasks.Add(_backtestDbContext.ExecuteAsync(_backtestDbDef.Sql.GetSql(SqlKeys.UpsertBacktestStats),
                     new BacktestStats(backtestId, configuration.Source,
                     name, "Industry", industry, categoryCount, totalInstances, ratio, criterion,
                     Convert.ToInt32(matchingResults.Average(r => r.ResultDurationTradingDays)),
@@ -260,7 +260,7 @@ internal class CandlestickSignalRunner : RunnerBase, IBacktestRunner
                 matchingResults = [.. signalSubset.Where(s => s.Sector != null &&
                     s.Sector.Equals(sector) && s.ResultDirection == successResult)];
                 ratio = matchingResults.Length / (double)totalInstances;
-                tasks.Add(_backtestDbContext.ExecuteAsync(_backtestDbDef.GetSql(SqlKeys.UpsertBacktestStats),
+                tasks.Add(_backtestDbContext.ExecuteAsync(_backtestDbDef.Sql.GetSql(SqlKeys.UpsertBacktestStats),
                     new BacktestStats(backtestId, configuration.Source,
                     name, "Sector", sector, categoryCount, totalInstances, ratio, criterion,
                     Convert.ToInt32(matchingResults.Average(r => r.ResultDurationTradingDays)),

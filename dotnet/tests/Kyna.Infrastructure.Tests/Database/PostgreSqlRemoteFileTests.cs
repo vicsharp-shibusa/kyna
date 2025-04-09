@@ -20,11 +20,11 @@ public class PostgreSqlRemoteFileTests : IClassFixture<PostgreSqlTestFixture>
         using var context = _fixture.Imports.GetConnection();
         Assert.NotNull(context);
 
-        context!.Execute(_fixture.Logs.GetSql(SqlKeys.DeleteRemoteFilesForSource), new { Source = "Test" });
+        context!.Execute(_fixture.Logs.Sql.GetSql(SqlKeys.DeleteRemoteFilesForSource), new { Source = "Test" });
 
-        context.Execute(_fixture.Logs.GetSql(SqlKeys.UpsertRemoteFile), remoteFileDao);
+        context.Execute(_fixture.Logs.Sql.GetSql(SqlKeys.UpsertRemoteFile), remoteFileDao);
 
-        var sql = _fixture.Logs.GetSql(SqlKeys.FetchRemoteFiles, "process_id = @ProcessId");
+        var sql = _fixture.Logs.Sql.GetSql(SqlKeys.FetchRemoteFiles, "process_id = @ProcessId");
 
         var actual = context.QueryFirstOrDefault<RemoteFile>(sql, new { remoteFileDao.ProcessId });
 

@@ -22,9 +22,9 @@ public class PostgreSqlApiTransactionTests : IClassFixture<PostgreSqlTestFixture
         using var context = _fixture.Imports.GetConnection();
         Debug.Assert(context != null);
 
-        context.Execute(_fixture.Imports.GetSql(SqlKeys.InsertApiTransaction), transactionDao);
+        context.Execute(_fixture.Imports.Sql.GetSql(SqlKeys.InsertApiTransaction), transactionDao);
 
-        var sql = _fixture.Imports.GetSql(SqlKeys.FetchApiTransaction, "sub_category = @SubCategory");
+        var sql = _fixture.Imports.Sql.GetSql(SqlKeys.FetchApiTransaction, "sub_category = @SubCategory");
 
         var actual = context.QueryFirstOrDefault<ApiTransaction>(sql, new { transactionDao.SubCategory });
 
@@ -50,7 +50,7 @@ public class PostgreSqlApiTransactionTests : IClassFixture<PostgreSqlTestFixture
         using var context = _fixture.Imports.GetConnection();
         Debug.Assert(context != null);
 
-        context.Execute(_fixture.Imports.GetSql(SqlKeys.InsertApiTransaction), apiTransactions);
+        context.Execute(_fixture.Imports.Sql.GetSql(SqlKeys.InsertApiTransaction), apiTransactions);
 
         string sql = "SELECT MAX(id) FROM api_transactions where sub_category = @Sub";
 
@@ -60,8 +60,8 @@ public class PostgreSqlApiTransactionTests : IClassFixture<PostgreSqlTestFixture
         string[] categories = ["Price Action"];
 
         var itemsToMigrate = context.Query<ApiTransactionForMigration>(
-            _fixture.Imports.GetSql(SqlKeys.FetchApiTransactionsForMigration, "source = @Source",
-            $"category {SqlFactory.GetSqlSyntaxForInCollection("Categories")}"),
+            _fixture.Imports.Sql.GetSql(SqlKeys.FetchApiTransactionsForMigration, "source = @Source",
+            $"category {SqlCollection.GetSqlSyntaxForInCollection("Categories")}"),
                 new { Source = "Test", categories });
 
         Assert.NotEmpty(itemsToMigrate);

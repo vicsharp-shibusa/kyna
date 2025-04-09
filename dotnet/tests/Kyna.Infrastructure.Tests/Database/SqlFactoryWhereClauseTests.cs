@@ -10,7 +10,7 @@ public class SqlFactoryWhereClauseTests
         const string Key = "test";
         const string BaseSql = "SELECT * FROM table";
 
-        var sut = new SqlFactory(new Dictionary<string, string>() {
+        var sut = new SqlCollection(new Dictionary<string, string>() {
             {Key,BaseSql }
         });
 
@@ -27,7 +27,7 @@ FROM
 table;"; // <- this is the semicolon being removed.
         const string Expected = "SELECT * FROM table WHERE x = 'test'";
 
-        var sut = new SqlFactory(new Dictionary<string, string>() {
+        var sut = new SqlCollection(new Dictionary<string, string>() {
             {"test",BaseSql }
         });
 
@@ -46,7 +46,7 @@ table;"; // <- this is the semicolon being removed.
         const string BaseSql = @"SELECT * FROM table";
         const string Expected = "SELECT * FROM table WHERE x = 'test'";
 
-        var sut = new SqlFactory(new Dictionary<string, string>() {
+        var sut = new SqlCollection(new Dictionary<string, string>() {
             {Key,BaseSql }
         });
 
@@ -62,7 +62,7 @@ table;"; // <- this is the semicolon being removed.
         const string BaseSql = @"SELECT * FROM table";
         const string Expected = "SELECT * FROM table WHERE (p = 1 AND x = 'test')";
 
-        var sut = new SqlFactory(new Dictionary<string, string>() {
+        var sut = new SqlCollection(new Dictionary<string, string>() {
             {Key,BaseSql }
         });
 
@@ -82,7 +82,7 @@ table;"; // <- this is the semicolon being removed.
         const string BaseSql = @"SELECT * FROM table";
         const string Expected = "SELECT * FROM table WHERE x = 'test OR other test'";
 
-        var sut = new SqlFactory(new Dictionary<string, string>() {
+        var sut = new SqlCollection(new Dictionary<string, string>() {
             {Key,BaseSql }
         });
 

@@ -224,7 +224,7 @@ internal sealed class PolygonImporter : HttpImporterBase, IExternalDataImporter
                                     $"{targetFileName} downloaded successfully.", nameof(PolygonImporter)));
 
                                 using var conn = _dbDef.GetConnection();
-                                await conn.ExecuteAsync(_dbDef.GetSql(SqlKeys.UpsertRemoteFile),
+                                await conn.ExecuteAsync(_dbDef.Sql.GetSql(SqlKeys.UpsertRemoteFile),
                                     new RemoteFile()
                                     {
                                         Source = SourceName,
@@ -301,11 +301,11 @@ internal sealed class PolygonImporter : HttpImporterBase, IExternalDataImporter
                 }
 
                 using var conn1 = _dbDef.GetConnection();
-                var t = conn1.ExecuteAsync(_dbDef.GetSql(SqlKeys.DeleteApiTransactionsForSource),
+                var t = conn1.ExecuteAsync(_dbDef.Sql.GetSql(SqlKeys.DeleteApiTransactionsForSource),
                     new { Source }, cancellationToken: cancellationToken);
 
                 using var conn2 = _dbDef.GetConnection();
-                await conn2.ExecuteAsync(_dbDef.GetSql(SqlKeys.DeleteRemoteFilesForSource),
+                await conn2.ExecuteAsync(_dbDef.Sql.GetSql(SqlKeys.DeleteRemoteFilesForSource),
                     new { Source }, cancellationToken: cancellationToken);
 
                 await t;

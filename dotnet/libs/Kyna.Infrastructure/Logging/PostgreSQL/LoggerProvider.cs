@@ -59,7 +59,7 @@ internal class LoggerProvider : ILoggerProvider
                 {
                     if (logItem is not null)
                     {
-                        _connection.Execute(_dbDef.GetSql(SqlKeys.InsertLog), logItem);
+                        _connection.Execute(_dbDef.Sql.GetSql(SqlKeys.InsertLog), logItem);
                     }
                 }
             }
@@ -73,7 +73,7 @@ internal class LoggerProvider : ILoggerProvider
                 {
                     if (appEvent is not null)
                     {
-                        _connection.Execute(_dbDef.GetSql(SqlKeys.InsertAppEvent), appEvent);
+                        _connection.Execute(_dbDef.Sql.GetSql(SqlKeys.InsertAppEvent), appEvent);
                     }
                 }
             }

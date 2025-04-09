@@ -42,13 +42,13 @@ internal sealed class ApiTransactionService : IDisposable
         };
 
         using var conn = _dbDef.GetConnection();
-        await conn.ExecuteAsync(_dbDef.GetSql(SqlKeys.InsertApiTransaction), transDao)
+        await conn.ExecuteAsync(_dbDef.Sql.GetSql(SqlKeys.InsertApiTransaction), transDao)
             .ConfigureAwait(false);
     }
 
     public async Task DeleteTransactionsAsync(string source, string category, IEnumerable<string> subCategories)
     {
-        string sql = $"DELETE FROM api_transactions WHERE source = @Source AND category = @Category AND sub_category {SqlFactory.GetSqlSyntaxForInCollection("SubCategories")}";
+        string sql = $"DELETE FROM api_transactions WHERE source = @Source AND category = @Category AND sub_category {SqlCollection.GetSqlSyntaxForInCollection("SubCategories")}";
 
         foreach (var c in subCategories.Select(x => x.Trim()).Chunk(500))
         {

@@ -124,9 +124,11 @@ internal sealed class EodHdMigrator : ImportsMigratorBase, IImportsMigrator
                     if (!_dryRun)
                     {
 
-                        string sql = $"{_sourceDbDef.GetSql(SqlKeys.DeleteApiTransactions, "id = @Id")}";
-                        await _sourceContext.ExecuteAsync(sql, new { item.Id },
+                        string sql = $"{_sourceDbDef.Sql.GetSql(SqlKeys.DeleteApiTransactions, "id = @Id")}";
+                        using var conn = _sourceDbDef.GetConnection();
+                        await conn.ExecuteAsync(sql, new { item.Id },
                             cancellationToken: cancellationToken).ConfigureAwait(false);
+                        conn.Close();
                     }
                 }
             }
@@ -134,23 +136,24 @@ internal sealed class EodHdMigrator : ImportsMigratorBase, IImportsMigrator
 
         Communicate?.Invoke(this, new CommunicationEventArgs(timer.Elapsed.ConvertToText(), null));
         Communicate?.Invoke(this, new CommunicationEventArgs("Hydrating missing entities", nameof(EodHdMigrator)));
-        await _targetContext.ExecuteAsync(_targetDbDef.GetSql(SqlKeys.HydrateMissingEntities),
+        using var targetConn = _targetDbDef.GetConnection();
+        await targetConn.ExecuteAsync(_targetDbDef.Sql.GetSql(SqlKeys.HydrateMissingEntities),
             commandTimeout: 0, cancellationToken: cancellationToken).ConfigureAwait(false);
 
         Communicate?.Invoke(this, new CommunicationEventArgs(timer.Elapsed.ConvertToText(), null));
 
         Communicate?.Invoke(this, new CommunicationEventArgs("Setting split indicator for entities", nameof(EodHdMigrator)));
-        await _targetContext.ExecuteAsync(_targetDbDef.GetSql(SqlKeys.SetSplitIndicatorForEntities),
+        await targetConn.ExecuteAsync(_targetDbDef.Sql.GetSql(SqlKeys.SetSplitIndicatorForEntities),
             commandTimeout: 0, cancellationToken: cancellationToken).ConfigureAwait(false);
 
         Communicate?.Invoke(this, new CommunicationEventArgs(timer.Elapsed.ConvertToText(), null));
         Communicate?.Invoke(this, new CommunicationEventArgs("Setting price action indicator for entities", nameof(EodHdMigrator)));
-        await _targetContext.ExecuteAsync(_targetDbDef.GetSql(SqlKeys.SetPriceActionIndicatorForEntities),
+        await targetConn.ExecuteAsync(_targetDbDef.Sql.GetSql(SqlKeys.SetPriceActionIndicatorForEntities),
             commandTimeout: 0, cancellationToken: cancellationToken).ConfigureAwait(false);
 
         Communicate?.Invoke(this, new CommunicationEventArgs(timer.Elapsed.ConvertToText(), null));
         Communicate?.Invoke(this, new CommunicationEventArgs("Setting last price actions for entities", nameof(EodHdMigrator)));
-        await _targetContext.ExecuteAsync(_targetDbDef.GetSql(SqlKeys.SetLastPriceActionForEntities), commandTimeout: 0,
+        await targetConn.ExecuteAsync(_targetDbDef.Sql.GetSql(SqlKeys.SetLastPriceActionForEntities), commandTimeout: 0,
             cancellationToken: cancellationToken).ConfigureAwait(false);
 
         timer.Stop();
@@ -174,8 +177,9 @@ internal sealed class EodHdMigrator : ImportsMigratorBase, IImportsMigrator
     {
         cancellationToken.ThrowIfCancellationRequested();
 
-        var responseBody = _sourceContext.QueryFirstOrDefault<string>(
-            _sourceDbDef.GetSql(SqlKeys.FetchApiResponseBodyForId),
+        using var srcConn = _sourceDbDef.GetConnection();
+        var responseBody = srcConn.QueryFirstOrDefault<string>(
+            _sourceDbDef.Sql.GetSql(SqlKeys.FetchApiResponseBodyForId),
             new { item.Id });
 
         if (!string.IsNullOrWhiteSpace(responseBody) &&
@@ -213,9 +217,10 @@ internal sealed class EodHdMigrator : ImportsMigratorBase, IImportsMigrator
     }
     private IEnumerable<ApiTransactionForMigration> GetTransactionsToMigrate()
     {
-        var sql = _sourceDbDef.GetSql(SqlKeys.FetchApiTransactionsForMigration,
+        var sql = _sourceDbDef.Sql.GetSql(SqlKeys.FetchApiTransactionsForMigration,
             "source = @Source", "response_status_code = '200'");
-        return _sourceContext.Query<ApiTransactionForMigration>(BuildFetchForMigrationSql(),
+        using var conn = _sourceDbDef.GetConnection();
+        return conn.Query<ApiTransactionForMigration>(BuildFetchForMigrationSql(),
             new { _configuration.Source, _configuration.Categories });
     }
 
@@ -228,10 +233,10 @@ internal sealed class EodHdMigrator : ImportsMigratorBase, IImportsMigrator
         };
         if ((_configuration.Categories?.Length ?? 0) > 0)
         {
-            whereClauses.Add($"category {SqlFactory.GetSqlSyntaxForInCollection("Categories", _sourceDbDef.Engine)}");
+            whereClauses.Add($"category {SqlCollection.GetSqlSyntaxForInCollection("Categories", _sourceDbDef.Engine)}");
         }
 
-        return _sourceDbDef.GetSql(SqlKeys.FetchApiTransactionsForMigration, [.. whereClauses]);
+        return _sourceDbDef.Sql.GetSql(SqlKeys.FetchApiTransactionsForMigration, [.. whereClauses]);
     }
 
     private async Task MigrateEodPricesAsync(ApiTransactionForMigration item, string responseBody)
@@ -248,26 +253,30 @@ internal sealed class EodHdMigrator : ImportsMigratorBase, IImportsMigrator
                         p.Date, p.Open, p.High, p.Low, p.Close, p.Volume,
                         _processId)).ToArray();
 
+                using var conn = _targetDbDef.GetConnection();
                 if (_configuration.PriceMigrationMode.HasFlag(PriceMigrationMode.Raw))
                 {
-                    await _targetContext.ExecuteAsync(_targetDbDef.GetSql(SqlKeys.UpsertEodPrice), eodPrices).ConfigureAwait(false);
+                    await conn.ExecuteAsync(_targetDbDef.Sql.GetSql(SqlKeys.UpsertEodPrice), eodPrices).ConfigureAwait(false);
                 }
 
                 var adjPrices = Array.Empty<EodAdjustedPrice>();
                 if (_configuration.PriceMigrationMode.HasFlag(PriceMigrationMode.Adjusted))
                 {
-                    string splitSql = $"{_targetDbDef.GetSql(SqlKeys.FetchSplits, "source = @Source", "code = @Code")}";
-                    var splits = _targetContext.Query<Database.DataAccessObjects.Split>(splitSql, new
+                    if (_targetDbDef.Sql.TryGetSqlWithWhereClause(SqlKeys.FetchSplits, out var splitSql,
+                        LogicalOperator.And, "source = @Source", "code = @Code"))
                     {
-                        item.Source,
-                        Code = item.SubCategory
-                    }).ToArray();
+                        var splits = conn.Query<Database.DataAccessObjects.Split>(splitSql, new
+                        {
+                            item.Source,
+                            Code = item.SubCategory
+                        }).ToArray();
 
-                    adjPrices = [.. SplitAdjustedPriceCalculator.Calculate(eodPrices, splits)];
+                        adjPrices = [.. SplitAdjustedPriceCalculator.Calculate(eodPrices, splits)];
 
-                    if (adjPrices.Length > 0)
-                    {
-                        await _targetContext.ExecuteAsync(_targetDbDef.GetSql(SqlKeys.UpsertAdjustedEodPrice), adjPrices).ConfigureAwait(false);
+                        if (adjPrices.Length > 0)
+                        {
+                            await conn.ExecuteAsync(_targetDbDef.Sql.GetSql(SqlKeys.UpsertAdjustedEodPrice), adjPrices).ConfigureAwait(false);
+                        }
                     }
                 }
             }
@@ -281,7 +290,8 @@ internal sealed class EodHdMigrator : ImportsMigratorBase, IImportsMigrator
 
         if ((splits?.Length ?? 0) > 0)
         {
-            return _targetContext.ExecuteAsync(_targetDbDef.GetSql(SqlKeys.UpsertSplit),
+            using var conn = _targetDbDef.GetConnection();
+            return conn.ExecuteAsync(_targetDbDef.Sql.GetSql(SqlKeys.UpsertSplit),
                 splits!.Select(s => new Database.DataAccessObjects.Split(item.Source, item.SubCategory,
                 s.Date, s.SplitText, _processId)));
         }
@@ -296,7 +306,8 @@ internal sealed class EodHdMigrator : ImportsMigratorBase, IImportsMigrator
 
         if ((dividends?.Length ?? 0) > 0)
         {
-            return _targetContext.ExecuteAsync(_targetDbDef.GetSql(SqlKeys.UpsertDividend),
+            using var conn = _targetDbDef.GetConnection();
+            return conn.ExecuteAsync(_targetDbDef.Sql.GetSql(SqlKeys.UpsertDividend),
                 dividends!.Select(s => new Database.DataAccessObjects.Dividend(item.Source, item.SubCategory,
                 "CD", _processId)
                 {
@@ -339,7 +350,8 @@ internal sealed class EodHdMigrator : ImportsMigratorBase, IImportsMigrator
 
             if (!string.IsNullOrWhiteSpace(fundamentals.General.Code))
             {
-                await _targetContext.ExecuteAsync(_targetDbDef.GetSql(SqlKeys.UpsertEntity),
+                using var conn = _targetDbDef.GetConnection();
+                await conn.ExecuteAsync(_targetDbDef.Sql.GetSql(SqlKeys.UpsertEntity),
                     new Entity(item.Source, item.SubCategory)
                     {
                         Country = fundamentals.General.CountryName ?? "USA",
@@ -358,7 +370,7 @@ internal sealed class EodHdMigrator : ImportsMigratorBase, IImportsMigrator
                         Sector = fundamentals.General.Sector,
                         ProcessId = _processId
                     }).ConfigureAwait(false);
-
+                conn.Close();
                 return true;
             }
 
@@ -366,6 +378,7 @@ internal sealed class EodHdMigrator : ImportsMigratorBase, IImportsMigrator
         }
         catch
         {
+            // TODO: this doesn't seem quite right - we aren't even logging this?
             return false;
         }
     }
@@ -380,7 +393,8 @@ internal sealed class EodHdMigrator : ImportsMigratorBase, IImportsMigrator
 
             if (!string.IsNullOrWhiteSpace(fundamentals.General.Code))
             {
-                await _targetContext.ExecuteAsync(_targetDbDef.GetSql(SqlKeys.UpsertEntity),
+                using var conn = _targetDbDef.GetConnection();
+                await conn.ExecuteAsync(_targetDbDef.Sql.GetSql(SqlKeys.UpsertEntity),
                     new Entity(item.Source, item.SubCategory)
                     {
                         Country = fundamentals.General.CountryName ?? "USA",
@@ -391,7 +405,7 @@ internal sealed class EodHdMigrator : ImportsMigratorBase, IImportsMigrator
                         Type = fundamentals.General.Type ?? "ETF",
                         ProcessId = _processId
                     }).ConfigureAwait(false);
-
+                conn.Close();
                 return true;
             }
 

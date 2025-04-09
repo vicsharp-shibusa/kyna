@@ -200,7 +200,8 @@ internal sealed class YahooMigrator(DbDef sourceDef, DbDef targetDef,
         int index = 0;
         foreach (var chunk in priceDaos.Chunk(sizeOfChunk))
         {
-            tasks[index++] = _targetContext.ExecuteAsync(_targetDbDef.GetSql(SqlKeys.UpsertAdjustedEodPrice), chunk);
+            using var conn = _targetDbDef.GetConnection();
+            tasks[index++] = conn.ExecuteAsync(_targetDbDef.Sql.GetSql(SqlKeys.UpsertAdjustedEodPrice), chunk);
         }
         Task.WaitAll(tasks);
 
@@ -249,7 +250,9 @@ internal sealed class YahooMigrator(DbDef sourceDef, DbDef targetDef,
             });
         }
 
-        await _targetContext.ExecuteAsync(_targetDbDef.GetSql(SqlKeys.UpsertSplit), splitDaos);
+        using var tgtConn = _targetDbDef.GetConnection();
+        await tgtConn.ExecuteAsync(_targetDbDef.Sql.GetSql(SqlKeys.UpsertSplit), splitDaos);
+        tgtConn.Close();
 
         if (_configuration.SourceDeletionMode == SourceDeletionMode.All)
         {
@@ -285,24 +288,15 @@ internal sealed class YahooMigrator(DbDef sourceDef, DbDef targetDef,
                 DeclarationDate = date,
             };
         }
-        await _targetContext.ExecuteAsync(_targetDbDef.GetSql(SqlKeys.UpsertDividend), dividendDaos);
+        using var tgtConn = _targetDbDef.GetConnection();
+        await tgtConn.ExecuteAsync(_targetDbDef.Sql.GetSql(SqlKeys.UpsertDividend), dividendDaos);
+        tgtConn.Close();
 
         if (_configuration.SourceDeletionMode == SourceDeletionMode.All)
         {
             file.Delete();
         }
     }
-
-
-    //private async Task ProcessFinancialsFileAsync(FileInfo file) { }
-
-    //private async Task ProcessBalanceSheetFileAsync(FileInfo file) { }
-
-    //private async Task ProcessCashFlowFileAsync(FileInfo file) { }
-
-    //private async Task ProcessQuarterlyBalanceSheetFileAsync(FileInfo file) { }
-
-    //private async Task ProcessQuarterlyCashFlowFileAsync(FileInfo file) { }
 
     public class MigrationConfiguration(string inputPath)
     {
