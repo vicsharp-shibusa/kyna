@@ -31,20 +31,6 @@ public static class MigratorFactory
             return new YahooMigrator(sourceDbDef, targetDbDef, yahooMigratorConfig, processId, dryRun);
         }
 
-        if (source.Equals(EodHdMigrator.SourceName, StringComparison.OrdinalIgnoreCase))
-        {
-            options.Converters.Add(new EnumDescriptionConverter<EodHdMigrator.MigrationSourceMode>());
-            options.Converters.Add(new EnumDescriptionConverter<EodHdMigrator.SourceDeletionMode>());
-            options.Converters.Add(new EnumDescriptionConverter<EodHdMigrator.PriceMigrationMode>());
-
-            var eodHdMigratorConfig = JsonSerializer.Deserialize<EodHdMigrator.MigrationConfiguration>(
-                File.ReadAllText(configFileInfo.FullName), options);
-
-            Debug.Assert(eodHdMigratorConfig != null);
-
-            return new EodHdMigrator(sourceDbDef, targetDbDef, eodHdMigratorConfig, processId, dryRun);
-        }
-
         if (source.Equals(PolygonMigrator.SourceName, StringComparison.OrdinalIgnoreCase))
         {
             options.Converters.Add(new EnumDescriptionConverter<PolygonMigrator.MigrationSourceMode>());

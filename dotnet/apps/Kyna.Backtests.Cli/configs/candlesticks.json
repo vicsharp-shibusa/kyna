@@ -1,7 +1,7 @@
 {
   "Type": "Candlestick Pattern",
   "Name": "Reversals",
-  "Source": "eodhd.com",
+  "Source": "polygon.io",
   "Description": "Reversal Candlestick Signals",
   "Entry Price Point": "Close",
   "Target Up": {

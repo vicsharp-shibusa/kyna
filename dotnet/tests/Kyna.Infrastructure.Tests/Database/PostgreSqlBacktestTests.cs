@@ -70,7 +70,7 @@ public class PostgreSqlBacktestTests : IClassFixture<PostgreSqlTestFixture>
 
     private Backtest CreateBacktest()
     {
-        return new Backtest(Guid.NewGuid(), "Test", "Test", "eodhd.com", "Integration Test",
+        return new Backtest(Guid.NewGuid(), "Test", "Test", "polygon.io", "Integration Test",
             PricePoint.Close.GetEnumDescription(),
             0.1D, PricePoint.High.GetEnumDescription(),
             0.1D, PricePoint.Low.GetEnumDescription(),

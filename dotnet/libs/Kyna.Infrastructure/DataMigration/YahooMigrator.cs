@@ -8,7 +8,7 @@ namespace Kyna.Infrastructure.DataMigration;
 
 internal sealed class YahooMigrator(DbDef sourceDef, DbDef targetDef,
     YahooMigrator.MigrationConfiguration configuration, Guid? processId = null, bool dryRun = false)
-    : ImportsMigratorBase(sourceDef, targetDef, processId, dryRun), IImportsMigrator
+    : ImportsMigratorBase(sourceDef, targetDef, processId, dryRun), IImportsMigrator, IDisposable
 {
     static class Constants
     {
@@ -35,8 +35,6 @@ internal sealed class YahooMigrator(DbDef sourceDef, DbDef targetDef,
 
     public override string Source => SourceName;
     public const string SourceName = "yahoo";
-
-    public event EventHandler<CommunicationEventArgs>? Communicate;
 
     private readonly MigrationConfiguration _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
 
@@ -100,17 +98,6 @@ internal sealed class YahooMigrator(DbDef sourceDef, DbDef targetDef,
                 SearchOption.AllDirectories), ProcessDividendFileAsync));
         }
 
-        //Task[] tasks = [
-        //    MigrateFilesAsync(dirInfo.GetFiles(_inputFileSuffixes[Constants.Prices]), ProcessPriceFileAsync),
-        //    //MigrateFilesAsync(dirInfo.GetFiles(_inputFileSuffixes[Constants.Splits]), ProcessSplitFileAsync),
-        //    //MigrateFilesAsync(dirInfo.GetFiles(_inputFileSuffixes[Constants.Dividends]), ProcessDividendFileAsync),
-        //    //MigrateFilesAsync(dirInfo.GetFiles(_inputFileSuffixes[Constants.Financials]), ProcessFinancialsFileAsync),
-        //    //MigrateFilesAsync(dirInfo.GetFiles(_inputFileSuffixes[Constants.BalanceSheets]), ProcessBalanceSheetFileAsync),
-        //    //MigrateFilesAsync(dirInfo.GetFiles(_inputFileSuffixes[Constants.CashFlows]), ProcessCashFlowFileAsync),
-        //    //MigrateFilesAsync(dirInfo.GetFiles(_inputFileSuffixes[Constants.QuarterlyBalanceSheets]), ProcessQuarterlyBalanceSheetFileAsync),
-        //    //MigrateFilesAsync(dirInfo.GetFiles(_inputFileSuffixes[Constants.QuarterlyCashFlows]), ProcessQuarterlyCashFlowFileAsync)
-        //];
-
         Task.WaitAll([.. tasks], cancellationToken);
 
         timer.Stop();
@@ -148,7 +135,7 @@ internal sealed class YahooMigrator(DbDef sourceDef, DbDef targetDef,
 
     private Task ProcessPriceFileAsync(FileInfo file)
     {
-        Communicate?.Invoke(this, new CommunicationEventArgs($"Processing {file.FullName}", nameof(YahooMigrator)));
+        Printf($"Processing {file.FullName}");
         var ticker = GetTickerFromFileName(file.Name);
         var lines = File.ReadAllLines(file.FullName);
         var priceDaos = new Database.DataAccessObjects.EodAdjustedPrice[lines.Length - 1];
@@ -156,33 +143,25 @@ internal sealed class YahooMigrator(DbDef sourceDef, DbDef targetDef,
         {
             var split = lines[i].Split(',');
             if (!DateOnly.TryParse(split[0], out DateOnly date))
-            {
                 throw new Exception($"Could not parse date from line {i} in file {file.Name}");
-            }
+
             if (!decimal.TryParse(split[1], System.Globalization.NumberStyles.Float, null, out decimal open))
-            {
                 throw new Exception($"Could not parse open from line {i} in file {file.Name}");
-            }
+
             if (!decimal.TryParse(split[2], System.Globalization.NumberStyles.Float, null, out decimal high))
-            {
                 throw new Exception($"Could not parse high from line {i} in file {file.Name}");
-            }
+
             if (!decimal.TryParse(split[3], System.Globalization.NumberStyles.Float, null, out decimal low))
-            {
                 throw new Exception($"Could not parse low from line {i} in file {file.Name}");
-            }
+
             if (!decimal.TryParse(split[4], System.Globalization.NumberStyles.Float, null, out decimal close))
-            {
                 throw new Exception($"Could not parse close from line {i} in file {file.Name}");
-            }
+
             if (!decimal.TryParse(split[5], System.Globalization.NumberStyles.Float, null, out decimal adjClose))
-            {
                 throw new Exception($"Could not parse adjusted close from line {i} in file {file.Name}");
-            }
+
             if (!long.TryParse(split[6], out long volume))
-            {
                 throw new Exception($"Could not parse volume from line {i} in file {file.Name}");
-            }
 
             priceDaos[i - 1] = new Database.DataAccessObjects.EodAdjustedPrice(SourceName, ticker, _processId)
             {
@@ -215,7 +194,7 @@ internal sealed class YahooMigrator(DbDef sourceDef, DbDef targetDef,
 
     private async Task ProcessSplitFileAsync(FileInfo file)
     {
-        Communicate?.Invoke(this, new CommunicationEventArgs($"Processing {file.FullName}", nameof(YahooMigrator)));
+        Printf($"Processing {file.FullName}");
 
         var ticker = GetTickerFromFileName(file.Name);
         var lines = File.ReadAllLines(file.FullName);
@@ -262,7 +241,7 @@ internal sealed class YahooMigrator(DbDef sourceDef, DbDef targetDef,
 
     private async Task ProcessDividendFileAsync(FileInfo file)
     {
-        Communicate?.Invoke(this, new CommunicationEventArgs($"Processing {file.FullName}", nameof(YahooMigrator)));
+        Printf($"Processing {file.FullName}");
 
         var ticker = GetTickerFromFileName(file.Name);
         var lines = File.ReadAllLines(file.FullName);
@@ -296,6 +275,10 @@ internal sealed class YahooMigrator(DbDef sourceDef, DbDef targetDef,
         {
             file.Delete();
         }
+    }
+
+    public void Dispose()
+    {
     }
 
     public class MigrationConfiguration(string inputPath)

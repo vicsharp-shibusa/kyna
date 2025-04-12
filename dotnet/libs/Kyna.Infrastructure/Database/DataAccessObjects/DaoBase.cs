@@ -20,7 +20,7 @@ internal abstract record class AuditBase
     public DateTimeOffset CreatedAt
     {
         get => DateTimeOffset.FromUnixTimeMilliseconds(_createdAtUnixMs).ToLocalTime();
-        set => _createdAtUnixMs = value.ToUnixTimeMilliseconds();
+        init => _createdAtUnixMs = value.ToUnixTimeMilliseconds();
     }
 }
 
@@ -39,6 +39,6 @@ internal abstract record class DaoBase : AuditBase
     public DateTimeOffset UpdatedAt
     {
         get => DateTimeOffset.FromUnixTimeMilliseconds(_updatedAtUnixMs).ToLocalTime();
-        set => _updatedAtUnixMs = value.ToUnixTimeMilliseconds();
+        init => _updatedAtUnixMs = value.ToUnixTimeMilliseconds();
     }
 }

@@ -8,7 +8,7 @@ IConfiguration? configuration;
 
 int exitCode = -1;
 
-string? appName = Assembly.GetExecutingAssembly().GetName().Name;
+var appName = Assembly.GetExecutingAssembly().GetName().Name;
 Debug.Assert(appName != null);
 
 Dictionary<string, SubCommand> commandDict;
@@ -122,7 +122,7 @@ void ShowHelp()
     Communicate("Commands:", true);
     const int PadRightVal = 11;
     var headers = new string[] { "Alias 1", "Alias 2", "Alias 3", "Command Name" };
-    
+
     var cmdSb = new StringBuilder();
     cmdSb.AppendLine($"\t{string.Join(" | ", headers.Select(h => h.PadRight(PadRightVal)))}");
     cmdSb.AppendLine(new string('-', 70));
@@ -139,10 +139,10 @@ void ShowHelp()
     kyna import -f ./file.json --info
     kyna importer -f ./file.json --info
     kyna imports -f ./file.json --info", true);
-    
+
     Communicate(null, true);
-    Communicate("Use 'help <command>' or '<command> --help' to get help on a specific sub-command.",true);
-    
+    Communicate("Use 'help <command>' or '<command> --help' to get help on a specific sub-command.", true);
+
     Communicate(@"
     kyna help import
     kyna importer --help", true);
@@ -217,9 +217,7 @@ void Configure()
     configuration = builder.Build();
 
     const string SectionName = "CommandNames";
-    var section = configuration?.GetSection(SectionName);
-    if (section == null)
-        throw new Exception($"Configuration error: could not find section '{SectionName}'");
+    var section = (configuration?.GetSection(SectionName)) ?? throw new Exception($"Configuration error: could not find section '{SectionName}'");
 
     commandDict = new Dictionary<string, SubCommand>()
     {
@@ -252,9 +250,7 @@ string GetSubcommandFilename(string? commandName)
     var files = dir.GetFiles(commandName, SearchOption.AllDirectories);
 
     if (files.Length == 0)
-    {
         throw new ArgumentException($"Could not find command file for {commandName}");
-    }
 
     return files[0].FullName;
 }
@@ -265,13 +261,9 @@ string GetChildArgsString(string[] args)
     for (int a = 0; a < args.Length; a++)
     {
         if (args[a].Contains(' '))
-        {
             childArgs.Add($"\"{args[a]}\"");
-        }
         else
-        {
             childArgs.Add(args[a]);
-        }
     }
     return string.Join(' ', childArgs);
 }

@@ -12,7 +12,7 @@
   ],
   "Options": {
     "Import File Location": "C:\\temp\\importer",
-    "Max Parallelization": "10",
+    "Max Parallelization": "25",
     "Years of Data": "10"
   }
 }

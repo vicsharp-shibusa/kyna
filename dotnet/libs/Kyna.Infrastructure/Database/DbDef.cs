@@ -42,7 +42,7 @@ public sealed class DbDef
         Sql = new SqlCollection(SqlRepository.BuildDictionary(Engine));
     }
 
-    public string ParameterPrefix => DefaultParmPrefix;
+    public static string ParameterPrefix => DefaultParmPrefix;
 
     public IDbConnection GetConnection()
     {
@@ -86,11 +86,13 @@ public sealed class DbDef
             _releaseAction = releaseAction;
         }
 
+#nullable disable // addresses with CS8767 compiler warning
         public string ConnectionString
         {
             get => _innerConnection.ConnectionString;
             set => _innerConnection.ConnectionString = value;
         }
+#nullable enable
 
         public int ConnectionTimeout => _innerConnection.ConnectionTimeout;
 

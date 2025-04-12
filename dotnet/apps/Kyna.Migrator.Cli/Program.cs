@@ -2,14 +2,13 @@
 using Kyna.ApplicationServices.Configuration;
 using Kyna.ApplicationServices.DataManagement;
 using Kyna.Common;
-using Kyna.Infrastructure.Logging;
 using Kyna.Infrastructure.DataMigration;
+using Kyna.Infrastructure.Logging;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using System.Diagnostics;
 using System.Reflection;
 
-ILogger<Program>? logger = null;
 IConfiguration? configuration;
 
 int exitCode = -1;
@@ -22,9 +21,14 @@ Debug.Assert(appName != null);
 
 IImportsMigrator? migrator = null;
 
+Config? config = null;
+
+TimeSpan duration = TimeSpan.Zero;
+
 Stopwatch timer = Stopwatch.StartNew();
 
-Config? config = null;
+CancellationTokenSource cts = new();
+
 
 try
 {
@@ -44,40 +48,13 @@ try
         Debug.Assert(migrator != null);
 
         if (config.ShowInfo)
-        {
             Console.WriteLine(migrator.GetInfo());
-        }
         else
         {
             KyLogger.LogEvent(EventIdRepository.GetAppStartedEvent(config!), processId);
 
-            CancellationTokenSource cts = new();
-
-            TimeSpan duration = TimeSpan.Zero;
-
-            try
-            {
-                duration = await migrator.MigrateAsync(cts.Token);
-            }
-            catch (AggregateException ex)
-            {
-                cts.Cancel(true);
-
-                foreach (var e in ex.InnerExceptions)
-                {
-#if DEBUG
-                    Communicate(e.ToString(), true, LogLevel.Error);
-#else
-                    Communicate(e.Message, true, LogLevel.Error);
-#endif
-                }
-            }
-            finally
-            {
-                Communicate($"{Environment.NewLine}Migration using file '{config.ConfigFile?.Name}' completed in {duration.ConvertToText()}");
-
-                cts.Dispose();
-            }
+            duration = await migrator.MigrateAsync(cts.Token);
+            Communicate($"{Environment.NewLine}Migration completed in {duration.ConvertToText()}.");
         }
     }
 
@@ -110,20 +87,19 @@ catch (Exception exc)
 finally
 {
     if (!(config?.ShowHelp ?? false))
-    {
         KyLogger.LogEvent(EventIdRepository.GetAppFinishedEvent(config!), processId);
-    }
 
     if (migrator != null)
     {
         migrator.Communicate -= Migrator_Communicate;
+        migrator.Dispose();
     }
 
     timer.Stop();
 
     Communicate($"{Environment.NewLine}{appName} completed in {timer.Elapsed.ConvertToText()}");
 
-    await Task.Delay(200); // give the logger a chance to catch up
+    cts?.Dispose();
 
     Environment.Exit(exitCode);
 }
@@ -132,14 +108,10 @@ void Communicate(string? message, bool force = false, LogLevel logLevel = LogLev
     string? scope = null)
 {
     if (force || (config?.Verbose ?? false))
-    {
         Console.WriteLine(message);
-    }
 
     if (!string.IsNullOrEmpty(message))
-    {
         KyLogger.Log(logLevel, message, scope ?? appName, processId);
-    }
 }
 
 void ShowHelp()
@@ -204,19 +176,13 @@ void ParseArguments(string[] args)
 void ValidateArgsAndSetDefaults()
 {
     if (config == null)
-    {
         throw new Exception("Logic error; configuration was not created.");
-    }
 
     if (config.ConfigFile == null)
-    {
         throw new ArgumentException($"A configuration file is required; use -f <file name>.");
-    }
 
     if (config.DryRun)
-    {
         config.Verbose = true;
-    }
 }
 
 void Configure()
@@ -243,15 +209,13 @@ void Configure()
     if (finDef == null)
         throw new Exception($"Unable to create {nameof(ConfigKeys.DbKeys.Financials)} db connection; no '{ConfigKeys.DbKeys.Financials}' key found.");
 
-    logger = Kyna.ApplicationServices.Logging.LoggerFactory.Create<Program>(logDef);
+    var logger = Kyna.ApplicationServices.Logging.LoggerFactory.Create<Program>(logDef);
     KyLogger.SetLogger(logger);
 
     migrator = MigratorFactory.Create(importDef, finDef, config.ConfigFile!, processId, config.DryRun);
 
     if (migrator == null)
-    {
         throw new Exception($"Unable to instantiate importer.");
-    }
 
     migrator!.Communicate += Migrator_Communicate;
 }

@@ -6,13 +6,13 @@ The following diagram represents an approximation of the `kyna-importer` applica
 
 ![Data Import Diagram](./images/kyna-importer.png)
 
-The CLI, `kyna-importer`, instantiates an implementation of `IExternalDataImporter` based on the `-s <source name>` argument. Currently, there are two implementations of `IExternalDataImporter`. The first is `eodhd.com` and the second is `yahoo`, which interfaces with the Yahoo Finance API via a NuGet package. The `<source name>` must correspond to the `Source` property in your `IExternalDataImporter` implementation (see below) for the connection to take place.
+The CLI, `kyna-importer`, instantiates an implementation of `IExternalDataImporter` based on the `-s <source name>` argument. Currently, there are two implementations of `IExternalDataImporter`. The first is `polygon.io` and the second is `yahoo`, which interfaces with the Yahoo Finance API via a NuGet package. The `<source name>` must correspond to the `Source` property in your `IExternalDataImporter` implementation (see below) for the connection to take place.
 
 ### New Implementations
 
 Each implementation of `IExternalDataImporter` must contain some sort of configuration data structure, represented in the diagram as `DataImportConfiguration`. I had hoped to have a generic import configuration, but it ultimately didn't make sense - the variations between the possible importers is too great to try to generify, so each importer will require it's own configuration structure, which may be housed inside the importer class.
 
-`ImportAction` is a simple struct. The `EodHdImporter` takes in its known configuration structure (e.g., `DataImportConfiguration`) and deserializes it into whatever it needs, which must include some representation of one or more `ImportAction` instances.
+`ImportAction` is a simple struct. The `PolygonImporter` takes in its known configuration structure (e.g., `DataImportConfiguration`) and deserializes it into whatever it needs, which must include some representation of one or more `ImportAction` instances.
 
 The `ImportAction` instances inform the `ImportAsync` function what to do to complete the import task.
 
@@ -42,20 +42,23 @@ An example of the `secret.json`:
 ```json
 {
   "ConnectionStrings": {
-    "Logs": "User ID=postgres;Password=secret_password;Host=127.0.0.1;Port=5432;Database=logs;",
-    "Imports": "User ID=postgres;Password=secret_password;Host=127.0.0.1;Port=5432;Database=imports;"
+    "Logs": "User ID=postgres;Password=YOURPASSWORD;Host=127.0.0.1;Port=5432;Database=logs;",
+    "Imports": "User ID=postgres;Password=YOURPASSWORD;Host=127.0.0.1;Port=5432;Database=imports;",
+    "Financials": "User ID=postgres;Password=YOURPASSWORD;Host=127.0.0.1;Port=5432;Database=financials;Include Error Detail=True"
   },
   "DatabaseEngines": {
     "Logs": "PostgreSql",
-    "Imports": "PostgreSql"
+    "Imports": "PostgreSql",
+    "Financials": "PostgreSql"
   },
   "ApiKeys": {
-    "eodhd.com": "MY-SECRET-KEY"
+    "polygon.io": "API_KEY"
+  },
+  "AccessKeys": {
+    "polygon.io": "ACCESS_KEY"
   }
 }
 ```
-
-The name of the key, `eodhd.com` in the `ApiKeys` section above must correspond to the `Source` property of your `IExternalDataImport` implementation and, of course, the value must be a valid key.
 
 The `DataImportConfiguration` class is a deserialized implementation of a JSON file passed into the `kyna-importer` application using the `-f <file name>` argument.
 

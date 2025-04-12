@@ -25,7 +25,7 @@ CLI for importing financial data.
 {
   "Type": "Random Baseline",
   "Name": "Baseline 1",
-  "Source": "eodhd.com",
+  "Source": "polygon.io",
   "Description": "Testing",
   "EntryPricePoint": "Close",
   "TargetUp": {

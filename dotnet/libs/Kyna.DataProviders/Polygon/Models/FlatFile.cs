@@ -1,48 +1,33 @@
 ﻿namespace Kyna.DataProviders.Polygon.Models;
 
-public struct FlatFile
+public struct FlatFileLine
 {
-    public FlatFile(string text)
+    public FlatFileLine(string text)
     {
         var split = text.Split(',');
         if (split.Length != 8)
-        {
-            throw new ArgumentException($"Expecting 8 items in {nameof(FlatFile)} text.");
-        }
+            throw new ArgumentException($"Expecting 8 items in {nameof(FlatFileLine)} text.");
+
         Code = split[0].Trim();
         if (!long.TryParse(split[1], out Volume))
-        {
             ThrowParsingException(text, nameof(Volume));
-        }
         if (!decimal.TryParse(split[2], out Open))
-        {
             ThrowParsingException(text, nameof(Open));
-        }
         if (!decimal.TryParse(split[3], out Close))
-        {
             ThrowParsingException(text, nameof(Close));
-        }
         if (!decimal.TryParse(split[4], out High))
-        {
             ThrowParsingException(text, nameof(High));
-        }
         if (!decimal.TryParse(split[5], out Low))
-        {
             ThrowParsingException(text, nameof(Low));
-        }
         if (!long.TryParse(split[6], out WindowStart))
-        {
             ThrowParsingException(text, nameof(WindowStart));
-        }
         if (!int.TryParse(split[7], out Transactions))
-        {
             ThrowParsingException(text, nameof(Transactions));
-        }
     }
 
     private ArgumentException ThrowParsingException(string text, string property)
     {
-        throw new ArgumentException($"Could not parse {nameof(property)} in {nameof(FlatFile)}; line: {text}");
+        throw new ArgumentException($"Could not parse {nameof(property)} in {nameof(FlatFileLine)}; line: {text}");
     }
 
     public string Code;
@@ -55,5 +40,5 @@ public struct FlatFile
     public int Transactions;
 
     public readonly DateOnly Date =>
-        DateOnly.FromDateTime(new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc).AddTicks(WindowStart / 100));
+        DateOnly.FromDateTime(new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Local).AddTicks(WindowStart / 100));
 }

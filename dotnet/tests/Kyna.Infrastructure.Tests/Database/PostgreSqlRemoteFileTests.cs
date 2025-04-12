@@ -37,10 +37,11 @@ public class PostgreSqlRemoteFileTests : IClassFixture<PostgreSqlTestFixture>
             Source = "Test",
             Location = "FlatFiles",
             HashCode = Guid.NewGuid().ToString(),
-            Name = "Test.csv",
+            SourceName = "Test.csv",
+            LocalName = "Test.csv",
             Provider = "AWS",
             Size = 1_000L,
-            UpdateDate = DateOnly.FromDateTime(DateTime.UtcNow),
+            UpdateDate = DateOnly.FromDateTime(DateTime.Now),
             ProcessId = processId ?? Guid.NewGuid()
         };
 }

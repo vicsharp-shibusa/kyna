@@ -8,6 +8,15 @@ namespace Kyna.Analysis.Tests;
 
 public class ChartFactoryTests
 {
+    public record StockData(
+        DateOnly Date,
+        decimal Open,
+        decimal High,
+        decimal Low,
+        decimal Close,
+        decimal AdjustedClose,
+        long Volume);
+
     [Fact]
     public void WeeklyChart()
     {
@@ -15,7 +24,7 @@ public class ChartFactoryTests
 
         Assert.True(aaplPricesFile.Exists);
 
-        var prices = JsonSerializer.Deserialize<DataProviders.EodHistoricalData.Models.PriceAction[]>(
+        var prices = JsonSerializer.Deserialize<StockData[]>(
             File.ReadAllText(aaplPricesFile.FullName),
             JsonSerializerOptionsRepository.Custom);
 
@@ -46,7 +55,7 @@ public class ChartFactoryTests
 
         Assert.True(aaplPricesFile.Exists);
 
-        var prices = JsonSerializer.Deserialize<DataProviders.EodHistoricalData.Models.PriceAction[]>(
+        var prices = JsonSerializer.Deserialize<StockData[]>(
             File.ReadAllText(aaplPricesFile.FullName),
             JsonSerializerOptionsRepository.Custom);
 
@@ -77,7 +86,7 @@ public class ChartFactoryTests
 
         Assert.True(aaplPricesFile.Exists);
 
-        var prices = JsonSerializer.Deserialize<DataProviders.EodHistoricalData.Models.PriceAction[]>(
+        var prices = JsonSerializer.Deserialize<StockData[]>(
             File.ReadAllText(aaplPricesFile.FullName),
             JsonSerializerOptionsRepository.Custom);
 
@@ -108,7 +117,7 @@ public class ChartFactoryTests
 
         Assert.True(aaplPricesFile.Exists);
 
-        var prices = JsonSerializer.Deserialize<DataProviders.EodHistoricalData.Models.PriceAction[]>(
+        var prices = JsonSerializer.Deserialize<StockData[]>(
             File.ReadAllText(aaplPricesFile.FullName),
             JsonSerializerOptionsRepository.Custom);
 
@@ -139,7 +148,7 @@ public class ChartFactoryTests
 
         Assert.True(aaplPricesFile.Exists);
 
-        var prices = JsonSerializer.Deserialize<DataProviders.EodHistoricalData.Models.PriceAction[]>(
+        var prices = JsonSerializer.Deserialize<StockData[]>(
             File.ReadAllText(aaplPricesFile.FullName),
             JsonSerializerOptionsRepository.Custom);
 

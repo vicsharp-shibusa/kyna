@@ -23,9 +23,6 @@
 		<None Update="configs\test-polygon.json">
 			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
 		</None>
-		<None Update="configs\test-eodhd.json">
-			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
-		</None>
 		<None Update="secrets.json">
 			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
 		</None>

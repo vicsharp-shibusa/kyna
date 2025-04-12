@@ -26,21 +26,6 @@ CLI for migrating from the imports database to the financials database.
 
 ```json
 {
-  "Source": "eodhd.com",
-  "Categories": [
-    "Fundamentals",
-    "Splits",
-    "EOD Prices"
-  ],
-  "Mode": "Latest",
-  "Source Deletion Mode": "All Except Latest",
-  "Price Migration Mode": "Raw, Adjusted",
-  "MaxParallelization": 10
-}
-```
-
-```json
-{
   "Source": "polygon.io",
   "Categories": [
     "Ticker Details",

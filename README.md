@@ -46,12 +46,11 @@ Choosing when to buy from a signal is pretty easy, but choosing when to sell is 
 
 #### Bad News
 
-The bad news is that I wasn't able to maintain backward compatibility.
-Because I no longer have an [EOD Historical Data](https://eodhd.com/) account, I wasn't able to test the changes I made around the data access layer.
-Consequently, there my be small defects in the eodhd importer and migrator.
-Sorry in advance if this causes you trouble.
-If you want to get a copy of the eodhd importer and migrator when they almost definitely worked, revert to the following commit.
-This had a working version of an eodhd.com client.
+The bad news is that I wasn't able to maintain backward compatibility when it came to [EOD Historical Data](https://eodhd.com/).
+Because I no longer have a subscription, I wasn't able to test the changes I made around the data access layer.
+So, sorry if this causes anyone trouble. You're welcome to fork the repo and resurrect the code from the git history.
+I thought it was useful, but I went with polygon.io for reasons.
+If you want to get a copy of the eodhd importer and migrator when they almost definitely worked, fork the repo and revert to the following commit.
 
 ```bash
 commit e7249ee3f202e407b3f80808722f116f03d956f7 (tag: v0.0.11)

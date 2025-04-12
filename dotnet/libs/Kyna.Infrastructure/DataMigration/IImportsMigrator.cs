@@ -8,4 +8,5 @@ public interface IImportsMigrator
     string Source { get; }
     Task<TimeSpan> MigrateAsync(CancellationToken cancellationToken = default);
     string GetInfo();
+    void Dispose();
 }

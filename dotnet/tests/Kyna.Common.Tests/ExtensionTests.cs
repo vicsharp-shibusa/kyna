@@ -258,7 +258,7 @@ public class ExtensionTests
         DateOnly monday = new(2021, 10, 4);
         Assert.Equal(DayOfWeek.Monday, monday.DayOfWeek);
         var sameDay = monday.FindFirstWeekday();
-        Assert.Equal(monday,sameDay);
+        Assert.Equal(monday, sameDay);
     }
 
     private enum NoDescription

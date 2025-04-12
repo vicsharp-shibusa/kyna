@@ -8,7 +8,6 @@ using Microsoft.Extensions.Logging;
 using System.Diagnostics;
 using System.Reflection;
 
-ILogger<Program>? logger = null;
 IConfiguration? configuration;
 BacktestingService? backtestingService = null;
 
@@ -26,32 +25,26 @@ Config? config = null;
 
 try
 {
-    HandleArguments(args);
+    ParseArguments(args);
     ValidateArgsAndSetDefaults();
     Configure();
 
     Debug.Assert(config != null);
 
     if (config.ShowHelp)
-    {
         ShowHelp();
-    }
     else if (config.ListProcessIds)
     {
         Debug.Assert(backtestingService != null);
         var processInfo = (await backtestingService.GetBacktestProcessesAsync()).ToArray();
 
         if (processInfo.Length == 0)
-        {
             Communicate("No processes found", true);
-        }
         else
-        {
             foreach (var p in processInfo)
             {
                 Communicate(p.ToString(), true);
             }
-        }
     }
     else
     {
@@ -63,9 +56,7 @@ try
         }
 
         if (config.ConfigDir != null || config.ConfigFile != null)
-        {
             KyLogger.LogEvent(EventIdRepository.GetAppStartedEvent(config!), processId);
-        }
 
         CancellationTokenSource cts = new();
 
@@ -83,9 +74,7 @@ try
                 await backtestingService.ExecuteAsync(files);
             }
             if (config.ConfigFile != null)
-            {
                 await backtestingService.ExecuteAsync(config.ConfigFile);
-            }
         }
         catch (AggregateException ex)
         {
@@ -131,14 +120,10 @@ catch (Exception exc)
 finally
 {
     if (config?.ConfigDir != null || config?.ConfigFile != null)
-    {
         KyLogger.LogEvent(EventIdRepository.GetAppFinishedEvent(config!), processId);
-    }
 
     if (backtestingService != null)
-    {
         backtestingService.Communicate -= Backtests_Communicate;
-    }
 
     timer.Stop();
 
@@ -155,14 +140,10 @@ void Communicate(string? message, bool force = false, LogLevel logLevel = LogLev
     string? scope = null)
 {
     if (force || (config?.Verbose ?? false))
-    {
         Console.WriteLine(message);
-    }
 
     if (!string.IsNullOrEmpty(message))
-    {
         KyLogger.Log(logLevel, message, scope ?? appName, processId);
-    }
 }
 
 void ShowHelp()
@@ -185,7 +166,7 @@ void ShowHelp()
     Communicate(CliHelper.FormatArguments(args), true);
 }
 
-void HandleArguments(string[] args)
+void ParseArguments(string[] args)
 {
     config = new Config(Assembly.GetExecutingAssembly().GetName().Name ?? nameof(Program), "v1",
         "CLI for importing financial data.");
@@ -251,18 +232,11 @@ void HandleArguments(string[] args)
 void ValidateArgsAndSetDefaults()
 {
     if (config == null)
-    {
         throw new Exception("Logic error; configuration was not created.");
-    }
 
-    if (!config.ShowHelp)
-    {
-        if (!config.ListProcessIds && config.ProcessIdsToDelete.Count == 0 &&
-            config.ConfigDir == null && config.ConfigFile == null)
-        {
-            throw new ArgumentException("Either a configuration file or directory is required.");
-        }
-    }
+    if (!config.ShowHelp && !config.ListProcessIds && config.ProcessIdsToDelete.Count == 0 &&
+        config.ConfigDir == null && config.ConfigFile == null)
+        throw new ArgumentException("Either a configuration file or directory is required.");
 }
 
 void Configure()
@@ -285,12 +259,11 @@ void Configure()
 
     backtestingService = new BacktestingService(finDef, bckDef);
     if (backtestingService == null)
-    {
         throw new Exception($"Could not instantiate {nameof(BacktestingService)}");
-    }
+
     backtestingService.Communicate += Backtests_Communicate;
 
-    logger = Kyna.ApplicationServices.Logging.LoggerFactory.Create<Program>(logDef);
+    var logger = Kyna.ApplicationServices.Logging.LoggerFactory.Create<Program>(logDef);
     KyLogger.SetLogger(logger);
 }
 

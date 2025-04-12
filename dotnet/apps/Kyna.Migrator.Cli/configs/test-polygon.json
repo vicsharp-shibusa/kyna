@@ -8,9 +8,11 @@
   ],
   "Mode": "Latest",
   "Source Deletion Mode": "All Except Latest",
-  "Max Parallelization": 50,
-  "Import File Location": "C:\\temp\\migrator",
+  "Max Parallelization": 25,
+  "Import File Location": "C:\\temp\\importer",
   "Import File Prefixes": [
     "us_stocks_sip/day_aggs_v1"
-  ]
+  ],
+  "Remove Migrated Files": false,
+  "Remove Compressed Files":  false
 }

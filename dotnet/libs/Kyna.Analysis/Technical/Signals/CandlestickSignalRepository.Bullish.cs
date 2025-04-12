@@ -19,8 +19,8 @@ public sealed partial class CandlestickSignalRepository
         return second.IsLight &&
             second.IsTallBody &&
             chart.IsTall(position + 1) &&
-            second.Volume > first.Volume * volumeFactor 
-            ? position + 1 
+            second.Volume > first.Volume * volumeFactor
+            ? position + 1
             : -1;
     }
 }

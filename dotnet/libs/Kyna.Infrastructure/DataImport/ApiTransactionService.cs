@@ -52,7 +52,7 @@ internal sealed class ApiTransactionService : IDisposable
 
         foreach (var c in subCategories.Select(x => x.Trim()).Chunk(500))
         {
-            using var conn = _dbDef.GetConnection();    
+            using var conn = _dbDef.GetConnection();
             await conn.ExecuteAsync(sql, new
             {
                 source,

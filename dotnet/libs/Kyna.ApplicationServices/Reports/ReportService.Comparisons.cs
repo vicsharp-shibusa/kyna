@@ -28,22 +28,7 @@ public sealed partial class ReportService
         {
             var sql = _financialDbDef.Sql.GetSql(SqlKeys.FetchSplits, "source = @Source");
             var splits = _financialsConn.Query<Split>(sql, new { source });
-            if (source == EodHdImporter.SourceName)
-            {
-                tickersBySourceDictionary.Add(source, [.. splits.Select(s => new Split(source, s.Code.Replace(".US", ""))
-                {
-                    After = s.After,
-                    Before = s.Before,
-                    ProcessId = s.ProcessId,
-                    SplitDate = s.SplitDate,
-                    CreatedAt = s.CreatedAt,
-                    UpdatedAt = s.UpdatedAt
-                })]);
-            }
-            else
-            {
-                tickersBySourceDictionary.Add(source, [.. splits]);
-            }
+            tickersBySourceDictionary.Add(source, [.. splits]);
         }
 
         var splitReport = CreateReport($"split-comparison", "Code", "Date", "Source", "Before", "After", "Source", "Before", "After");
@@ -76,7 +61,6 @@ public sealed partial class ReportService
     public async Task<IEnumerable<string>> CreateChartComparisonCsvReportAsync(string outputDir)
     {
         var codesAndDates = _financialsConn.Query<CodeAndDates>(
-            //var sql = $"{_financialsCtx.Sql.Splits.Fetch} WHERE source = @Source";
             _financialDbDef.Sql.GetSql(SqlKeys.FetchAdjustedCodesAndDates), commandTimeout: 0);
 
         Dictionary<string, string[]> codesBySourceDictionary = [];
@@ -84,7 +68,7 @@ public sealed partial class ReportService
         foreach (var source in codesAndDates.Select(c => c.Source).Distinct())
         {
             codesBySourceDictionary.Add(source, [.. codesAndDates.Where(c => c.Source.Equals(source))
-                .Select(c => c.CommonCode).Distinct()]);
+                .Select(c => c.Code).Distinct()]);
         }
 
         List<string> headers = new(5) { "Code", "Date" };
@@ -113,16 +97,17 @@ public sealed partial class ReportService
         foreach (var commonCode in commonCodes)
         {
             bool skip = false;
-            var start = codesAndDates.Where(c => c.CommonCode.Equals(commonCode))
+            var start = codesAndDates.Where(c => c.Code.Equals(commonCode))
                 .Select(c => c.Start).Max();
-            var finish = codesAndDates.Where(c => c.CommonCode.Equals(commonCode))
+            var finish = codesAndDates.Where(c => c.Code.Equals(commonCode))
                 .Select(c => c.Finish).Min();
 
             Chart[] charts = new Chart[codesBySourceDictionary.Keys.Count];
             int chartIndex = 0;
             foreach (var source in codesBySourceDictionary.Keys)
             {
-                var code = source.Equals(EodHdImporter.SourceName, StringComparison.OrdinalIgnoreCase)
+                // TODO: this is an inappropriate use of the PolygonImporter.SourceName - should be more dynamic.
+                var code = source.Equals(PolygonImporter.SourceName, StringComparison.OrdinalIgnoreCase)
                     ? $"{commonCode}.US"
                     : commonCode;
 
@@ -225,7 +210,4 @@ public struct CodeAndDates
     public string Code;
     public DateOnly Start;
     public DateOnly Finish;
-    public readonly string CommonCode => Source.Equals("eodhd.com", StringComparison.OrdinalIgnoreCase)
-        ? Code.Replace(".US", "", StringComparison.OrdinalIgnoreCase)
-        : Code;
 }

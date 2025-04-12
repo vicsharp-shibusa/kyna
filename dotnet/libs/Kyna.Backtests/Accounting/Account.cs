@@ -58,7 +58,7 @@ internal class Account
         if (amount > 0M)
         {
             Ledger.AddEntry(date, Constants.Accounting.AccountNames.Cash, amount,
-                Constants.Accounting .AccountNames.OwnersEquity, amount,
+                Constants.Accounting.AccountNames.OwnersEquity, amount,
                 description: $"Deposit: {amount:C}");
         }
 

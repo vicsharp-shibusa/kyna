@@ -31,7 +31,7 @@ public class CombinedTrend : TrendBase, ITrend
     {
         get
         {
-            if (_name == null )
+            if (_name == null)
             {
                 StringBuilder sb = new();
                 foreach (var t in _trends)

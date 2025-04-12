@@ -29,6 +29,7 @@ public static class SqlKeys
     public const string UpsertRemoteFile = nameof(UpsertRemoteFile);
     public const string FetchRemoteFiles = nameof(FetchRemoteFiles);
     public const string DeleteRemoteFilesForSource = nameof(DeleteRemoteFilesForSource);
+    public const string MarkRemoteFileAsMigrated = nameof(MarkRemoteFileAsMigrated);
 
     public const string UpsertBacktest = nameof(UpsertBacktest);
     public const string FetchBacktest = nameof(FetchBacktest);

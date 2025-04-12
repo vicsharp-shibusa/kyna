@@ -16,4 +16,3 @@ public static class ConfigKeys
         public const string Backtests = "Backtests";
     }
 }
-    

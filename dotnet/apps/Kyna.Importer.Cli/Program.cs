@@ -9,7 +9,6 @@ using Microsoft.Extensions.Logging;
 using System.Diagnostics;
 using System.Reflection;
 
-ILogger<Program>? logger = null;
 IConfiguration? configuration;
 
 int exitCode = -1;
@@ -24,10 +23,10 @@ Debug.Assert(appName != null);
 
 IExternalDataImporter? importer = null;
 
-Stopwatch timer = Stopwatch.StartNew();
-
 Config? config = null;
 CancellationTokenSource cts = new();
+
+Stopwatch timer = Stopwatch.StartNew();
 
 try
 {
@@ -67,32 +66,23 @@ try
 
         if (!acceptDanger && IsDangerous)
         {
-            if (IsDangerous)
+            bool? allowDanger = null;
+            foreach (var message in DangerMessages)
             {
-                bool? allowDanger = null;
-                foreach (var message in DangerMessages)
-                {
-                    allowDanger = allowDanger.HasValue
-                        ? allowDanger.Value && CliHelper.ConfirmActionWithUser(message)
-                        : CliHelper.ConfirmActionWithUser(message);
-                }
-
-                acceptDanger = allowDanger.GetValueOrDefault();
+                allowDanger = allowDanger.HasValue
+                    ? allowDanger.Value && CliHelper.ConfirmActionWithUser(message)
+                    : CliHelper.ConfirmActionWithUser(message);
             }
+
+            acceptDanger = allowDanger.GetValueOrDefault();
         }
         else
-        {
             acceptDanger = true;
-        }
 
         if (!acceptDanger)
-        {
             Communicate($"{Environment.NewLine}Process halted at user's request.", true);
-        }
         else
-        {
             duration = await importer.ImportAsync(cts.Token);
-        }
     }
     exitCode = 0;
 }
@@ -267,7 +257,7 @@ void Configure()
     if (importDef == null)
         throw new Exception($"Unable to create {nameof(ConfigKeys.DbKeys.Imports)} db connection; no '{ConfigKeys.DbKeys.Imports}' key found.");
 
-    logger = Kyna.ApplicationServices.Logging.LoggerFactory.Create<Program>(logDef);
+    var logger = Kyna.ApplicationServices.Logging.LoggerFactory.Create<Program>(logDef);
     KyLogger.SetLogger(logger);
 
     config.ApiKey = configuration.GetSection($"ApiKeys:{source}").Value;

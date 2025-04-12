@@ -765,7 +765,7 @@ public sealed partial class CandlestickSignalRepository
             second.IsLight &&
             third.IsLight &&
             chart.IsTall(position) &&
-            chart.IsTall(position +1 ) &&
+            chart.IsTall(position + 1) &&
             chart.IsTall(position + 2) &&
             second.Body.Low > first.Body.Low &&
             second.Body.Low < first.Body.High &&

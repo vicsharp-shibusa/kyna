@@ -11,7 +11,7 @@ public class ConfigurationBuilderTests
     public void Builder()
     {
         var config = new BacktestingConfiguration(BacktestType.RandomBaseline,
-            "eodhd.com", "Baseline 1", "Testing", PricePoint.Close,
+            "polygon.io", "Baseline 1", "Testing", PricePoint.Close,
             new TestTargetPercentage(PricePoint.High, .1),
             new TestTargetPercentage(PricePoint.Low, .1));
 

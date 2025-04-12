@@ -156,9 +156,9 @@ internal class Ledger : IDisposable
                 {
                     totalValue += acctTransaction.Transaction.GetValueOrDefault().Value;
                 }
-                
+
                 pricePerShare = Math.Abs(qty == 0 ? 0M : totalValue / qty);
-                
+
                 yield return new Position()
                 {
                     Date = acctTransaction.Date,

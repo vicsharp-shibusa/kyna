@@ -108,9 +108,6 @@ public sealed class NullableDateOnlyJsonConverter : JsonConverter<DateOnly?>
         }
         else
         {
-            // this is necessary to support eodhd.com's api - this is how they handle null dates.
-            dateString = dateString == "0000-00-00" ? null : dateString;
-
             if (dateString == null)
             {
                 return null;
@@ -164,19 +161,11 @@ public sealed class NullableDateTimeJsonConverter : JsonConverter<DateTime?>
     {
         string? dateString = reader.GetString();
 
-        // this is necessary to support eodhd.com's api - this is how they handle null dates.
-        if (dateString == null || dateString == "0000-00-00 00:00:00")
+        if (DateTime.TryParseExact(dateString, Format, null, DateTimeStyles.None, out DateTime dateTime))
         {
-            return null;
+            return dateTime;
         }
-        else
-        {
-            if (DateTime.TryParseExact(dateString, Format, null, DateTimeStyles.None, out DateTime dateTime))
-            {
-                return dateTime;
-            }
-            return null;
-        }
+        return null;
     }
 
 
@@ -359,7 +348,6 @@ public sealed class DecimalJsonConverter : JsonConverter<decimal>
 
 public sealed partial class NullableDecimalJsonConverter : JsonConverter<decimal?>
 {
-    // Sometimes the values delivered by the eodhd API are exponential values (e.g., "1.0E+18").
     private static readonly Regex _notationRegex = NotationRegex();
 
     public override decimal? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)

@@ -131,7 +131,7 @@ internal sealed class PolygonImporter : HttpImporterBase, IExternalDataImporter
 
                 for (int i = 0; i < downloadAction.Details!.Length; i++)
                 {
-                    fileMatchRegexes[i] = new Regex($@"{downloadAction.Details![i]}/\d{{4}}/\d{{2}}/([\d-]+)\.csv\.gz", RegexOptions.Singleline);
+                    fileMatchRegexes[i] = new Regex($@"{downloadAction.Details[i]}/\d{{4}}/\d{{2}}/([\d-]+)\.csv\.gz", RegexOptions.Singleline);
                 }
 
                 var credentials = new Amazon.Runtime.BasicAWSCredentials(_accessKey, _apiKey);
@@ -173,24 +173,25 @@ internal sealed class PolygonImporter : HttpImporterBase, IExternalDataImporter
 
                     if (s3Objects.Count > 0)
                     {
+                        RemoteFile[] remoteFiles = [];
+
                         var sql = $@"{_dbDef.Sql.GetFormattedSqlWithWhereClause(SqlKeys.FetchRemoteFiles,
                             LogicalOperator.And, "source = @Source", "provider = @Provider")}";
 
-                        RemoteFile[]? remoteFiles;
                         using (var conn = _dbDef.GetConnection())
                         {
-                            remoteFiles = (await conn.QueryAsync<RemoteFile>(sql,
+                            remoteFiles = [.. (await conn.QueryAsync<RemoteFile>(sql,
                                 new { Source = SourceName, Provider = "AWS" },
-                                cancellationToken: cancellationToken).ConfigureAwait(false)).ToArray();
+                                cancellationToken: cancellationToken).ConfigureAwait(false))];
                             conn.Close();
                         }
 
                         foreach (var obj in s3Objects)
                         {
-                            var rfMatch = remoteFiles?.FirstOrDefault(r => r.Name != null &&
+                            var rfMatch = remoteFiles?.FirstOrDefault(r => r.SourceName != null &&
                                 r.HashCode != null &&
                                 r.Size.HasValue &&
-                                r.Name.Equals(obj.Key) &&
+                                r.SourceName.Equals(obj.Key) &&
                                 r.HashCode.Equals(obj.ETag[1..^1]) &&
                                 r.Size.Equals(obj.Size));
 
@@ -202,26 +203,22 @@ internal sealed class PolygonImporter : HttpImporterBase, IExternalDataImporter
                                     Key = obj.Key
                                 };
 
-                                var splitName = obj.Key.Split('/');
+                                var targetFileName = FileNameHelper.ConvertSourceNameToLocalName(obj.Key);
+                                if (string.IsNullOrWhiteSpace(targetFileName))
+                                    throw new Exception($"Could not convert '{obj.Key}' to local file name.");
 
-                                var targetFileName = Path.Combine(_downloadDirectory.FullName,
-                                    $"{splitName[1]}_{splitName.Last()}");
+                                var targetFileFullPath = Path.Combine(_downloadDirectory.FullName, targetFileName);
 
-                                if (File.Exists(targetFileName))
-                                {
-                                    File.Delete(targetFileName);
-                                }
+                                if (File.Exists(targetFileFullPath))
+                                    File.Delete(targetFileFullPath);
 
                                 using (GetObjectResponse getResponse = await s3Client.GetObjectAsync(getRequest.BucketName,
                                     getRequest.Key, cancellationToken).ConfigureAwait(false))
                                 {
                                     using Stream responseStream = getResponse.ResponseStream;
-                                    using FileStream fileStream = File.Create(targetFileName);
+                                    using FileStream fileStream = File.Create(targetFileFullPath);
                                     await responseStream.CopyToAsync(fileStream, cancellationToken).ConfigureAwait(false);
                                 }
-
-                                Communicate?.Invoke(this, new CommunicationEventArgs(
-                                    $"{targetFileName} downloaded successfully.", nameof(PolygonImporter)));
 
                                 using var conn = _dbDef.GetConnection();
                                 await conn.ExecuteAsync(_dbDef.Sql.GetSql(SqlKeys.UpsertRemoteFile),
@@ -231,7 +228,8 @@ internal sealed class PolygonImporter : HttpImporterBase, IExternalDataImporter
                                         Provider = "AWS",
                                         HashCode = obj.ETag[1..^1],
                                         Location = BucketName,
-                                        Name = obj.Key,
+                                        SourceName = obj.Key,
+                                        LocalName = targetFileName,
                                         ProcessId = _processId,
                                         Size = obj.Size,
                                         UpdateDate = DateOnly.FromDateTime(obj.LastModified)
@@ -243,10 +241,12 @@ internal sealed class PolygonImporter : HttpImporterBase, IExternalDataImporter
                 }
                 catch (AmazonS3Exception e)
                 {
+                    Communicate?.Invoke(this, new CommunicationEventArgs(e.ToString(), nameof(PolygonImporter)));
                     KyLogger.LogError(e, nameof(PolygonImporter), _processId);
                 }
                 catch (Exception e)
                 {
+                    Communicate?.Invoke(this, new CommunicationEventArgs(e.ToString(), nameof(PolygonImporter)));
                     KyLogger.LogError(e, nameof(PolygonImporter), _processId);
                 }
             }
@@ -362,43 +362,41 @@ internal sealed class PolygonImporter : HttpImporterBase, IExternalDataImporter
         {
             CommunicateAction(Constants.Actions.Tickers);
 
-            if (!_dryRun)
+            if (_dryRun)
+                return;
+
+            var tickerTypes = GetTickerTypes(tickerAction.Details);
+
+            _tickers = new(150_000);
+            var uri = BuildTickersUri();
+
+            while (!string.IsNullOrWhiteSpace(uri))
             {
-                var tickerTypes = GetTickerTypes(tickerAction.Details);
+                var response = await GetStringResponseAsync(uri, Constants.Actions.Tickers, "US", false, cancellationToken);
 
-                _tickers = new(150_000);
-                var uri = BuildTickersUri();
+                var tickerResponse = JsonSerializer.Deserialize<TickerResponse>(response, JsonSerializerOptionsRepository.Custom);
 
-                while (!string.IsNullOrWhiteSpace(uri))
+                if (tickerTypes.HasFlag(Constants.TickerTypes.Stocks))
                 {
-                    var response = await GetStringResponseAsync(uri, Constants.Actions.Tickers, "US", false, cancellationToken);
-
-                    var tickerResponse = JsonSerializer.Deserialize<TickerResponse>(response, JsonSerializerOptionsRepository.Custom);
-
-                    if (tickerTypes.HasFlag(Constants.TickerTypes.Stocks))
-                    {
-                        _tickers.AddRange(tickerResponse.Results.Where(r => !r.Code.Contains(':')).Select(r => r.Code));
-                    }
-
-                    if (tickerTypes.HasFlag(Constants.TickerTypes.Indexes))
-                    {
-                        _tickers.AddRange(tickerResponse.Results.Where(r => !r.Code.StartsWith("I:")).Select(r => r.Code));
-                    }
-
-                    if (tickerTypes.HasFlag(Constants.TickerTypes.Currencies))
-                    {
-                        _tickers.AddRange(tickerResponse.Results.Where(r => !r.Code.StartsWith("C:")).Select(r => r.Code));
-                    }
-
-                    if (tickerTypes.HasFlag(Constants.TickerTypes.Crypto))
-                    {
-                        _tickers.AddRange(tickerResponse.Results.Where(r => !r.Code.StartsWith("X:")).Select(r => r.Code));
-                    }
-
-                    uri = tickerResponse.NextUrl == null ? null : $"{tickerResponse.NextUrl}&{GetToken()}";
+                    _tickers.AddRange(tickerResponse.Results.Where(r => !r.Code.Contains(':')).Select(r => r.Code));
                 }
 
-                Communicate?.Invoke(this, new CommunicationEventArgs(_tickers.Count.ToString("#,##0"), nameof(PolygonImporter)));
+                if (tickerTypes.HasFlag(Constants.TickerTypes.Indexes))
+                {
+                    _tickers.AddRange(tickerResponse.Results.Where(r => !r.Code.StartsWith("I:")).Select(r => r.Code));
+                }
+
+                if (tickerTypes.HasFlag(Constants.TickerTypes.Currencies))
+                {
+                    _tickers.AddRange(tickerResponse.Results.Where(r => !r.Code.StartsWith("C:")).Select(r => r.Code));
+                }
+
+                if (tickerTypes.HasFlag(Constants.TickerTypes.Crypto))
+                {
+                    _tickers.AddRange(tickerResponse.Results.Where(r => !r.Code.StartsWith("X:")).Select(r => r.Code));
+                }
+
+                uri = tickerResponse.NextUrl == null ? null : $"{tickerResponse.NextUrl}&{GetToken()}";
             }
         }
     }
@@ -462,7 +460,6 @@ internal sealed class PolygonImporter : HttpImporterBase, IExternalDataImporter
                             }, async (code, ct) =>
                             {
                                 var uri = BuildSplitUri(code);
-                                Communicate?.Invoke(this, new CommunicationEventArgs($"Splits for {code}", nameof(PolygonImporter)));
                                 await InvokeApiCallAsync(uri, Constants.Actions.Splits, code, false, cancellationToken).ConfigureAwait(false);
                             }).ConfigureAwait(false);
                         }
@@ -471,7 +468,6 @@ internal sealed class PolygonImporter : HttpImporterBase, IExternalDataImporter
                             foreach (var code in _tickers.Where(t => !t.Contains(':')))
                             {
                                 var uri = BuildSplitUri(code);
-                                Communicate?.Invoke(this, new CommunicationEventArgs($"Splits for {code}", nameof(PolygonImporter)));
                                 await InvokeApiCallAsync(uri, Constants.Actions.Splits, code, false, cancellationToken).ConfigureAwait(false);
                             }
                         }
@@ -486,7 +482,6 @@ internal sealed class PolygonImporter : HttpImporterBase, IExternalDataImporter
                             }, async (code, ct) =>
                             {
                                 var uri = BuildSplitUri(code);
-                                Communicate?.Invoke(this, new CommunicationEventArgs($"Splits for {code}", nameof(PolygonImporter)));
                                 await InvokeApiCallAsync(uri, Constants.Actions.Splits, code, false, cancellationToken).ConfigureAwait(false);
                             }).ConfigureAwait(false);
                         }
@@ -495,7 +490,6 @@ internal sealed class PolygonImporter : HttpImporterBase, IExternalDataImporter
                             foreach (var code in _tickers.Where(t => t.StartsWith(prefix)))
                             {
                                 var uri = BuildSplitUri(code);
-                                Communicate?.Invoke(this, new CommunicationEventArgs($"Splits for {code}", nameof(PolygonImporter)));
                                 await InvokeApiCallAsync(uri, Constants.Actions.Splits, code, false, cancellationToken).ConfigureAwait(false);
                             }
                         }
@@ -541,7 +535,6 @@ internal sealed class PolygonImporter : HttpImporterBase, IExternalDataImporter
                         foreach (var code in _tickers.Where(t => !t.Contains(':')))
                         {
                             var uri = BuildDividendsUri(code);
-                            Communicate?.Invoke(this, new CommunicationEventArgs($"Dividends for {code}", nameof(PolygonImporter)));
                             await InvokeApiCallAsync(uri, Constants.Actions.Dividends, code, false, cancellationToken).ConfigureAwait(false);
                         }
                     }
@@ -550,7 +543,6 @@ internal sealed class PolygonImporter : HttpImporterBase, IExternalDataImporter
                         foreach (var code in _tickers.Where(t => t.StartsWith("I:")))
                         {
                             var uri = BuildDividendsUri(code);
-                            Communicate?.Invoke(this, new CommunicationEventArgs($"Dividends for {code}", nameof(PolygonImporter)));
                             await InvokeApiCallAsync(uri, Constants.Actions.Dividends, code, false, cancellationToken).ConfigureAwait(false);
                         }
                     }
@@ -559,7 +551,6 @@ internal sealed class PolygonImporter : HttpImporterBase, IExternalDataImporter
                         foreach (var code in _tickers.Where(t => t.StartsWith("C:")))
                         {
                             var uri = BuildDividendsUri(code);
-                            Communicate?.Invoke(this, new CommunicationEventArgs($"Dividends for {code}", nameof(PolygonImporter)));
                             await InvokeApiCallAsync(uri, Constants.Actions.Dividends, code, false, cancellationToken).ConfigureAwait(false);
                         }
                     }
@@ -568,7 +559,6 @@ internal sealed class PolygonImporter : HttpImporterBase, IExternalDataImporter
                         foreach (var code in _tickers.Where(t => t.StartsWith("X:")))
                         {
                             var uri = BuildDividendsUri(code);
-                            Communicate?.Invoke(this, new CommunicationEventArgs($"Dividends for {code}", nameof(PolygonImporter)));
                             await InvokeApiCallAsync(uri, Constants.Actions.Dividends, code, false, cancellationToken).ConfigureAwait(false);
                         }
                     }
@@ -588,55 +578,6 @@ internal sealed class PolygonImporter : HttpImporterBase, IExternalDataImporter
                 }
             }
         }
-    }
-
-    private static (DateOnly? From, DateOnly? To) ExtractDateRange(IDictionary<string, string[]> options, string key)
-    {
-        if (!options.Any())
-        {
-            return (null, null);
-        }
-
-        DateOnly? from = null, to = null;
-
-        if (options.TryGetValue(key, out string[]? value) && value.Length > 0)
-        {
-            foreach (var item in value)
-            {
-                if (DateOnly.TryParse(item, out DateOnly dt))
-                {
-                    if (from == null)
-                    {
-                        from = dt;
-                    }
-                    else if (to == null)
-                    {
-                        if (dt < from)
-                        {
-                            to = from;
-                            from = dt;
-                        }
-                        else
-                        {
-                            to = dt;
-                        }
-                    }
-                    else
-                    {
-                        if (dt < from)
-                        {
-                            from = dt;
-                        }
-                        else if (dt > to)
-                        {
-                            to = dt;
-                        }
-                    }
-                }
-            }
-        }
-
-        return (from, to);
     }
 
     private void ConfigureOptions(ReadOnlyDictionary<string, string[]> options)
@@ -701,24 +642,16 @@ internal sealed class PolygonImporter : HttpImporterBase, IExternalDataImporter
         var result = Constants.TickerTypes.None;
 
         if (_stockTypes.Intersect(text).Any())
-        {
             result |= Constants.TickerTypes.Stocks;
-        }
 
         if (_indexTypes.Intersect(text).Any())
-        {
             result |= Constants.TickerTypes.Indexes;
-        }
 
         if (_currencyTypes.Intersect(text).Any())
-        {
             result |= Constants.TickerTypes.Currencies;
-        }
 
         if (_cryptoTypes.Intersect(text).Any())
-        {
             result |= Constants.TickerTypes.Crypto;
-        }
 
         return result;
     }
@@ -744,6 +677,8 @@ internal sealed class PolygonImporter : HttpImporterBase, IExternalDataImporter
             public const string Splits = "Splits";
             public const string Dividends = "Dividends";
 
+            private static FieldInfo[] _fields = typeof(Actions).GetFields(BindingFlags.Public | BindingFlags.Static);
+
             public static bool ValueExists(string? text, bool caseSensitive = false)
             {
                 if (text == null)
@@ -751,11 +686,10 @@ internal sealed class PolygonImporter : HttpImporterBase, IExternalDataImporter
                     return false;
                 }
 
-                var fields = typeof(Actions).GetFields(BindingFlags.Public | BindingFlags.Static);
-                foreach (var field in fields)
+                foreach (var field in _fields)
                 {
                     if ((caseSensitive && text.Equals(field.GetValue(null)?.ToString())) ||
-                        !caseSensitive && text.Equals(field.GetValue(null)?.ToString(), StringComparison.OrdinalIgnoreCase))
+                        (!caseSensitive && text.Equals(field.GetValue(null)?.ToString(), StringComparison.OrdinalIgnoreCase)))
                     {
                         return true;
                     }
@@ -837,5 +771,21 @@ internal sealed class PolygonImporter : HttpImporterBase, IExternalDataImporter
 
             return new ReadOnlyDictionary<string, string[]>(result);
         }
+    }
+}
+
+file static class FileNameHelper
+{
+    public static string ConvertSourceNameToLocalName(string sourceName)
+    {
+        if (string.IsNullOrWhiteSpace(sourceName))
+            return sourceName.Trim();
+
+        var splitName = sourceName.Split('/');
+
+        if (splitName.Length < 3)
+            return sourceName;
+
+        return $"{splitName[0]}_{splitName[1]}_{splitName.Last()}";
     }
 }

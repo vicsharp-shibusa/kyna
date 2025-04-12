@@ -4,7 +4,7 @@ public record class WeightedTrend
 {
     public ITrend Trend;
     public double Weight;
-    
+
     public WeightedTrend(ITrend trend, double weight)
     {
         Trend = trend;

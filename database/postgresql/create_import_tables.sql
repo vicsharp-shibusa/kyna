@@ -24,10 +24,12 @@ CREATE INDEX IF NOT EXISTS api_transactions_process_id_idx ON public.api_transac
 
 CREATE TABLE IF NOT EXISTS public.remote_files
 (
+    id UUID NOT NULL,
     source TEXT NOT NULL,
     provider TEXT NOT NULL,
     location text NOT NULL,
-    name TEXT NOT NULL,
+    source_name TEXT NOT NULL,
+    local_name TEXT NOT NULL,
     update_date DATE NOT NULL,
     size BIGINT NOT NULL,
     hash_code TEXT NULL,
@@ -36,5 +38,7 @@ CREATE TABLE IF NOT EXISTS public.remote_files
     updated_at TIMESTAMP WITH TIME ZONE NOT NULL,
     created_at_unix_ms BIGINT NOT NULL,
     updated_at_unix_ms BIGINT NOT NULL,
-    PRIMARY KEY (source, provider, location, name)
+    migrated_at TIMESTAMP WITH TIME ZONE NULL,
+    migrated_at_unix_ms BIGINT NULL,
+    PRIMARY KEY (id)
 );

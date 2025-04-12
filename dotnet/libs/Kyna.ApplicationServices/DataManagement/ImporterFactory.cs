@@ -19,33 +19,6 @@ public static class ImporterFactory
     {
         var source = SourceUtility.GetSource(configFileInfo);
 
-        if (source.Equals(EodHdImporter.SourceName, StringComparison.OrdinalIgnoreCase))
-        {
-            if (string.IsNullOrWhiteSpace(apiKey))
-            {
-                throw new ArgumentException($"{nameof(apiKey)} is required to instantiate an importer for {source}");
-            }
-            if (configFileInfo == null)
-            {
-                return new EodHdImporter(dbDef, apiKey, processId);
-            }
-            var eodHdImportConfig = JsonSerializer.Deserialize<EodHdImporter.ImportConfigfile>(
-                File.ReadAllText(configFileInfo.FullName),
-                JsonSerializerOptionsRepository.Custom);
-
-            Debug.Assert(eodHdImportConfig != null);
-
-            return new EodHdImporter(dbDef,
-                new EodHdImporter.DataImportConfiguration(EodHdImporter.SourceName,
-                    apiKey,
-                    eodHdImportConfig.ImportActions,
-                    eodHdImportConfig.Exchanges,
-                    eodHdImportConfig.SymbolTypes,
-                    eodHdImportConfig.Options,
-                    eodHdImportConfig.DateRanges),
-                processId, dryRun);
-        }
-
         if (source.Equals(PolygonImporter.SourceName, StringComparison.OrdinalIgnoreCase))
         {
             if (string.IsNullOrWhiteSpace(apiKey))
