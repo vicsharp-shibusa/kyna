@@ -30,8 +30,8 @@ public class Chart : IEquatable<Chart?>
     public string? Industry { get; }
     public string? Sector { get; }
     private ITrend? Trend { get; set; } = null;
-    public TrendValue[] TrendValues => Trend?.TrendValues ??
-        Enumerable.Repeat(new TrendValue(TrendSentiment.None, 0D), PriceActions.Length).ToArray();
+    public double[] TrendValues => Trend?.TrendValues ??
+        Enumerable.Repeat(0D, PriceActions.Length).ToArray();
     public Ohlc[] PriceActions { get; private set; } = [];
     public Candlestick[] Candlesticks { get; private set; } = [];
     public int Length => PriceActions.Length;
@@ -96,7 +96,7 @@ public class Chart : IEquatable<Chart?>
 
     public TrendSentiment PrologueSentiment(int position) => position > -1 && position < _prologueSentiment.Length
         ? _prologueSentiment[position]
-        : TrendSentiment.None;
+        : TrendSentiment.Neutral;
 
     public Chart WithMovingAverage(MovingAverageKey key)
     {
@@ -164,14 +164,14 @@ public class Chart : IEquatable<Chart?>
             {
                 var prologue = Candlesticks[(p - _prologueLength - 1)..(p - 1)];
                 _prologueSentiment[p] = prologue.All(pr => pr.High < Candlesticks[p].High)
-                    ? TrendSentiment.Bullish
+                    ? TrendSentiment.Bull
                     : prologue.All(pr => pr.Low > Candlesticks[p].Low)
-                    ? TrendSentiment.Bearish
+                    ? TrendSentiment.Bear
                     : TrendSentiment.Neutral;
             }
             else
             {
-                _prologueSentiment[p] = TrendSentiment.None;
+                _prologueSentiment[p] = TrendSentiment.Neutral;
             }
 
             if (p == 0)

@@ -1,6 +1,7 @@
 ﻿using Kyna.Analysis.Technical;
 using Kyna.Analysis.Technical.Charts;
 using Kyna.Analysis.Technical.Signals;
+using Kyna.Analysis.Technical.Trends;
 using Kyna.ApplicationServices.Analysis;
 using Kyna.Backtests.AlphaModel;
 using Kyna.Infrastructure.Database;
@@ -154,15 +155,15 @@ internal class CandlestickSignalRunner : RunnerBase, IBacktestRunner
 
             var successResult = signal.Sentiment switch
             {
-                TrendSentiment.Bullish => "Up",
-                TrendSentiment.Bearish => "Down",
+                var x when x.IsBullish() => "Up",
+                var x when x.IsBearish() => "Down",
                 _ => "Sideways"
             };
 
             var percentage = signal.Sentiment switch
             {
-                TrendSentiment.Bullish => configuration.TargetUp.Value * 100D,
-                TrendSentiment.Bearish => configuration.TargetDown.Value * 100D,
+                var x when x.IsBullish() => configuration.TargetUp.Value * 100D,
+                var x when x.IsBearish() => configuration.TargetDown.Value * 100D,
                 _ => 0D
             };
 

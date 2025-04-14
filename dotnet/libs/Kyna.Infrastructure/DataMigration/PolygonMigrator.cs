@@ -421,7 +421,7 @@ internal sealed class PolygonMigrator : ImportsMigratorBase, IImportsMigrator, I
 
         tgtConn2.Close();
 
-        await tgtConn1.ExecuteAsync(_targetDbDef.Sql.GetSql(SqlKeys.UpsertAdjustedEodPrice),
+        await tgtConn1.ExecuteAsync(_targetDbDef.Sql.GetSql(SqlKeys.UpsertEodAdjustedPrice),
             adjustedChart, cancellationToken: cancellationToken).ConfigureAwait(false);
         tgtConn1.Close();
     }

@@ -7,29 +7,28 @@ public record class WeightedTrend
 
     public WeightedTrend(ITrend trend, double weight)
     {
-        Trend = trend;
-        Weight = weight;
+        ArgumentNullException.ThrowIfNull(trend);
+        if (weight <= 0 || weight > 1D)
+            throw new ArgumentOutOfRangeException(nameof(weight));
 
         if ((trend?.TrendValues.Length ?? 0) == 0)
         {
             throw new ArgumentNullException(nameof(trend));
         }
 
-        trend!.Calculate();
-        TrendValues = new TrendValue[trend.TrendValues.Length];
+        Trend = trend!;
+        Weight = weight;
 
-        for (int t = 0; t < trend!.TrendValues.Length; t++)
+        Trend.Calculate();
+        TrendValues = new double[Trend.TrendValues.Length];
+
+        for (int t = 0; t < Trend!.TrendValues.Length; t++)
         {
-            var weightedValue = trend.TrendValues[t].Value * weight;
-            var sentiment = weightedValue > 0
-                ? TrendSentiment.Bullish
-                : weightedValue < 0
-                    ? TrendSentiment.Bearish
-                    : TrendSentiment.Neutral;
-            TrendValues[t] = new TrendValue(sentiment, weightedValue);
+            var weightedValue = Trend.TrendValues[t] * weight;
+            TrendValues[t] = weightedValue;
         }
     }
 
-    public TrendValue[] TrendValues { get; }
-    public string Name => $"{Trend.ToString}{Weight}";
+    public double[] TrendValues { get; }
+    public string Name => $"{Trend.ToString}:{(Weight*100):F2}%";
 }

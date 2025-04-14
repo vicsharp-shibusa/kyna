@@ -1,19 +1,16 @@
-﻿using Kyna.Analysis.Technical;
-using Kyna.Analysis.Technical.Charts;
+﻿using Kyna.Analysis.Technical.Charts;
+using Kyna.Analysis.Technical.Trends;
+using Kyna.ApplicationServices.Analysis;
 using Kyna.ApplicationServices.Cli;
 using Kyna.ApplicationServices.Configuration;
-using Kyna.ApplicationServices.Logging;
-using Kyna.Backtests.AlphaModel;
 using Kyna.Common;
+using Kyna.Infrastructure.Database;
 using Kyna.Infrastructure.Logging;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
-using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Reflection;
-using System.Text.Json;
 
-ILogger<Program>? logger = null;
 IConfiguration? configuration;
 
 int exitCode = -1;
@@ -25,11 +22,12 @@ Debug.Assert(appName != null);
 
 string defaultScope = appName ?? nameof(Program);
 
-DatabaseLogService? dbLogService = null;
-
 Stopwatch timer = Stopwatch.StartNew();
-
 Config? config = null;
+
+DbDef? logDef = null;
+DbDef? importDef = null;
+DbDef? finDef = null;
 
 try
 {
@@ -43,125 +41,80 @@ try
     }
     else
     {
-        bool onlySignalWithMarket = false;
+        Debug.Assert(logDef is not null && importDef is not null && finDef is not null);
 
-        var options = JsonSerializerOptionsRepository.Custom;
-        options.Converters.Add(new EnumDescriptionConverter<PricePoint>());
-        options.Converters.Add(new EnumDescriptionConverter<BacktestType>());
-        options.WriteIndented = true;
+        // get chart and calculate trend.
+        var financialsRepo = new FinancialsRepository(finDef);
 
-        MarketConfiguration marketConfiguration = new()
+        var aapl = (await financialsRepo.GetOhlcForSourceAndCodeAsync("polygon.io", "AAPL")).ToArray();
+
+        MovingAverageKey[] maKeys = [
+        new MovingAverageKey(21), new MovingAverageKey(50), new MovingAverageKey(200)
+        ];
+
+        List<WeightedTrend> trends = new(5)
         {
-            Codes = ["SPY", "QQQ"],
-            Trends = [
-                new TrendConfiguration()
-                {
-                    Trend = "S50C"
-                }
-            ]
+            new WeightedTrend(new ExtremeTrend(aapl), 0.50D), // good indicator.
+            new WeightedTrend(new MultipleMovingAverageTrend(aapl, maKeys), 0.05D),
+            new WeightedTrend(new PriceToMovingAverageTrend(maKeys[0], aapl), 0.20D),
+            new WeightedTrend(new PriceToMovingAverageTrend(maKeys[1], aapl), 0.15D),
+            new WeightedTrend(new PriceToMovingAverageTrend(maKeys[2], aapl), 0.10D)
         };
 
-        foreach (var signalName in new SignalName[]
-        {
-            SignalName.BullishEngulfing,
-            SignalName.BullishEngulfingWithTallCandles,
-            SignalName.BullishEngulfingWithFollowThru,
-            SignalName.BullishEngulfingWithFourBlackPredecessors,
-            SignalName.BearishEngulfing,
-            SignalName.BearishEngulfingWithFollowThru,
-            SignalName.BearishEngulfingWithTallCandles,
-            SignalName.BearishEngulfingWithFourWhitePredecessors,
-            SignalName.BullishHammer,
-            SignalName.BullishHammerWithFollowThru,
-            SignalName.BearishHammer,
-            SignalName.BearishHammerWithFollowThru,
-            SignalName.DarkCloudCover,
-            SignalName.DarkCloudCoverWithFollowThru,
-            SignalName.PiercingPattern,
-            SignalName.PiercingPatternWithFollowThru,
-            SignalName.MorningStar,
-            SignalName.EveningStar,
-            SignalName.MorningDojiStar,
-            SignalName.EveningDojiStar,
-            SignalName.ShootingStar,
-            SignalName.InvertedHammer,
-            SignalName.BullishHarami,
-            SignalName.BearishHarami,
-            SignalName.BullishHaramiCross,
-            SignalName.BearishHaramiCross,
-            SignalName.TweezerTop,
-            SignalName.TweezerBottom,
-            SignalName.BullishBelthold,
-            SignalName.BearishBelthold,
-            SignalName.UpsideGapTwoCrows,
-            SignalName.ThreeBlackCrows,
-            SignalName.ThreeWhiteSoliders,
-            SignalName.BullishCounterattack,
-            SignalName.BearishCounterattack,
-        })
-        {
-            int num = 1;
+        var trend = new CombinedWeightedTrend(trends.ToArray());
 
-            foreach (var move in new double[] { .1, .2 })
+        //var trend = new ExtremeTrend(aapl);
+
+        //var trend = new MovingAverageTrend(maKeys[0], aapl);
+
+        //var trend = new MultipleMovingAverageTrend(aapl, maKeys);
+        //var trend = new PriceToMovingAverageTrend(maKeys[0], aapl);
+        trend.Calculate();
+
+        Debug.Assert(aapl.Length == trend.TrendValues.Length);
+
+        // write output
+        var rootFolder = Path.GetPathRoot(Environment.CurrentDirectory);
+        Debug.Assert(rootFolder != null);
+        var fullPath = Path.Combine(rootFolder, "temp", "kyna-tests");
+        if (!Directory.Exists(fullPath))
+            Directory.CreateDirectory(fullPath);
+
+        // fullPath will be like "C:\Your\Path\Here"
+        var outputFileFullName = Path.Combine(fullPath, $"{trend.GetType().Name}_{DateTime.Now:HHmmss}.csv");
+
+        using var outputFile = File.Create(outputFileFullName);
+
+        var headers = new string[] {
+            "Date","Symbol","Open","High","Low","Close","Volume","Trend"
+        };
+        outputFile.WriteLine(string.Join(',', headers));
+        for (int i = 0; i < aapl.Length; i++)
+        {
+            decimal percentPriceChange = 0M;
+            double percentTrendChange = 0D;
+
+            if (i > 0)
             {
-                foreach (var len in new int[] { 15, 30 })
-                {
-                    foreach (var vol in new double[] { 1D, 1.5D, 2D })
-                    {
-                        foreach (var trendDesc in new string[] { "S21C", "S50C", "S200C", "E21C", "E50C", "E200C" })
-                        {
-                            foreach (var useMarket in new bool[] { true, false })
-                            {
-                                ChartConfiguration chartConfig = new()
-                                {
-                                    Interval = "Daily",
-                                    Trends = [new TrendConfiguration() { Trend = trendDesc }]
-                                };
-
-                                string[] descItems = [
-                                    $"move: {move}",
-                                    $"prologue len: {len}",
-                                    $"trend desc: {trendDesc}",
-                                    $"vol factor: {vol}",
-                                    $"use market: {useMarket}"
-                                ];
-
-                                var backtestConfig = new BacktestingConfiguration(BacktestType.CandlestickPattern,
-                                    "polygon.io",
-                                    $"{signalName.GetEnumDescription()} {num}",
-                                    string.Join(';', descItems),
-                                    PricePoint.Close,
-                                    new TestTargetPercentage(PricePoint.High, move),
-                                    new TestTargetPercentage(PricePoint.Low, move),
-                                    [signalName.GetEnumDescription()],
-                                    len,
-                                    vol,
-                                    10,
-                                    onlySignalWithMarket,
-                                    chartConfig,
-                                    useMarket ? marketConfiguration : null);
-
-                                var btJson = JsonSerializer.Serialize(backtestConfig, options);
-
-                                var nameWithHyphens = signalName.GetEnumDescription().ToLower().Replace(" ", "-");
-                                var dirInfo = new DirectoryInfo(
-                                    Path.Combine($"\\repos\\kyna-ins-and-outs\\backtests\\candlesticks\\{nameWithHyphens}\\inputs"));
-
-                                if (!dirInfo.Exists)
-                                {
-                                    dirInfo.Create();
-                                }
-
-                                var fileName = Path.Combine(dirInfo.FullName, $"{nameWithHyphens}-{num.ToString().PadLeft(4, '0')}.json");
-                                File.WriteAllText(fileName, btJson);
-                                Console.WriteLine(fileName);
-                                num++;
-                            }
-                        }
-                    }
-                }
+                if (aapl[i - 1].Close != 0M)
+                    percentPriceChange = (aapl[i].Close - aapl[i - 1].Close) / aapl[i - 1].Close;
+                if (trend.TrendValues[i - 1] != 0D)
+                    percentTrendChange = (trend.TrendValues[i] - trend.TrendValues[i - 1]) / trend.TrendValues[i - 1];
             }
+
+            var lineItems = new string[] {
+                aapl[i].Date.ToString("yyyy-MM-dd"),
+                aapl[i].Symbol,
+                aapl[i].Open.ToString("0.00"),
+                aapl[i].High.ToString("0.00"),
+                aapl[i].Low.ToString("0.00"),
+                aapl[i].Close.ToString("0.00"),
+                aapl[i].Volume.ToString("0.00"),
+                trend.TrendValues[i].ToString("0.000")
+            };
+            outputFile.WriteLine(string.Join(',', lineItems));
         }
+        outputFile.Flush();
     }
     exitCode = 0;
 }
@@ -240,9 +193,9 @@ void Configure()
 
     var dbDefs = CliHelper.GetDbDefs(configuration);
 
-    var logDef = dbDefs.FirstOrDefault(d => d.Name == ConfigKeys.DbKeys.Logs);
-    var importDef = dbDefs.FirstOrDefault(d => d.Name == ConfigKeys.DbKeys.Imports);
-    var finDef = dbDefs.FirstOrDefault(d => d.Name == ConfigKeys.DbKeys.Financials);
+    logDef = dbDefs.FirstOrDefault(d => d.Name == ConfigKeys.DbKeys.Logs) ?? logDef;
+    importDef = dbDefs.FirstOrDefault(d => d.Name == ConfigKeys.DbKeys.Imports) ?? importDef;
+    finDef = dbDefs.FirstOrDefault(d => d.Name == ConfigKeys.DbKeys.Financials) ?? finDef;
 
     if (logDef == null)
         throw new Exception($"Unable to create {nameof(ConfigKeys.DbKeys.Logs)} db connection; no '{ConfigKeys.DbKeys.Logs}' key found.");
@@ -253,20 +206,10 @@ void Configure()
     if (finDef == null)
         throw new Exception($"Unable to create {nameof(ConfigKeys.DbKeys.Financials)} db connection; no '{ConfigKeys.DbKeys.Financials}' key found.");
 
-    logger = Kyna.ApplicationServices.Logging.LoggerFactory.Create<Program>(logDef);
+    var logger = Kyna.ApplicationServices.Logging.LoggerFactory.Create<Program>(logDef);
     KyLogger.SetLogger(logger);
-
-    dbLogService = new(logDef);
 }
 
 class Config(string appName, string appVersion, string? description = null) : CliConfigBase(appName, appVersion, description)
 {
-}
-
-class Pattern(string key, Func<Candlestick, bool> func)
-{
-    public string Key { get; } = key;
-    public Collection<(string Symbol, DateOnly Date)> Candles { get; } = [];
-
-    public Func<Candlestick, bool> Func { get; } = func;
 }

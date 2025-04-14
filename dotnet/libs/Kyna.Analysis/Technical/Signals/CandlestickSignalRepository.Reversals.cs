@@ -1,4 +1,5 @@
 ﻿using Kyna.Analysis.Technical.Charts;
+using Kyna.Analysis.Technical.Trends;
 
 namespace Kyna.Analysis.Technical.Signals;
 
@@ -15,8 +16,8 @@ public sealed partial class CandlestickSignalRepository
         var first = chart.Candlesticks[position];
         var second = chart.Candlesticks[position + 1];
 
-        return chart.TrendValues[position].Sentiment == TrendSentiment.Bearish &&
-            chart.PrologueSentiment(position) == TrendSentiment.Bearish &&
+        return chart.TrendValues[position].AsSentiment().IsBearish() &&
+            chart.PrologueSentiment(position).IsBearish() &&
             first.IsDark &&
             second.IsLight &&
             second.Body.Low < first.Body.Low &&
@@ -36,8 +37,8 @@ public sealed partial class CandlestickSignalRepository
         var first = chart.Candlesticks[position];
         var second = chart.Candlesticks[position + 1];
 
-        if (chart.TrendValues[position].Sentiment == TrendSentiment.Bearish &&
-            chart.PrologueSentiment(position) == TrendSentiment.Bearish &&
+        if (chart.TrendValues[position].AsSentiment().IsBearish() &&
+            chart.PrologueSentiment(position).IsBearish() &&
             first.IsDark &&
             second.IsLight &&
             second.Body.Low < first.Body.Low &&
@@ -71,8 +72,8 @@ public sealed partial class CandlestickSignalRepository
         var first = chart.Candlesticks[position];
         var second = chart.Candlesticks[position + 1];
 
-        return chart.TrendValues[position].Sentiment == TrendSentiment.Bearish &&
-            chart.PrologueSentiment(position) == TrendSentiment.Bearish &&
+        return chart.TrendValues[position].AsSentiment().IsBearish() &&
+            chart.PrologueSentiment(position).IsBearish() &&
             first.IsDark &&
             chart.IsTall(position) &&
             second.IsLight &&
@@ -97,8 +98,8 @@ public sealed partial class CandlestickSignalRepository
         var fifth = chart.Candlesticks[position + 4];
         var sixth = chart.Candlesticks[position + 5];
 
-        if (chart.TrendValues[position + 4].Sentiment == TrendSentiment.Bearish &&
-            chart.PrologueSentiment(position + 4) == TrendSentiment.Bearish &&
+        if (chart.TrendValues[position + 4].AsSentiment().IsBearish() &&
+            chart.PrologueSentiment(position + 4).IsBearish() &&
             first.IsDark && second.IsDark && third.IsDark && fourth.IsDark &&
             fifth.IsDark &&
             sixth.IsLight &&
@@ -123,8 +124,8 @@ public sealed partial class CandlestickSignalRepository
         var first = chart.Candlesticks[position];
         var second = chart.Candlesticks[position + 1];
 
-        return chart.TrendValues[position].Sentiment == TrendSentiment.Bullish &&
-            chart.PrologueSentiment(position) == TrendSentiment.Bullish &&
+        return chart.TrendValues[position].AsSentiment().IsBullish() &&
+            chart.PrologueSentiment(position).IsBullish() &&
             first.IsLight &&
             second.IsDark &&
             second.Body.Low < first.Body.Low &&
@@ -144,8 +145,8 @@ public sealed partial class CandlestickSignalRepository
         var first = chart.Candlesticks[position];
         var second = chart.Candlesticks[position + 1];
 
-        if (chart.TrendValues[position].Sentiment == TrendSentiment.Bullish &&
-            chart.PrologueSentiment(position) == TrendSentiment.Bullish &&
+        if (chart.TrendValues[position].AsSentiment().IsBullish() &&
+            chart.PrologueSentiment(position).IsBullish() &&
             first.IsLight &&
             second.IsDark &&
             second.Body.Low < first.Body.Low &&
@@ -178,8 +179,8 @@ public sealed partial class CandlestickSignalRepository
         var first = chart.Candlesticks[position];
         var second = chart.Candlesticks[position + 1];
 
-        return chart.TrendValues[position].Sentiment == TrendSentiment.Bullish &&
-            chart.PrologueSentiment(position) == TrendSentiment.Bullish &&
+        return chart.TrendValues[position].AsSentiment().IsBullish() &&
+            chart.PrologueSentiment(position).IsBullish() &&
             first.IsLight &&
             chart.IsTall(position) &&
             second.IsDark &&
@@ -204,8 +205,8 @@ public sealed partial class CandlestickSignalRepository
         var fifth = chart.Candlesticks[position + 4];
         var sixth = chart.Candlesticks[position + 5];
 
-        return chart.TrendValues[position + 4].Sentiment == TrendSentiment.Bullish &&
-            chart.PrologueSentiment(position + 4) == TrendSentiment.Bullish &&
+        return chart.TrendValues[position + 4].AsSentiment().IsBullish() &&
+            chart.PrologueSentiment(position + 4).IsBullish() &&
             first.IsLight && second.IsLight && third.IsLight && fourth.IsLight &&
             fifth.IsLight &&
             sixth.IsDark &&
@@ -226,8 +227,8 @@ public sealed partial class CandlestickSignalRepository
         var first = chart.Candlesticks[position];
 
         return first.IsUmbrella &&
-            chart.TrendValues[position].Sentiment == TrendSentiment.Bearish &&
-            chart.PrologueSentiment(position) == TrendSentiment.Bearish
+            chart.TrendValues[position].AsSentiment().IsBearish() &&
+            chart.PrologueSentiment(position).IsBearish()
             ? position : -1;
     }
 
@@ -242,8 +243,8 @@ public sealed partial class CandlestickSignalRepository
         var first = chart.Candlesticks[position];
 
         if (first.IsUmbrella &&
-            chart.TrendValues[position].Sentiment == TrendSentiment.Bearish &&
-            chart.PrologueSentiment(position) == TrendSentiment.Bearish)
+            chart.TrendValues[position].AsSentiment().IsBearish() &&
+            chart.PrologueSentiment(position).IsBearish())
         {
             for (int i = position + 1; i < (position + numberRequired); i++)
             {
@@ -274,8 +275,8 @@ public sealed partial class CandlestickSignalRepository
         var first = chart.Candlesticks[position];
 
         return first.IsUmbrella &&
-            chart.TrendValues[position].Sentiment == TrendSentiment.Bullish &&
-            chart.PrologueSentiment(position) == TrendSentiment.Bullish
+            chart.TrendValues[position].AsSentiment().IsBullish() &&
+            chart.PrologueSentiment(position).IsBullish()
             ? position : -1;
     }
 
@@ -290,8 +291,8 @@ public sealed partial class CandlestickSignalRepository
         var first = chart.Candlesticks[position];
 
         if (first.IsUmbrella &&
-            chart.TrendValues[position].Sentiment == TrendSentiment.Bullish &&
-            chart.PrologueSentiment(position) == TrendSentiment.Bullish)
+            chart.TrendValues[position].AsSentiment().IsBullish() &&
+            chart.PrologueSentiment(position).IsBullish())
         {
             for (int i = position + 1; i < (position + numberRequired); i++)
             {
@@ -319,8 +320,8 @@ public sealed partial class CandlestickSignalRepository
         var first = chart.Candlesticks[position];
         var second = chart.Candlesticks[position + 1];
 
-        return chart.TrendValues[position].Sentiment == TrendSentiment.Bullish &&
-            chart.PrologueSentiment(position) == TrendSentiment.Bullish &&
+        return chart.TrendValues[position].AsSentiment().IsBullish() &&
+            chart.PrologueSentiment(position).IsBullish() &&
             first.IsLight &&
             chart.IsTall(position) &&
             second.IsDark &&
@@ -342,8 +343,8 @@ public sealed partial class CandlestickSignalRepository
         var second = chart.Candlesticks[position + 1];
         var third = chart.Candlesticks[position + 2];
 
-        return chart.TrendValues[position].Sentiment == TrendSentiment.Bullish &&
-            chart.PrologueSentiment(position) == TrendSentiment.Bullish &&
+        return chart.TrendValues[position].AsSentiment().IsBullish() &&
+            chart.PrologueSentiment(position).IsBullish() &&
             first.IsLight &&
             chart.IsTall(position) &&
             second.IsDark &&
@@ -365,8 +366,8 @@ public sealed partial class CandlestickSignalRepository
         var first = chart.Candlesticks[position];
         var second = chart.Candlesticks[position + 1];
 
-        return chart.TrendValues[position].Sentiment == TrendSentiment.Bearish &&
-            chart.PrologueSentiment(position) == TrendSentiment.Bearish &&
+        return chart.TrendValues[position].AsSentiment().IsBearish() &&
+            chart.PrologueSentiment(position).IsBearish() &&
             first.IsDark &&
             chart.IsTall(position) &&
             second.IsLight &&
@@ -388,8 +389,8 @@ public sealed partial class CandlestickSignalRepository
         var second = chart.Candlesticks[position + 1];
         var third = chart.Candlesticks[position + 2];
 
-        return chart.TrendValues[position].Sentiment == TrendSentiment.Bearish &&
-            chart.PrologueSentiment(position) == TrendSentiment.Bearish &&
+        return chart.TrendValues[position].AsSentiment().IsBearish() &&
+            chart.PrologueSentiment(position).IsBearish() &&
             first.IsDark &&
             chart.IsTall(position) &&
             second.IsLight &&
@@ -412,8 +413,8 @@ public sealed partial class CandlestickSignalRepository
         var second = chart.Candlesticks[position + 1];
         var third = chart.Candlesticks[position + 2];
 
-        return chart.TrendValues[position].Sentiment == TrendSentiment.Bearish &&
-            chart.PrologueSentiment(position) == TrendSentiment.Bearish &&
+        return chart.TrendValues[position].AsSentiment().IsBearish() &&
+            chart.PrologueSentiment(position).IsBearish() &&
             first.IsDark &&
             second.Body.High < first.Body.Low &&
             chart.IsTall(position) &&
@@ -439,8 +440,8 @@ public sealed partial class CandlestickSignalRepository
         var second = chart.Candlesticks[position + 1];
         var third = chart.Candlesticks[position + 2];
 
-        return chart.TrendValues[position].Sentiment == TrendSentiment.Bullish &&
-            chart.PrologueSentiment(position) == TrendSentiment.Bullish &&
+        return chart.TrendValues[position].AsSentiment().IsBullish() &&
+            chart.PrologueSentiment(position).IsBullish() &&
             first.IsLight &&
             second.Body.Low > first.Body.High &&
             chart.IsTall(position) &&
@@ -466,8 +467,8 @@ public sealed partial class CandlestickSignalRepository
         var second = chart.Candlesticks[position + 1];
         var third = chart.Candlesticks[position + 2];
 
-        return chart.TrendValues[position].Sentiment == TrendSentiment.Bearish &&
-            chart.PrologueSentiment(position) == TrendSentiment.Bearish &&
+        return chart.TrendValues[position].AsSentiment().IsBearish() &&
+            chart.PrologueSentiment(position).IsBearish() &&
             first.IsDark &&
             chart.IsTall(position) &&
             second.Body.High < first.Body.Low &&
@@ -493,8 +494,8 @@ public sealed partial class CandlestickSignalRepository
         var second = chart.Candlesticks[position + 1];
         var third = chart.Candlesticks[position + 2];
 
-        return chart.TrendValues[position].Sentiment == TrendSentiment.Bullish &&
-            chart.PrologueSentiment(position) == TrendSentiment.Bullish &&
+        return chart.TrendValues[position].AsSentiment().IsBullish() &&
+            chart.PrologueSentiment(position).IsBullish() &&
             first.IsLight &&
             second.Body.Low > first.Body.High &&
             chart.IsTall(position) &&
@@ -518,8 +519,8 @@ public sealed partial class CandlestickSignalRepository
 
         var first = chart.Candlesticks[position];
 
-        return chart.TrendValues[position].Sentiment == TrendSentiment.Bullish &&
-            chart.PrologueSentiment(position) == TrendSentiment.Bullish &&
+        return chart.TrendValues[position].AsSentiment().IsBullish() &&
+            chart.PrologueSentiment(position).IsBullish() &&
             (first.IsInvertedUmbrella || first.IsGravestoneDoji)
             ? position : -1;
     }
@@ -534,8 +535,8 @@ public sealed partial class CandlestickSignalRepository
 
         var first = chart.Candlesticks[position];
 
-        return chart.TrendValues[position].Sentiment == TrendSentiment.Bearish &&
-            chart.PrologueSentiment(position) == TrendSentiment.Bearish &&
+        return chart.TrendValues[position].AsSentiment().IsBearish() &&
+            chart.PrologueSentiment(position).IsBearish() &&
             (first.IsInvertedUmbrella || first.IsGravestoneDoji)
             ? position : -1;
     }
@@ -551,8 +552,8 @@ public sealed partial class CandlestickSignalRepository
         var first = chart.Candlesticks[position];
         var second = chart.Candlesticks[position + 1];
 
-        return chart.TrendValues[position].Sentiment == TrendSentiment.Bearish &&
-            chart.PrologueSentiment(position) == TrendSentiment.Bearish &&
+        return chart.TrendValues[position].AsSentiment().IsBearish() &&
+            chart.PrologueSentiment(position).IsBearish() &&
             chart.IsTall(position, 0, 1.2M) &&
             chart.IsShort(position + 1) &&
             !second.IsDoji &&
@@ -572,8 +573,8 @@ public sealed partial class CandlestickSignalRepository
         var first = chart.Candlesticks[position];
         var second = chart.Candlesticks[position + 1];
 
-        return chart.TrendValues[position].Sentiment == TrendSentiment.Bullish &&
-            chart.PrologueSentiment(position) == TrendSentiment.Bullish &&
+        return chart.TrendValues[position].AsSentiment().IsBullish() &&
+            chart.PrologueSentiment(position).IsBullish() &&
             chart.IsTall(position, 0, 1.2M) &&
             chart.IsShort(position + 1) &&
             !second.IsDoji &&
@@ -593,8 +594,8 @@ public sealed partial class CandlestickSignalRepository
         var first = chart.Candlesticks[position];
         var second = chart.Candlesticks[position + 1];
 
-        return chart.TrendValues[position].Sentiment == TrendSentiment.Bearish &&
-            chart.PrologueSentiment(position) == TrendSentiment.Bearish &&
+        return chart.TrendValues[position].AsSentiment().IsBearish() &&
+            chart.PrologueSentiment(position).IsBearish() &&
             chart.IsTall(position, 0, 1.2M) &&
             second.IsDoji &&
             second.Body.High < first.Body.High &&
@@ -613,8 +614,8 @@ public sealed partial class CandlestickSignalRepository
         var first = chart.Candlesticks[position];
         var second = chart.Candlesticks[position + 1];
 
-        return chart.TrendValues[position].Sentiment == TrendSentiment.Bullish &&
-            chart.PrologueSentiment(position) == TrendSentiment.Bullish &&
+        return chart.TrendValues[position].AsSentiment().IsBullish() &&
+            chart.PrologueSentiment(position).IsBullish() &&
             chart.IsTall(position, 0, 1.2M) &&
             second.IsDoji &&
             second.Body.High < first.Body.High &&
@@ -633,8 +634,8 @@ public sealed partial class CandlestickSignalRepository
         var first = chart.Candlesticks[position];
         var second = chart.Candlesticks[position + 1];
 
-        return chart.TrendValues[position].Sentiment == TrendSentiment.Bullish &&
-            chart.PrologueSentiment(position) == TrendSentiment.Bullish &&
+        return chart.TrendValues[position].AsSentiment().IsBullish() &&
+            chart.PrologueSentiment(position).IsBullish() &&
             first.High == second.High &&
             chart.IsTall(position) &&
             chart.IsShort(position + 1)
@@ -652,8 +653,8 @@ public sealed partial class CandlestickSignalRepository
         var first = chart.Candlesticks[position];
         var second = chart.Candlesticks[position + 1];
 
-        return chart.TrendValues[position].Sentiment == TrendSentiment.Bearish &&
-            chart.PrologueSentiment(position) == TrendSentiment.Bearish &&
+        return chart.TrendValues[position].AsSentiment().IsBearish() &&
+            chart.PrologueSentiment(position).IsBearish() &&
             first.Low == second.Low &&
             chart.IsTall(position) &&
             chart.IsShort(position + 1)
@@ -670,8 +671,8 @@ public sealed partial class CandlestickSignalRepository
 
         var first = chart.Candlesticks[position];
 
-        return chart.TrendValues[position].Sentiment == TrendSentiment.Bearish &&
-            chart.PrologueSentiment(position) == TrendSentiment.Bearish &&
+        return chart.TrendValues[position].AsSentiment().IsBearish() &&
+            chart.PrologueSentiment(position).IsBearish() &&
             first.IsBullishBelthold &&
             chart.IsTall(position)
             ? position : -1;
@@ -687,8 +688,8 @@ public sealed partial class CandlestickSignalRepository
 
         var first = chart.Candlesticks[position];
 
-        return chart.TrendValues[position].Sentiment == TrendSentiment.Bullish &&
-            chart.PrologueSentiment(position) == TrendSentiment.Bullish &&
+        return chart.TrendValues[position].AsSentiment().IsBullish() &&
+            chart.PrologueSentiment(position).IsBullish() &&
             first.IsBearishBelthold &&
             chart.IsTall(position)
             ? position : -1;
@@ -706,8 +707,8 @@ public sealed partial class CandlestickSignalRepository
         var second = chart.Candlesticks[position + 1];
         var third = chart.Candlesticks[position + 2];
 
-        return chart.TrendValues[position].Sentiment == TrendSentiment.Bullish &&
-            chart.PrologueSentiment(position) == TrendSentiment.Bullish &&
+        return chart.TrendValues[position].AsSentiment().IsBullish() &&
+            chart.PrologueSentiment(position).IsBullish() &&
             first.IsLight &&
             second.IsDark &&
             third.IsDark &&
@@ -730,8 +731,8 @@ public sealed partial class CandlestickSignalRepository
         var second = chart.Candlesticks[position + 1];
         var third = chart.Candlesticks[position + 2];
 
-        return chart.TrendValues[position].Sentiment == TrendSentiment.Bullish &&
-            chart.PrologueSentiment(position) == TrendSentiment.Bullish &&
+        return chart.TrendValues[position].AsSentiment().IsBullish() &&
+            chart.PrologueSentiment(position).IsBullish() &&
             first.IsDark &&
             second.IsDark &&
             third.IsDark &&
@@ -759,8 +760,8 @@ public sealed partial class CandlestickSignalRepository
         var second = chart.Candlesticks[position + 1];
         var third = chart.Candlesticks[position + 2];
 
-        return chart.TrendValues[position].Sentiment == TrendSentiment.Bearish &&
-            chart.PrologueSentiment(position) == TrendSentiment.Bearish &&
+        return chart.TrendValues[position].AsSentiment().IsBearish() &&
+            chart.PrologueSentiment(position).IsBearish() &&
             first.IsLight &&
             second.IsLight &&
             third.IsLight &&
@@ -787,8 +788,8 @@ public sealed partial class CandlestickSignalRepository
         var first = chart.Candlesticks[position];
         var second = chart.Candlesticks[position + 1];
 
-        return chart.TrendValues[position].Sentiment == TrendSentiment.Bearish &&
-            chart.PrologueSentiment(position) == TrendSentiment.Bearish &&
+        return chart.TrendValues[position].AsSentiment().IsBearish() &&
+            chart.PrologueSentiment(position).IsBearish() &&
             first.IsDark &&
             chart.IsTall(position) &&
             second.IsLight &&
@@ -807,8 +808,8 @@ public sealed partial class CandlestickSignalRepository
         var first = chart.Candlesticks[position];
         var second = chart.Candlesticks[position + 1];
 
-        return chart.TrendValues[position].Sentiment == TrendSentiment.Bullish &&
-            chart.PrologueSentiment(position) == TrendSentiment.Bullish &&
+        return chart.TrendValues[position].AsSentiment().IsBullish() &&
+            chart.PrologueSentiment(position).IsBullish() &&
             first.IsLight &&
             chart.IsTall(position) &&
             second.IsDark &&

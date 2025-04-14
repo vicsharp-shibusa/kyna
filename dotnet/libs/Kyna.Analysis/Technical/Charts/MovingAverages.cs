@@ -1,8 +1,13 @@
-﻿namespace Kyna.Analysis.Technical.Charts;
+﻿using Kyna.Common;
+using System.ComponentModel;
+
+namespace Kyna.Analysis.Technical.Charts;
 
 public enum MovingAverageType
 {
+    [Description("SMA")]
     Simple = 0,
+    [Description("EMA")]
     Exponential = 1
 }
 
@@ -14,7 +19,7 @@ public struct MovingAverageKey(int period, PricePoint pricePoint = PricePoint.Cl
     public PricePoint PricePoint = pricePoint;
 
     public override readonly string ToString() =>
-        $"{Type.ToString()[0]}{Period}{PricePoint.ToString()[0]}";
+        $"{Type.GetEnumDescription()[0]}{Period}{PricePoint.GetEnumDescription()[0]}";
 }
 
 public struct MovingAverage
@@ -33,19 +38,13 @@ public struct MovingAverage
     {
         Key = key;
 
-        if (values == null)
+        if ((values?.Length ?? 0) == 0)
         {
             Values = [];
             return;
         }
 
-        if (values.Length == 0)
-        {
-            Values = [];
-            return;
-        }
-
-        Values = new decimal[values.Length];
+        Values = new decimal[values!.Length];
 
         if (values.Length < key.Period)
         {

@@ -98,7 +98,7 @@ WHERE (source, code, date_eod) IN (
 
         // Upsert an adjusted EOD price record
         yield return new KeyValuePair<SqlRepoKey, string>(
-            new SqlRepoKey(SqlKeys.UpsertAdjustedEodPrice, DatabaseEngine.PostgreSql),
+            new SqlRepoKey(SqlKeys.UpsertEodAdjustedPrice, DatabaseEngine.PostgreSql),
             @"
 INSERT INTO public.eod_adjusted_prices (
     source, code, date_eod, open, high, low, close, volume, factor,
@@ -119,7 +119,7 @@ SET
 
         // Fetch all adjusted EOD prices
         yield return new KeyValuePair<SqlRepoKey, string>(
-            new SqlRepoKey(SqlKeys.FetchAdjustedEodPrices, DatabaseEngine.PostgreSql),
+            new SqlRepoKey(SqlKeys.FetchEodAdjustedPrices, DatabaseEngine.PostgreSql),
             @"
 SELECT
     source, code, date_eod AS DateEod, open, high, low, close, volume, factor,
@@ -132,7 +132,7 @@ FROM public.eod_adjusted_prices");
     {
         // Upsert an adjusted EOD price record
         yield return new KeyValuePair<SqlRepoKey, string>(
-            new SqlRepoKey(SqlKeys.UpsertAdjustedEodPrice, DatabaseEngine.PostgreSql),
+            new SqlRepoKey(SqlKeys.UpsertEodAdjustedPrice, DatabaseEngine.PostgreSql),
             @"
 INSERT INTO public.eod_adjusted_prices (
     source, code, date_eod, open, high, low, close, volume, factor,
@@ -153,7 +153,7 @@ SET
 
         // Fetch all adjusted EOD prices
         yield return new KeyValuePair<SqlRepoKey, string>(
-            new SqlRepoKey(SqlKeys.FetchAdjustedEodPrices, DatabaseEngine.PostgreSql),
+            new SqlRepoKey(SqlKeys.FetchEodAdjustedPrices, DatabaseEngine.PostgreSql),
             @"
 SELECT
     source, code, date_eod AS DateEod, open, high, low, close, volume, factor,
@@ -172,7 +172,7 @@ ORDER BY code");
 
         // Delete all adjusted EOD prices (use with caution)
         yield return new KeyValuePair<SqlRepoKey, string>(
-            new SqlRepoKey(SqlKeys.DeleteAdjustedEodPrices, DatabaseEngine.PostgreSql),
+            new SqlRepoKey(SqlKeys.DeleteEodAdjustedPrices, DatabaseEngine.PostgreSql),
             @"
 DELETE FROM public.eod_adjusted_prices");
 

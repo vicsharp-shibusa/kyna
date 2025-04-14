@@ -42,16 +42,16 @@ public class PostgreSqlFinancialTests : IClassFixture<PostgreSqlTestFixture>
         Guid processId = Guid.NewGuid();
         var eodPriceDao = CreateAdjustedEodPricesDao(processId);
 
-        var sqlDelete = _fixture.Financials.Sql.GetSql(SqlKeys.DeleteAdjustedEodPrices,
+        var sqlDelete = _fixture.Financials.Sql.GetSql(SqlKeys.DeleteEodAdjustedPrices,
             "source = @Source", "code = @Code", "date_eod = @DateEod");
 
         using var context = _fixture.Financials.GetConnection();
         Assert.NotNull(context);
 
         context.Execute(sqlDelete, eodPriceDao);
-        context.Execute(_fixture.Financials.Sql.GetSql(SqlKeys.UpsertAdjustedEodPrice), eodPriceDao);
+        context.Execute(_fixture.Financials.Sql.GetSql(SqlKeys.UpsertEodAdjustedPrice), eodPriceDao);
 
-        var sql = _fixture.Financials.Sql.GetSql(SqlKeys.FetchAdjustedEodPrices, "process_id = @ProcessId");
+        var sql = _fixture.Financials.Sql.GetSql(SqlKeys.FetchEodAdjustedPrices, "process_id = @ProcessId");
 
         var actual = context.QueryFirstOrDefault<EodAdjustedPrice>(
             sql, new { eodPriceDao.ProcessId });

@@ -2,198 +2,110 @@
 
 namespace Kyna.Analysis.Technical.Trends;
 
-public class ExtremeTrend(Ohlc[] prices) : TrendBase(prices?.Length ?? 0), ITrend
+public class ExtremeTrend : PriceTrendBase, ITrend
 {
-    private readonly Ohlc[] _prices = prices!;
+    private readonly int _lookbackPeriod;
+    private readonly double _alpha;
+    private readonly double _beta;
 
-    public string Name => "Extremes";
+    /// <summary>
+    /// Represents a trend based on highs and lows.
+    /// </summary>
+    /// <param name="prices">The prices (i.e., chart) for which to determine the trend.</param>
+    /// <param name="lookbackPeriod">Defines how far back the algo looks when relating to highs and lows.</param>
+    /// <param name="alpha">A number between 0 and 1 that decides how much the trend score focuses on the long-term
+    /// trend vs. the short-term trend.</param>
+    /// <param name="beta">A scaling factor that determines how sensitive the long-term trend (the slope) is to changes.</param>
+    public ExtremeTrend(Ohlc[] prices, int lookbackPeriod = 20, double alpha = 0.5, double beta = 1.0)
+        : base(prices)
+    {
+        if (alpha < 0 || alpha > 1D)
+            throw new ArgumentOutOfRangeException(nameof(alpha));
+
+        _lookbackPeriod = lookbackPeriod;
+        _alpha = alpha;
+        _beta = beta;
+    }
 
     public void Calculate()
     {
-        var extremes = GetHighs().Union(GetLows()).OrderBy(x => x.Position).ToArray();
+        var highs = new decimal[_prices.Length];
+        var lows = new decimal[_prices.Length];
 
-        int e = 0;
-
-        Extreme? previousExtreme = null;
-
+        // Calculate highs and lows (unchanged)
         for (int i = 0; i < _prices.Length; i++)
         {
-            if (i < extremes[e].Position)
+            if (i < _lookbackPeriod - 1)
             {
-                if (previousExtreme == null)
-                {
-                    TrendValues[i] = new(TrendSentiment.None, 0D);
-                }
-                else
-                {
-                    TrendValues[i] = new(previousExtreme!.Value.Sentiment, previousExtreme.Value.TrendValue);
-                }
+                highs[i] = _prices.Take(i + 1).Max(p => p.High);
+                lows[i] = _prices.Take(i + 1).Min(p => p.Low);
             }
-            else if (i == extremes[e].Position)
+            else
             {
-                // It's possible that a single position could be both a high and a low.
-                List<Extreme> ex = new(2);
-                int j = e;
-                while (extremes[j].Position == i && j < extremes.Length - 1)
-                {
-                    ex.Add(extremes[j++]);
-                }
-                if (ex.Count == 1)
-                {
-                    TrendValues[i] = new(extremes[e].Sentiment, extremes[e].TrendValue);
-                }
-                else
-                {
-                    if (previousExtreme == null)
-                    {
-                        TrendValues[i] = new(TrendSentiment.None, 0D);
-                    }
-                    else
-                    {
-                        if (previousExtreme!.Value.Sentiment == TrendSentiment.Bullish)
-                        {
-                            TrendValues[i] = new(TrendSentiment.Bearish, -1D);
-                        }
-                        else if (previousExtreme!.Value.Sentiment == TrendSentiment.Bearish)
-                        {
-                            TrendValues[i] = new(TrendSentiment.Bullish, 1D);
-                        }
-                        else
-                        {
-                            TrendValues[i] = new(extremes[e].Sentiment, extremes[e].TrendValue);
-                        }
-                    }
-                }
-                e += ex.Count;
-                if (e < extremes.Length)
-                {
-                    previousExtreme = extremes[e - 1];
-                }
+                highs[i] = _prices.Skip(i - _lookbackPeriod + 1).Take(_lookbackPeriod).Max(p => p.High);
+                lows[i] = _prices.Skip(i - _lookbackPeriod + 1).Take(_lookbackPeriod).Min(p => p.Low);
             }
         }
-    }
 
-    public IEnumerable<Extreme> GetHighs()
-    {
-        Extreme previousExtreme = default;
-
-        for (int i = 1; i < _prices.Length - 1; i++)
+        // Calculate trend values with volume adjustment
+        for (int i = 0; i < _prices.Length; i++)
         {
-            if (_prices[i].High > _prices[i - 1].High &&
-                _prices[i].High > _prices[i + 1].High)
+            if (i < _lookbackPeriod)
             {
-                var extreme = new Extreme()
-                {
-                    Position = i,
-                    Price = _prices[i].High,
-                    PricePoint = PricePoint.High,
-                    ExtremeType = ExtremeType.High,
-                    Sentiment = _prices[i].High == previousExtreme.Price
-                        ? previousExtreme.Sentiment
-                        : _prices[i].High > previousExtreme.Price
-                            ? TrendSentiment.Bullish
-                            : TrendSentiment.Bearish
-                };
-                yield return extreme;
-                previousExtreme = extreme;
+                TrendValues[i] = 0D;
+                continue;
             }
-            else if (_prices[i].High > _prices[i - 1].High &&
-                _prices[i].High == _prices[i + 1].High &&
-                i < _prices.Length - 2)
-            {
-                var p = i + 1;
-                while (_prices[i].High == _prices[p].High && p < _prices.Length - 2)
-                {
-                    p++;
-                }
-                i = p;
-                if (_prices[i].High > _prices[i + 1].High)
-                {
-                    var extreme = new Extreme()
-                    {
-                        Position = i,
-                        Price = _prices[i].High,
-                        PricePoint = PricePoint.High,
-                        ExtremeType = ExtremeType.High,
-                        Sentiment = _prices[i].High == previousExtreme.Price
-                            ? previousExtreme.Sentiment
-                            : _prices[i].High > previousExtreme.Price
-                                ? TrendSentiment.Bullish
-                                : TrendSentiment.Bearish
-                    };
-                    yield return extreme;
-                    previousExtreme = extreme;
-                }
-            }
+
+            // Existing trend calculation
+            var slope = CalculateRegressionSlope(i, _lookbackPeriod);
+            var normalizedSlope = (2D / Math.PI) * Math.Atan(_beta * slope);
+            var recentHigh = highs[i];
+            var recentLow = lows[i];
+            var range = recentHigh - recentLow;
+            var position = range == 0M ? 0M : (_prices[i].Close - recentLow) / range;
+            var scaledPosition = 2M * position - 1M;
+            var baseTrendScore = _alpha * normalizedSlope + (1 - _alpha) * (double)scaledPosition;
+
+            // Volume adjustment
+            var avgVolume = CalculateAverageVolume(i, _lookbackPeriod);
+            var currentVolume = (double)_prices[i].Volume;
+            var volumeFactor = avgVolume > 0 ? currentVolume / avgVolume : 1.0; // Avoid division by zero
+            volumeFactor = Math.Max(0.5, Math.Min(2.0, volumeFactor)); // Clamp between 0.5 and 2.0
+
+            // Apply volume-adjusted trend score
+            TrendValues[i] = Math.Max(-1.0, Math.Min(1.0, baseTrendScore * volumeFactor));
         }
     }
 
-    public IEnumerable<Extreme> GetLows()
+    private double CalculateRegressionSlope(int endIndex, int lookbackPeriod)
     {
-        Extreme previousExtreme = default;
+        decimal sumX = 0, sumY = 0, sumXY = 0, sumX2 = 0;
+        int n = lookbackPeriod;
 
-        for (int i = 1; i < _prices.Length - 1; i++)
+        for (int i = 0; i < n; i++)
         {
-            if (_prices[i].Low < _prices[i - 1].Low &&
-                _prices[i].Low < _prices[i + 1].Low)
-            {
-                var extreme = new Extreme()
-                {
-                    Position = i,
-                    Price = _prices[i].Low,
-                    PricePoint = PricePoint.Low,
-                    ExtremeType = ExtremeType.Low,
-                    Sentiment = _prices[i].Low == previousExtreme.Price
-                        ? previousExtreme.Sentiment
-                        : _prices[i].Low > previousExtreme.Price
-                            ? TrendSentiment.Bullish
-                            : TrendSentiment.Bearish
-                };
-                yield return extreme;
-                previousExtreme = extreme;
-            }
-            else if (_prices[i].Low > _prices[i - 1].Low &&
-                _prices[i].Low == _prices[i + 1].Low &&
-                i < _prices.Length - 2)
-            {
-                var p = i + 1;
-                while (_prices[i].Low == _prices[p].Low && p < _prices.Length - 2)
-                {
-                    p++;
-                }
-                i = p;
-                if (_prices[i].Low < _prices[i + 1].Low)
-                {
-                    var extreme = new Extreme()
-                    {
-                        Position = i,
-                        Price = _prices[i].Low,
-                        PricePoint = PricePoint.Low,
-                        ExtremeType = ExtremeType.Low,
-                        Sentiment = _prices[i].Low == previousExtreme.Price
-                            ? previousExtreme.Sentiment
-                            : _prices[i].Low > previousExtreme.Price
-                                ? TrendSentiment.Bullish
-                                : TrendSentiment.Bearish
-                    };
-                    yield return extreme;
-                    previousExtreme = extreme;
-                }
-            }
+            int x = i;
+            var y = _prices[endIndex - n + 1 + i].Close;
+            sumX += x;
+            sumY += y;
+            sumXY += x * y;
+            sumX2 += x * x;
         }
-    }
-}
 
-public struct Extreme
-{
-    public int Position;
-    public ExtremeType ExtremeType;
-    public PricePoint PricePoint;
-    public decimal Price;
-    public TrendSentiment Sentiment;
-    public readonly double TrendValue => Sentiment == TrendSentiment.Bullish
-        ? 1D
-        : Sentiment == TrendSentiment.Bearish
-            ? -1D
-            : 0D;
+        var slope = (n * sumXY - sumX * sumY) / (n * sumX2 - sumX * sumX);
+        return (double)slope;
+    }
+
+    private double CalculateAverageVolume(int endIndex, int lookbackPeriod)
+    {
+        if (endIndex < lookbackPeriod - 1)
+        {
+            // For early indices, use all available data up to endIndex
+            return (double)_prices.Take(endIndex + 1).Average(p => p.Volume);
+        }
+        // For later indices, use the full lookback period
+        return (double)_prices.Skip(endIndex - lookbackPeriod + 1)
+                             .Take(lookbackPeriod)
+                             .Average(p => p.Volume);
+    }
 }

@@ -60,10 +60,10 @@ public static class SqlKeys
     public const string FetchAppEvents = nameof(FetchAppEvents);
     public const string DeleteAppEvents = nameof(DeleteAppEvents);
 
-    public const string UpsertAdjustedEodPrice = nameof(UpsertAdjustedEodPrice);
-    public const string FetchAdjustedEodPrices = nameof(FetchAdjustedEodPrices);
+    public const string UpsertEodAdjustedPrice = nameof(UpsertEodAdjustedPrice);
+    public const string FetchEodAdjustedPrices = nameof(FetchEodAdjustedPrices);
     public const string FetchAllAdjustedSymbolsForSource = nameof(FetchAllAdjustedSymbolsForSource);
-    public const string DeleteAdjustedEodPrices = nameof(DeleteAdjustedEodPrices);
+    public const string DeleteEodAdjustedPrices = nameof(DeleteEodAdjustedPrices);
     public const string MigratePricesWithoutSplitsToAdjustedPrices = nameof(MigratePricesWithoutSplitsToAdjustedPrices);
     public const string FetchAdjustedCodesAndCounts = nameof(FetchAdjustedCodesAndCounts);
     public const string FetchAdjustedCodesAndDates = nameof(FetchAdjustedCodesAndDates);

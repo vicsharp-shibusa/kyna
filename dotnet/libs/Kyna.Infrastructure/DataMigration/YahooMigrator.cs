@@ -180,7 +180,7 @@ internal sealed class YahooMigrator(DbDef sourceDef, DbDef targetDef,
         foreach (var chunk in priceDaos.Chunk(sizeOfChunk))
         {
             using var conn = _targetDbDef.GetConnection();
-            tasks[index++] = conn.ExecuteAsync(_targetDbDef.Sql.GetSql(SqlKeys.UpsertAdjustedEodPrice), chunk);
+            tasks[index++] = conn.ExecuteAsync(_targetDbDef.Sql.GetSql(SqlKeys.UpsertEodAdjustedPrice), chunk);
         }
         Task.WaitAll(tasks);
 

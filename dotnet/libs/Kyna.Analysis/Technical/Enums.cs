@@ -27,12 +27,16 @@ public enum PricePoint
     Close
 }
 
+[Flags]
 public enum TrendSentiment
 {
-    None = 0,
-    Bullish,
-    Bearish,
-    Neutral
+    Neutral = 0,
+    FullBear = 1 << 0,
+    Bear = 1 << 1,
+    MildBear = 1 << 2,
+    MildBull = 1 << 3,
+    Bull = 1 << 4,
+    FullBull = 1 << 5
 }
 
 public enum ExtremeType

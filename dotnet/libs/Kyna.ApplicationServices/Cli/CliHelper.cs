@@ -76,7 +76,7 @@ public static class CliHelper
 
     public static DbDef[] GetDbDefs(IConfiguration configuration)
     {
-        List<DbDef> dbDefs = new(10);
+        List<DbDef> dbDefs = new();
 
         var connStringSection = configuration.GetSection(ConfigKeys.Sections.ConnectionStrings);
         var engineSection = configuration.GetSection(ConfigKeys.Sections.DbEngines);

@@ -205,7 +205,7 @@ public static class ChartFactory
                         wt.Add(new WeightedTrend(tr, configTrend.Weight ?? DefaultWeight));
                     }
                 }
-                trend = new CombinedTrend([.. wt]);
+                trend = new CombinedWeightedTrend([.. wt]);
             }
         }
         else

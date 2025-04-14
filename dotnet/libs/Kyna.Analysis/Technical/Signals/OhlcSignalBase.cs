@@ -1,4 +1,5 @@
 ﻿using Kyna.Analysis.Technical.Charts;
+using Kyna.Analysis.Technical.Trends;
 using Kyna.Common;
 
 namespace Kyna.Analysis.Technical.Signals;
@@ -52,8 +53,9 @@ public abstract class OhlcSignalBase(
                 {
                     var index = market!.GetIndexOfDate(chart.PriceActions[i].Date);
                     if (index > -1 &&
-                        (market.TrendValues[index].Sentiment is TrendSentiment.Bullish or TrendSentiment.Bearish) &&
-                        market.TrendValues[index].Sentiment != Sentiment)
+                        (market.TrendValues[index].AsSentiment().IsBullish() ||
+                            market.TrendValues[index].AsSentiment().IsBearish()) &&
+                        market.TrendValues[index].AsSentiment() != Sentiment)
                     {
                         continue;
                     }

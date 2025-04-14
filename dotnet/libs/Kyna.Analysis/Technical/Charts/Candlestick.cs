@@ -32,33 +32,27 @@ public record class Candlestick : Ohlc
     protected decimal UpperShadowToTotalShadowRatio => TotalShadowLength == 0 ? 0 : UpperShadow.Length / TotalShadowLength;
     protected decimal LowerShadowToTotalShadowRatio => TotalShadowLength == 0 ? 0 : LowerShadow.Length / TotalShadowLength;
 
-    protected bool IsDojiBody => Volume > 0L
-        && !IsFourPriceDoji
-        && Body.Length < Length * .05M;
+    public bool IsDojiBody => Math.Abs(Open - Close) < Math.Max(GetTolerance(High - Low), 0.01M);
 
-    public bool IsFourPriceDoji =>
-        Body.Length == 0 &&
-        (MidPoint < 5M ? Length == 0 : Length < .02M) &&
-        Volume > 0L;
+    public bool IsFourPriceDoji => IsDojiBody && Length < GetTolerance(AveragePrice, 0.001M);
 
     public bool IsDoji => IsDojiBody &&
         !IsLongLeggedDoji &&
         !IsDragonflyDoji &&
         !IsGravestoneDoji;
 
-    public bool IsLongLeggedDoji => IsDojiBody &&
-        TotalShadowLength / AveragePrice > .05M;
+    public bool IsLongLeggedDoji => IsDojiBody && TotalShadowLength > GetTolerance(AveragePrice, 0.05M);
 
     public bool IsDragonflyDoji => IsDojiBody &&
-        UpperShadowToTotalShadowRatio < .15M &&
-        LowerShadowToTotalShadowRatio > .85M;
+        UpperShadowToTotalShadowRatio < GetTolerance(1M, 0.15M) &&
+        LowerShadowToTotalShadowRatio > 1M - GetTolerance(1M, 0.15M);
 
     public bool IsGravestoneDoji => IsDojiBody &&
-        LowerShadowToTotalShadowRatio < .15M &&
-        UpperShadowToTotalShadowRatio > .85M;
+        LowerShadowToTotalShadowRatio < GetTolerance(1M, 0.15M) &&
+        UpperShadowToTotalShadowRatio > 1M - GetTolerance(1M, 0.15M);
 
-    protected bool HasShavenHead => UpperShadow.Length == 0;
-    protected bool HasShavenBottom => LowerShadow.Length == 0;
+    public bool HasShavenHead => UpperShadow.Length < GetTolerance(AveragePrice, 0.001M);
+    public bool HasShavenBottom => LowerShadow.Length < GetTolerance(AveragePrice, 0.001M);
 
     public bool IsBullishBelthold => !IsDojiBody
         && !IsMarubozu
@@ -67,7 +61,7 @@ public record class Candlestick : Ohlc
         && Volume != 0
         && HasShavenBottom
         && IsLight
-        && Body.Length > Length / 1.5M;
+        && Body.Length > (2M / 3M) * Length - GetTolerance(Length, 0.05M);
 
     public bool IsBearishBelthold => !IsDojiBody
         && !IsMarubozu
@@ -76,7 +70,7 @@ public record class Candlestick : Ohlc
         && Volume != 0
         && HasShavenHead
         && IsDark
-        && Body.Length > Length / 1.5M;
+        && Body.Length > (2M / 3M) * Length - GetTolerance(Length, 0.05M);
 
     protected bool IsMarubozu => !IsDojiBody && Body.Length == Length && Body.Length > 0;
 
@@ -86,19 +80,21 @@ public record class Candlestick : Ohlc
 
     public bool IsUmbrella => Length > 0
         && !IsDojiBody
-        && LowerShadow.Length >= 2 * Body.Length
-        && UpperShadow.Length <= Length * .1M
-        && Body.Low > MidPoint;
+        && LowerShadow.Length >= 2 * Body.Length - GetTolerance(Body.Length, 0.05M)
+        && UpperShadow.Length <= GetTolerance(Length, 0.1M)
+        && Body.Low > MidPoint - GetTolerance(MidPoint, 0.01M);
 
     public bool IsInvertedUmbrella => Length > 0
         && !IsDojiBody
-        && UpperShadow.Length >= 2 * Body.Length
-        && LowerShadow.Length <= Length * .1M
-        && Body.High < MidPoint;
+        && UpperShadow.Length >= 2 * Body.Length - GetTolerance(Body.Length, 0.05M)
+        && LowerShadow.Length <= GetTolerance(Length, 0.1M)
+        && Body.High < MidPoint + GetTolerance(MidPoint, 0.01M);
 
     public bool IsSpinningTop => UpperShadow.Length > Body.Length
         && LowerShadow.Length > Body.Length
         && !IsDojiBody
         && !IsUmbrella
         && !IsInvertedUmbrella;
+
+    private decimal GetTolerance(decimal baseValue, decimal factor = 0.01M) => factor * baseValue;
 }
