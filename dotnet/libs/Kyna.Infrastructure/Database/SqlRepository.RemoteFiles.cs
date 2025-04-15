@@ -27,7 +27,7 @@ SET
 
         // Fetch all remote files
         yield return new KeyValuePair<SqlRepoKey, string>(
-            new SqlRepoKey(SqlKeys.FetchRemoteFiles, DatabaseEngine.PostgreSql),
+            new SqlRepoKey(SqlKeys.SelectRemoteFiles, DatabaseEngine.PostgreSql),
             @"
 SELECT 
     id, source, provider, location, source_name AS SourceName, local_name AS LocalName,

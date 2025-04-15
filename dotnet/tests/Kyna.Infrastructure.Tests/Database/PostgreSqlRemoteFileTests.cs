@@ -24,7 +24,7 @@ public class PostgreSqlRemoteFileTests : IClassFixture<PostgreSqlTestFixture>
 
         context.Execute(_fixture.Logs.Sql.GetSql(SqlKeys.UpsertRemoteFile), remoteFileDao);
 
-        var sql = _fixture.Logs.Sql.GetSql(SqlKeys.FetchRemoteFiles, "process_id = @ProcessId");
+        var sql = _fixture.Logs.Sql.GetSql(SqlKeys.SelectRemoteFiles, "process_id = @ProcessId");
 
         var actual = context.QueryFirstOrDefault<RemoteFile>(sql, new { remoteFileDao.ProcessId });
 

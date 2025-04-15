@@ -175,7 +175,7 @@ internal sealed class PolygonImporter : HttpImporterBase, IExternalDataImporter
                     {
                         RemoteFile[] remoteFiles = [];
 
-                        var sql = $@"{_dbDef.Sql.GetFormattedSqlWithWhereClause(SqlKeys.FetchRemoteFiles,
+                        var sql = $@"{_dbDef.Sql.GetFormattedSqlWithWhereClause(SqlKeys.SelectRemoteFiles,
                             LogicalOperator.And, "source = @Source", "provider = @Provider")}";
 
                         using (var conn = _dbDef.GetConnection())

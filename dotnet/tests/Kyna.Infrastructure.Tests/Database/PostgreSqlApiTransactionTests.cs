@@ -24,7 +24,7 @@ public class PostgreSqlApiTransactionTests : IClassFixture<PostgreSqlTestFixture
 
         context.Execute(_fixture.Imports.Sql.GetSql(SqlKeys.InsertApiTransaction), transactionDao);
 
-        var sql = _fixture.Imports.Sql.GetSql(SqlKeys.FetchApiTransaction, "sub_category = @SubCategory");
+        var sql = _fixture.Imports.Sql.GetSql(SqlKeys.SelectApiTransaction, "sub_category = @SubCategory");
 
         var actual = context.QueryFirstOrDefault<ApiTransaction>(sql, new { transactionDao.SubCategory });
 
@@ -60,7 +60,7 @@ public class PostgreSqlApiTransactionTests : IClassFixture<PostgreSqlTestFixture
         string[] categories = ["Price Action"];
 
         var itemsToMigrate = context.Query<ApiTransactionForMigration>(
-            _fixture.Imports.Sql.GetSql(SqlKeys.FetchApiTransactionsForMigration, "source = @Source",
+            _fixture.Imports.Sql.GetSql(SqlKeys.SelectApiTransactionsForMigration, "source = @Source",
             $"category {SqlCollection.GetSqlSyntaxForInCollection("Categories")}"),
                 new { Source = "Test", categories });
 

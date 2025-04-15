@@ -203,7 +203,7 @@ internal sealed class PolygonMigrator : ImportsMigratorBase, IImportsMigrator, I
         cancellationToken.ThrowIfCancellationRequested();
 
         using var srcConn = _sourceDbDef.GetConnection();
-        var responseBody = await srcConn.QueryFirstOrDefaultAsync<string>(_sourceDbDef.Sql.GetSql(SqlKeys.FetchApiResponseBodyForId), new { item.Id }, cancellationToken: cancellationToken);
+        var responseBody = await srcConn.QueryFirstOrDefaultAsync<string>(_sourceDbDef.Sql.GetSql(SqlKeys.SelectApiResponseBodyForId), new { item.Id }, cancellationToken: cancellationToken);
         srcConn.Close();
 
         if (!string.IsNullOrWhiteSpace(responseBody) && responseBody != "[]" && responseBody != "{}")
@@ -263,7 +263,7 @@ internal sealed class PolygonMigrator : ImportsMigratorBase, IImportsMigrator, I
             whereClauses.Add($"category {SqlCollection.GetSqlSyntaxForInCollection("Categories")}");
         }
 
-        return _sourceDbDef.Sql.GetSql(SqlKeys.FetchApiTransactionsForMigration, [.. whereClauses]);
+        return _sourceDbDef.Sql.GetSql(SqlKeys.SelectApiTransactionsForMigration, [.. whereClauses]);
     }
 
     private async Task MigrateFlatFilesAsync(CancellationToken cancellationToken)
@@ -313,7 +313,7 @@ internal sealed class PolygonMigrator : ImportsMigratorBase, IImportsMigrator, I
 
         RemoteFile[] remoteFiles = [];
 
-        var sql = _sourceDbDef.Sql.GetFormattedSqlWithWhereClause(SqlKeys.FetchRemoteFiles,
+        var sql = _sourceDbDef.Sql.GetFormattedSqlWithWhereClause(SqlKeys.SelectRemoteFiles,
             LogicalOperator.And, "source = @Source", "provider = @Provider");
 
         using (var conn = _sourceDbDef.GetConnection())
@@ -381,7 +381,7 @@ internal sealed class PolygonMigrator : ImportsMigratorBase, IImportsMigrator, I
         timer = Stopwatch.StartNew();
         Printf($"Fetching codes with splits.");
         var codesWithSplits = (await tgtConn.QueryAsync<string>(
-            _targetDbDef.Sql.GetSql(SqlKeys.FetchCodesWithSplits), new { Source },
+            _targetDbDef.Sql.GetSql(SqlKeys.SelectCodesWithSplits), new { Source },
             cancellationToken: cancellationToken).ConfigureAwait(false)).ToArray();
         
         tgtConn.Close();
@@ -413,8 +413,8 @@ internal sealed class PolygonMigrator : ImportsMigratorBase, IImportsMigrator, I
     {
         cancellationToken.ThrowIfCancellationRequested();
         Printf($"Adjusting prices for {code}.");
-        var chartSql = _targetDbDef.Sql.GetSql(SqlKeys.FetchEodPrices, _whereClauses);
-        var splitSql = _targetDbDef.Sql.GetSql(SqlKeys.FetchSplits, _whereClauses);
+        var chartSql = _targetDbDef.Sql.GetSql(SqlKeys.SelectEodPrices, _whereClauses);
+        var splitSql = _targetDbDef.Sql.GetSql(SqlKeys.SelectSplits, _whereClauses);
         using var tgtConn1 = _targetDbDef.GetConnection();
         using var tgtConn2 = _targetDbDef.GetConnection();
         var splits = tgtConn1.QueryAsync<Split>(splitSql,

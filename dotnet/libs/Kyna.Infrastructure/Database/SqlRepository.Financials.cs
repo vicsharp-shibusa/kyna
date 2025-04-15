@@ -26,7 +26,7 @@ SET
 
         // Fetch all EOD prices
         yield return new KeyValuePair<SqlRepoKey, string>(
-            new SqlRepoKey(SqlKeys.FetchEodPrices, DatabaseEngine.PostgreSql),
+            new SqlRepoKey(SqlKeys.SelectEodPrices, DatabaseEngine.PostgreSql),
             @"
 SELECT
     source, code, date_eod AS DateEod, open, high, low, close, volume,
@@ -36,7 +36,7 @@ FROM public.eod_prices");
 
         // Fetch distinct codes with splits for a source
         yield return new KeyValuePair<SqlRepoKey, string>(
-            new SqlRepoKey(SqlKeys.FetchCodesWithSplits, DatabaseEngine.PostgreSql),
+            new SqlRepoKey(SqlKeys.SelectCodesWithSplits, DatabaseEngine.PostgreSql),
             @"
 SELECT DISTINCT P.code
 FROM public.eod_prices P
@@ -72,7 +72,7 @@ SET
 
         // Fetch distinct codes without splits
         yield return new KeyValuePair<SqlRepoKey, string>(
-            new SqlRepoKey(SqlKeys.FetchCodesWithoutSplits, DatabaseEngine.PostgreSql),
+            new SqlRepoKey(SqlKeys.SelectCodesWithoutSplits, DatabaseEngine.PostgreSql),
             @"
 SELECT DISTINCT P.code
 FROM public.eod_prices P
@@ -119,7 +119,7 @@ SET
 
         // Fetch all adjusted EOD prices
         yield return new KeyValuePair<SqlRepoKey, string>(
-            new SqlRepoKey(SqlKeys.FetchEodAdjustedPrices, DatabaseEngine.PostgreSql),
+            new SqlRepoKey(SqlKeys.SelectEodAdjustedPrices, DatabaseEngine.PostgreSql),
             @"
 SELECT
     source, code, date_eod AS DateEod, open, high, low, close, volume, factor,
@@ -153,7 +153,7 @@ SET
 
         // Fetch all adjusted EOD prices
         yield return new KeyValuePair<SqlRepoKey, string>(
-            new SqlRepoKey(SqlKeys.FetchEodAdjustedPrices, DatabaseEngine.PostgreSql),
+            new SqlRepoKey(SqlKeys.SelectEodAdjustedPrices, DatabaseEngine.PostgreSql),
             @"
 SELECT
     source, code, date_eod AS DateEod, open, high, low, close, volume, factor,
@@ -163,7 +163,7 @@ FROM public.eod_adjusted_prices");
 
         // Fetch all distinct adjusted symbols for a source
         yield return new KeyValuePair<SqlRepoKey, string>(
-            new SqlRepoKey(SqlKeys.FetchAllAdjustedSymbolsForSource, DatabaseEngine.PostgreSql),
+            new SqlRepoKey(SqlKeys.SelectAllAdjustedSymbolsForSource, DatabaseEngine.PostgreSql),
             @"
 SELECT DISTINCT code
 FROM public.eod_adjusted_prices
@@ -202,7 +202,7 @@ SET
 
         // Fetch adjusted codes with counts and industry/sector info
         yield return new KeyValuePair<SqlRepoKey, string>(
-            new SqlRepoKey(SqlKeys.FetchAdjustedCodesAndCounts, DatabaseEngine.PostgreSql),
+            new SqlRepoKey(SqlKeys.SelectAdjustedCodesAndCounts, DatabaseEngine.PostgreSql),
             @"
 SELECT 
     P.code, E.industry, E.sector, COUNT(*) AS Count
@@ -215,7 +215,7 @@ ORDER BY P.code");
 
         // Fetch adjusted codes with date ranges
         yield return new KeyValuePair<SqlRepoKey, string>(
-            new SqlRepoKey(SqlKeys.FetchAdjustedCodesAndDates, DatabaseEngine.PostgreSql),
+            new SqlRepoKey(SqlKeys.SelectAdjustedCodesAndDates, DatabaseEngine.PostgreSql),
             @"
 SELECT DISTINCT 
     source, code, MIN(date_eod) AS Start, MAX(date_eod) AS Finish
@@ -246,7 +246,7 @@ SET
 
         // Fetch all splits
         yield return new KeyValuePair<SqlRepoKey, string>(
-            new SqlRepoKey(SqlKeys.FetchSplits, DatabaseEngine.PostgreSql),
+            new SqlRepoKey(SqlKeys.SelectSplits, DatabaseEngine.PostgreSql),
             @"
 SELECT
     source, code, date_split AS SplitDate, before_split AS Before, after_split AS After,
@@ -285,7 +285,7 @@ SET
 
         // Fetch all dividends
         yield return new KeyValuePair<SqlRepoKey, string>(
-            new SqlRepoKey(SqlKeys.FetchDividends, DatabaseEngine.PostgreSql),
+            new SqlRepoKey(SqlKeys.SelectDividends, DatabaseEngine.PostgreSql),
             @"
 SELECT
     source, code, type, declaration_date AS DeclarationDate,
@@ -442,7 +442,7 @@ SET
 
         // Fetch all entities
         yield return new KeyValuePair<SqlRepoKey, string>(
-            new SqlRepoKey(SqlKeys.FetchEntity, DatabaseEngine.PostgreSql),
+            new SqlRepoKey(SqlKeys.SelectEntity, DatabaseEngine.PostgreSql),
             @"
 SELECT 
     source, code, type, name, exchange, country, currency, delisted, ignored,

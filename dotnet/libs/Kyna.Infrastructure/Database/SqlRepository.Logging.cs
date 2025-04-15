@@ -15,7 +15,7 @@ VALUES (
 
         // Fetch all logs
         yield return new KeyValuePair<SqlRepoKey, string>(
-            new SqlRepoKey(SqlKeys.FetchLogs, DatabaseEngine.PostgreSql),
+            new SqlRepoKey(SqlKeys.SelectLogs, DatabaseEngine.PostgreSql),
             @"
 SELECT
     id, created_at AS CreatedAt, process_id AS ProcessId,
@@ -39,7 +39,7 @@ VALUES (
 
         // Fetch all app events
         yield return new KeyValuePair<SqlRepoKey, string>(
-            new SqlRepoKey(SqlKeys.FetchAppEvents, DatabaseEngine.PostgreSql),
+            new SqlRepoKey(SqlKeys.SelectAppEvents, DatabaseEngine.PostgreSql),
             @"
 SELECT
     id, created_at AS CreatedAt, process_id AS ProcessId,

@@ -11,14 +11,14 @@ public sealed partial class ReportService
     public IEnumerable<string> CreateBacktestingCsvReports(Guid processId, string outputDir)
     {
         //TODO: there's a #fail here - the where clause is db specific (see the '_').
-        string sql = $@"{_backtestDbDef.Sql.GetFormattedSqlWithWhereClause(SqlKeys.FetchBacktest, whereClauses: ["process_id = @ProcessId"])}";
+        string sql = $@"{_backtestDbDef.Sql.GetFormattedSqlWithWhereClause(SqlKeys.SelectBacktest, whereClauses: ["process_id = @ProcessId"])}";
 
         var backtestDaos = _backtestConn.Query<Backtest>(sql, new { processId }).ToArray();
 
         Debug.Assert(backtestDaos != null);
 
         var counts = _backtestConn.Query<SignalCounts>(
-            _backtestDbDef.Sql.GetSql(SqlKeys.FetchBacktestSignalCounts),
+            _backtestDbDef.Sql.GetSql(SqlKeys.SelectBacktestSignalCounts),
             new { processId }).ToArray();
 
         var signalNames = counts.Select(c => c.SignalName).Distinct().ToArray();
@@ -70,7 +70,7 @@ public sealed partial class ReportService
                     "Number Signals", "Success %", "Avg Duration");
 
                 var summary = _backtestConn.Query<SignalSummaryDetails>(
-                    _backtestDbDef.Sql.GetSql(SqlKeys.FetchBacktestSignalSummary),
+                    _backtestDbDef.Sql.GetSql(SqlKeys.SelectBacktestSignalSummary),
                     new { BacktestId = btDao.Id, signalName });
 
                 foreach (var item in summary.Where(d => d.NumberSignals >= (_reportOptions.Stats?.MinimumSignals ?? 0)))
@@ -86,7 +86,7 @@ public sealed partial class ReportService
                 signalSummaryReport = null;
 
                 var details = _backtestConn.Query<SignalDetails>(
-                    _backtestDbDef.Sql.GetSql(SqlKeys.FetchBacktestSignalDetails),
+                    _backtestDbDef.Sql.GetSql(SqlKeys.SelectBacktestSignalDetails),
                     new { BacktestId = btDao.Id, processId, signalName });
 
                 var signalDetailReport = CreateReport(
@@ -116,7 +116,7 @@ public sealed partial class ReportService
 
     public IEnumerable<string> CreateBacktestingXlsxReports(Guid processId, string outputDir)
     {
-        string sql = $@"{_backtestDbDef.Sql.GetFormattedSqlWithWhereClause(SqlKeys.FetchBacktest,
+        string sql = $@"{_backtestDbDef.Sql.GetFormattedSqlWithWhereClause(SqlKeys.SelectBacktest,
             whereClauses: ["process_id = @ProcessId"])}";
 
         var backtests = _backtestConn.Query<Backtest>(sql, new { processId }).ToArray();
@@ -169,7 +169,7 @@ public sealed partial class ReportService
         reports.Add(summaryReport);
 
         var counts = _backtestConn.Query<SignalCounts>(
-            _backtestDbDef.Sql.GetSql(SqlKeys.FetchBacktestSignalCounts),
+            _backtestDbDef.Sql.GetSql(SqlKeys.SelectBacktestSignalCounts),
             new { processId });
 
         var scReport = CreateReport("Signal Counts", "Number",
@@ -228,7 +228,7 @@ public sealed partial class ReportService
                     "Number Signals", "Success %", "Avg Duration");
 
                 var summary = _backtestConn.Query<SignalSummaryDetails>(
-                    _backtestDbDef.Sql.GetSql(SqlKeys.FetchBacktestSignalSummary),
+                    _backtestDbDef.Sql.GetSql(SqlKeys.SelectBacktestSignalSummary),
                     new { backtestId, signalName });
 
                 foreach (var item in summary.Where(d => d.NumberSignals >= (_reportOptions.Stats?.MinimumSignals ?? 0)))
@@ -248,7 +248,7 @@ public sealed partial class ReportService
                     "Result Direction", "Trading Days", "Calendar Days");
 
                 var details = _backtestConn.Query<SignalDetails>(
-                    _backtestDbDef.Sql.GetSql(SqlKeys.FetchBacktestSignalDetails),
+                    _backtestDbDef.Sql.GetSql(SqlKeys.SelectBacktestSignalDetails),
                     new { backtestId, processId, signalName });
 
                 foreach (var item in details)
@@ -272,7 +272,7 @@ public sealed partial class ReportService
 
     public Task<IEnumerable<ProcessIdInfo>> GetBacktestProcessesAsync() =>
         _backtestConn.QueryAsync<ProcessIdInfo>(
-            _backtestDbDef.Sql.GetSql(SqlKeys.FetchBacktestsProcessIdInfo));
+            _backtestDbDef.Sql.GetSql(SqlKeys.SelectBacktestsProcessIdInfo));
 
     public async Task DeleteProcessesAsync(params Guid[] processIds)
     {

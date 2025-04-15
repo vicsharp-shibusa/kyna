@@ -21,7 +21,7 @@ public class PostgreSqlLogTests : IClassFixture<PostgreSqlTestFixture>
 
         context!.Execute(_fixture.Logs.Sql.GetSql(SqlKeys.InsertLog), logDao);
 
-        var sql = _fixture.Logs.Sql.GetSql(SqlKeys.FetchLogs, "message = @Message");
+        var sql = _fixture.Logs.Sql.GetSql(SqlKeys.SelectLogs, "message = @Message");
 
         var actual = context.QueryFirstOrDefault<Log>(sql,
             new { logDao.Message });
@@ -40,7 +40,7 @@ public class PostgreSqlLogTests : IClassFixture<PostgreSqlTestFixture>
 
         await context!.ExecuteAsync(_fixture.Logs.Sql.GetSql(SqlKeys.InsertLog), logDao);
 
-        var sql = _fixture.Logs.Sql.GetSql(SqlKeys.FetchLogs, "message = @Message");
+        var sql = _fixture.Logs.Sql.GetSql(SqlKeys.SelectLogs, "message = @Message");
 
         var actual = await context.QueryFirstOrDefaultAsync<Log>(sql, new { logDao.Message });
 
@@ -67,7 +67,7 @@ public class PostgreSqlLogTests : IClassFixture<PostgreSqlTestFixture>
         t.Connection?.Close();
 
         var actuals = context.Query<Log>(
-            _fixture.Logs.Sql.GetSql(SqlKeys.FetchLogs));
+            _fixture.Logs.Sql.GetSql(SqlKeys.SelectLogs));
 
         var match1 = actuals.FirstOrDefault(a => a.ProcessId.Equals(logDao1.ProcessId));
         var match2 = actuals.FirstOrDefault(a => a.ProcessId.Equals(logDao2.ProcessId));
@@ -95,7 +95,7 @@ public class PostgreSqlLogTests : IClassFixture<PostgreSqlTestFixture>
         t.Connection?.Close();
 
         var actuals = await context.QueryAsync<Log>(
-            _fixture.Logs.Sql.GetSql(SqlKeys.FetchLogs));
+            _fixture.Logs.Sql.GetSql(SqlKeys.SelectLogs));
 
         var match1 = actuals.FirstOrDefault(a => a.ProcessId.Equals(logDao1.ProcessId));
         var match2 = actuals.FirstOrDefault(a => a.ProcessId.Equals(logDao2.ProcessId));
@@ -114,7 +114,7 @@ public class PostgreSqlLogTests : IClassFixture<PostgreSqlTestFixture>
 
         context!.Execute(_fixture.Logs.Sql.GetSql(SqlKeys.InsertAppEvent), eventDao);
 
-        var sql = _fixture.Logs.Sql.GetSql(SqlKeys.FetchAppEvents, "event_name = @EventName");
+        var sql = _fixture.Logs.Sql.GetSql(SqlKeys.SelectAppEvents, "event_name = @EventName");
 
         var actual = context.QueryFirstOrDefault<AppEvent>(sql,
             new { eventDao.EventName });
@@ -133,7 +133,7 @@ public class PostgreSqlLogTests : IClassFixture<PostgreSqlTestFixture>
 
         await context!.ExecuteAsync(_fixture.Logs.Sql.GetSql(SqlKeys.InsertAppEvent), eventDao);
 
-        var sql = _fixture.Logs.Sql.GetSql(SqlKeys.FetchAppEvents, "event_name = @EventName");
+        var sql = _fixture.Logs.Sql.GetSql(SqlKeys.SelectAppEvents, "event_name = @EventName");
 
         var actual = await context.QueryFirstOrDefaultAsync<AppEvent>(sql,
             new { eventDao.EventName });
@@ -163,7 +163,7 @@ public class PostgreSqlLogTests : IClassFixture<PostgreSqlTestFixture>
         t.Connection?.Close();
 
         var actuals = context.Query<AppEvent>(
-            _fixture.Logs.Sql.GetSql(SqlKeys.FetchAppEvents), new { eventDao1.EventName });
+            _fixture.Logs.Sql.GetSql(SqlKeys.SelectAppEvents), new { eventDao1.EventName });
 
         var match1 = actuals.FirstOrDefault(a => a.ProcessId.Equals(eventDao1.ProcessId));
         var match2 = actuals.FirstOrDefault(a => a.ProcessId.Equals(eventDao2.ProcessId));
@@ -193,7 +193,7 @@ public class PostgreSqlLogTests : IClassFixture<PostgreSqlTestFixture>
         t.Connection?.Close();
 
         var actuals = await context.QueryAsync<AppEvent>(
-            _fixture.Logs.Sql.GetSql(SqlKeys.FetchAppEvents), new { eventDao1.EventName });
+            _fixture.Logs.Sql.GetSql(SqlKeys.SelectAppEvents), new { eventDao1.EventName });
 
         var match1 = actuals.FirstOrDefault(a => a.ProcessId.Equals(eventDao1.ProcessId));
         var match2 = actuals.FirstOrDefault(a => a.ProcessId.Equals(eventDao2.ProcessId));

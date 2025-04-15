@@ -90,7 +90,7 @@ internal abstract class RunnerBase
     {
         OnCommunicate(new CommunicationEventArgs("Fetching data to backtest ...", null));
         return _finDbContext.QueryAsync<CodesAndCounts>(
-            _finDbDef.Sql.GetSql(SqlKeys.FetchAdjustedCodesAndCounts), new { source },
+            _finDbDef.Sql.GetSql(SqlKeys.SelectAdjustedCodesAndCounts), new { source },
             commandTimeout: 0, cancellationToken: cancellationToken);
     }
 

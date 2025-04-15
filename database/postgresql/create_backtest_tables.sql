@@ -68,3 +68,49 @@ CREATE TABLE IF NOT EXISTS public.backtest_stats
   process_id UUID NULL,
   PRIMARY KEY (backtest_id, source, signal_name, category, sub_category)
 );
+
+CREATE TABLE IF NOT EXISTS public.stats_build
+(
+  id UUID NOT NULL,
+  source TEXT NOT NULL,
+  config_content TEXT NOT NULL, -- for config data (e.g., {"market":"SPY", "lookback": 20})
+  created_at TIMESTAMP WITH TIME ZONE NOT NULL,
+  updated_at TIMESTAMP WITH TIME ZONE NOT NULL,
+  created_at_unix_ms BIGINT NOT NULL,
+  updated_at_unix_ms BIGINT NOT NULL,
+  PRIMARY KEY (id)
+);
+
+CREATE TABLE IF NOT EXISTS public.stats_details
+(
+  stats_build_id UUID NOT NULL,
+  code TEXT NOT NULL,
+  stat_type TEXT NOT NULL,
+  stat_key TEXT NOT NULL,
+  stat_val DOUBLE PRECISION NOT NULL,
+  stat_meta TEXT NOT NULL, -- for meta data (e.g., trend values, ...)
+  created_at TIMESTAMP WITH TIME ZONE NOT NULL,
+  updated_at TIMESTAMP WITH TIME ZONE NOT NULL,
+  created_at_unix_ms BIGINT NOT NULL,
+  updated_at_unix_ms BIGINT NOT NULL,
+  PRIMARY KEY (stats_build_id, code, stat_type, stat_key)
+);
+
+CREATE TABLE IF NOT EXISTS public.stats
+(
+  stats_build_id UUID NOT NULL,
+  category TEXT NOT NULL,
+  sub_category TEXT NOT NULL,
+  stat_type TEXT NOT NULL,
+  stat_key TEXT NOT NULL,
+  stat_val DOUBLE PRECISION NOT NULL,
+  search_size INTEGER NOT NULL,
+  sample_size INTEGER NOT NULL,
+  confidence_lower DOUBLE PRECISION,
+  confidence_upper DOUBLE PRECISION,
+  created_at TIMESTAMP WITH TIME ZONE NOT NULL,
+  updated_at TIMESTAMP WITH TIME ZONE NOT NULL,
+  created_at_unix_ms BIGINT NOT NULL,
+  updated_at_unix_ms BIGINT NOT NULL,
+  PRIMARY KEY (stats_build_id, category, sub_category, stat_type, stat_key)
+);

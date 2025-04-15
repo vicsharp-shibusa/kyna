@@ -35,7 +35,7 @@ ON CONFLICT (id) DO UPDATE SET
 
         // Fetch all backtests
         yield return new KeyValuePair<SqlRepoKey, string>(
-            new SqlRepoKey(SqlKeys.FetchBacktest, DatabaseEngine.PostgreSql),
+            new SqlRepoKey(SqlKeys.SelectBacktest, DatabaseEngine.PostgreSql),
             @"
 SELECT
     id, name, type, source, description,
@@ -92,7 +92,7 @@ ON CONFLICT (id) DO UPDATE SET
 
         // Fetch all backtest results
         yield return new KeyValuePair<SqlRepoKey, string>(
-            new SqlRepoKey(SqlKeys.FetchBacktestResult, DatabaseEngine.PostgreSql),
+            new SqlRepoKey(SqlKeys.SelectBacktestResult, DatabaseEngine.PostgreSql),
             @"
 SELECT
     id, backtest_id AS BacktestId, signal_name AS SignalName, code, industry, sector,
@@ -137,7 +137,7 @@ ON CONFLICT (backtest_id, source, signal_name, category, sub_category) DO UPDATE
 
         // Fetch all backtest stats
         yield return new KeyValuePair<SqlRepoKey, string>(
-            new SqlRepoKey(SqlKeys.FetchBacktestStats, DatabaseEngine.PostgreSql),
+            new SqlRepoKey(SqlKeys.SelectBacktestStats, DatabaseEngine.PostgreSql),
             @"
 SELECT
     backtest_id AS BacktestId, source, signal_name AS SignalName, category, sub_category AS SubCategory,
@@ -158,7 +158,7 @@ DELETE FROM public.backtest_stats");
 
         // Fetch backtest result info for a specific backtest
         yield return new KeyValuePair<SqlRepoKey, string>(
-            new SqlRepoKey(SqlKeys.FetchBacktestResultInfo, DatabaseEngine.PostgreSql),
+            new SqlRepoKey(SqlKeys.SelectBacktestResultInfo, DatabaseEngine.PostgreSql),
             @"
 SELECT
     signal_name AS SignalName, code, industry, sector,
@@ -171,7 +171,7 @@ ORDER BY signal_name, code");
 
         // Fetch signal counts for a process ID
         yield return new KeyValuePair<SqlRepoKey, string>(
-            new SqlRepoKey(SqlKeys.FetchBacktestSignalCounts, DatabaseEngine.PostgreSql),
+            new SqlRepoKey(SqlKeys.SelectBacktestSignalCounts, DatabaseEngine.PostgreSql),
             @"
 SELECT
     R.backtest_id AS BacktestId,
@@ -186,7 +186,7 @@ ORDER BY R.backtest_id, signal_name, result_direction");
 
         // Fetch signal summary for a specific backtest and signal
         yield return new KeyValuePair<SqlRepoKey, string>(
-            new SqlRepoKey(SqlKeys.FetchBacktestSignalSummary, DatabaseEngine.PostgreSql),
+            new SqlRepoKey(SqlKeys.SelectBacktestSignalSummary, DatabaseEngine.PostgreSql),
             @"
 SELECT
     backtest_id AS BacktestId, signal_name AS Name, category, sub_category AS SubCategory,
@@ -200,7 +200,7 @@ ORDER BY success_percentage DESC, success_duration_calendar_days ASC");
 
         // Fetch detailed signal results for a process ID, backtest ID, and signal name
         yield return new KeyValuePair<SqlRepoKey, string>(
-            new SqlRepoKey(SqlKeys.FetchBacktestSignalDetails, DatabaseEngine.PostgreSql),
+            new SqlRepoKey(SqlKeys.SelectBacktestSignalDetails, DatabaseEngine.PostgreSql),
             @"
 SELECT
     R.backtest_id AS BacktestId,
@@ -221,7 +221,7 @@ ORDER BY R.code, R.entry_date");
 
         // Fetch process ID info with backtest counts and date ranges
         yield return new KeyValuePair<SqlRepoKey, string>(
-            new SqlRepoKey(SqlKeys.FetchBacktestsProcessIdInfo, DatabaseEngine.PostgreSql),
+            new SqlRepoKey(SqlKeys.SelectBacktestsProcessIdInfo, DatabaseEngine.PostgreSql),
             @"
 SELECT
     B.process_id AS ProcessId,

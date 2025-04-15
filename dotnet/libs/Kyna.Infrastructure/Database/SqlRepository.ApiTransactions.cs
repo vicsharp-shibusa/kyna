@@ -16,7 +16,7 @@ VALUES (@CreatedAt, @CreatedAtUnixMs, @Source, @Category, @SubCategory,
 @ResponseHeaders, @ResponseStatusCode, @ResponseBody, @ProcessId)");
 
         yield return new KeyValuePair<SqlRepoKey, string>(
-            new SqlRepoKey(SqlKeys.FetchApiTransaction, DatabaseEngine.PostgreSql),
+            new SqlRepoKey(SqlKeys.SelectApiTransaction, DatabaseEngine.PostgreSql),
     @"SELECT 
 created_at_unix_ms AS CreatedAtUnixMs,
 source AS Source, 
@@ -33,7 +33,7 @@ process_id AS ProcessId
 FROM public.api_transactions");
 
         yield return new KeyValuePair<SqlRepoKey, string>(
-            new SqlRepoKey(SqlKeys.FetchApiResponseBodyForId, DatabaseEngine.PostgreSql),
+            new SqlRepoKey(SqlKeys.SelectApiResponseBodyForId, DatabaseEngine.PostgreSql),
 @"SELECT response_body AS ResponseBody FROM public.api_transactions WHERE id = @Id");
 
         yield return new KeyValuePair<SqlRepoKey, string>(
@@ -48,7 +48,7 @@ FROM public.api_transactions");
 @"DELETE FROM public.api_transactions");
 
         yield return new KeyValuePair<SqlRepoKey, string>(
-            new SqlRepoKey(SqlKeys.FetchApiTransactionsForMigration, DatabaseEngine.PostgreSql),
+            new SqlRepoKey(SqlKeys.SelectApiTransactionsForMigration, DatabaseEngine.PostgreSql),
 @"SELECT
 id AS Id,
 source AS Source,

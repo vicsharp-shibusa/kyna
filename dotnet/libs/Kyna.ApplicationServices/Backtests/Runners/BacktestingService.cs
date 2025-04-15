@@ -24,7 +24,7 @@ public sealed class BacktestingService(DbDef finDef, DbDef backtestDef) : IDispo
 
     public Task<IEnumerable<ProcessIdInfo>> GetBacktestProcessesAsync() =>
         _backtestConn.QueryAsync<ProcessIdInfo>(
-            _bckDef.Sql.GetSql(SqlKeys.FetchBacktestsProcessIdInfo));
+            _bckDef.Sql.GetSql(SqlKeys.SelectBacktestsProcessIdInfo));
 
     public async Task DeleteProcessesAsync(params Guid[] processIds)
     {

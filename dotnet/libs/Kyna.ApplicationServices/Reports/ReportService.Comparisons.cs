@@ -26,7 +26,7 @@ public sealed partial class ReportService
 
         foreach (var source in sources)
         {
-            var sql = _financialDbDef.Sql.GetSql(SqlKeys.FetchSplits, "source = @Source");
+            var sql = _financialDbDef.Sql.GetSql(SqlKeys.SelectSplits, "source = @Source");
             var splits = _financialsConn.Query<Split>(sql, new { source });
             tickersBySourceDictionary.Add(source, [.. splits]);
         }
@@ -61,7 +61,7 @@ public sealed partial class ReportService
     public async Task<IEnumerable<string>> CreateChartComparisonCsvReportAsync(string outputDir)
     {
         var codesAndDates = _financialsConn.Query<CodeAndDates>(
-            _financialDbDef.Sql.GetSql(SqlKeys.FetchAdjustedCodesAndDates), commandTimeout: 0);
+            _financialDbDef.Sql.GetSql(SqlKeys.SelectAdjustedCodesAndDates), commandTimeout: 0);
 
         Dictionary<string, string[]> codesBySourceDictionary = [];
 

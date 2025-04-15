@@ -141,7 +141,7 @@ internal class CandlestickSignalRunner : RunnerBase, IBacktestRunner
         var repo = new CandlestickSignalRepository(new SignalOptions(configuration.LengthOfPrologue));
 
         var backtestResults = await _backtestDbContext.QueryAsync<BacktestResultsInfo>(
-            _backtestDbDef.Sql.GetSql(SqlKeys.FetchBacktestResultInfo),
+            _backtestDbDef.Sql.GetSql(SqlKeys.SelectBacktestResultInfo),
             new { backtestId }, cancellationToken: cancellationToken).ConfigureAwait(false);
 
         var signalNames = backtestResults.Select(b => b.SignalName).Distinct().ToArray();

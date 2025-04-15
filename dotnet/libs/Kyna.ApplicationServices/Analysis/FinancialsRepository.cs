@@ -19,7 +19,7 @@ public sealed class FinancialsRepository
     {
         using var conn = _dbDef.GetConnection();
         return conn.QueryAsync<string>(
-            _dbDef.Sql.GetSql(SqlKeys.FetchAllAdjustedSymbolsForSource), new { source });
+            _dbDef.Sql.GetSql(SqlKeys.SelectAllAdjustedSymbolsForSource), new { source });
     }
 
     public async Task<IEnumerable<Ohlc>> GetOhlcForSourceAndCodeAsync(string source, string code,
@@ -66,7 +66,7 @@ public sealed class FinancialsRepository
             whereClauses.Add("date_eod <= @Finish");
 
         return useAdjusted
-            ? $"{_dbDef.Sql.GetSql(SqlKeys.FetchEodAdjustedPrices, [.. whereClauses])}".Trim()
-            : $"{_dbDef.Sql.GetSql(SqlKeys.FetchEodPrices, [.. whereClauses])}".Trim();
+            ? $"{_dbDef.Sql.GetSql(SqlKeys.SelectEodAdjustedPrices, [.. whereClauses])}".Trim()
+            : $"{_dbDef.Sql.GetSql(SqlKeys.SelectEodPrices, [.. whereClauses])}".Trim();
     }
 }
