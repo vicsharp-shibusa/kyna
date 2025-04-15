@@ -1,4 +1,5 @@
-﻿using Kyna.Analysis.Technical.Charts;
+﻿using Amazon.S3.Model;
+using Kyna.Analysis.Technical.Charts;
 using Kyna.Analysis.Technical.Trends;
 using Kyna.ApplicationServices.Analysis;
 using Kyna.ApplicationServices.Cli;
@@ -46,75 +47,93 @@ try
         // get chart and calculate trend.
         var financialsRepo = new FinancialsRepository(finDef);
 
-        var aapl = (await financialsRepo.GetOhlcForSourceAndCodeAsync("polygon.io", "AAPL")).ToArray();
-
-        MovingAverageKey[] maKeys = [
-        new MovingAverageKey(21), new MovingAverageKey(50), new MovingAverageKey(200)
-        ];
-
-        List<WeightedTrend> trends = new(5)
+        foreach (var ticker in new string[] { "SPY", "DJIA", "QQQ" })
         {
-            new WeightedTrend(new ExtremeTrend(aapl), 0.50D), // good indicator.
-            new WeightedTrend(new MultipleMovingAverageTrend(aapl, maKeys), 0.05D),
-            new WeightedTrend(new PriceToMovingAverageTrend(maKeys[0], aapl), 0.20D),
-            new WeightedTrend(new PriceToMovingAverageTrend(maKeys[1], aapl), 0.15D),
-            new WeightedTrend(new PriceToMovingAverageTrend(maKeys[2], aapl), 0.10D)
-        };
+            var priceActions = (await financialsRepo.GetOhlcForSourceAndCodeAsync("polygon.io", ticker)).ToArray();
 
-        var trend = new CombinedWeightedTrend(trends.ToArray());
+            MovingAverageKey[] maKeys = [
+            new MovingAverageKey(21), new MovingAverageKey(50), new MovingAverageKey(200)
+            ];
 
-        //var trend = new ExtremeTrend(aapl);
+            double[] weights = new double[] {
+                0.37D, // best indicator
+                0.24D, // next best
+                0.16D, // and so on ...
+                0.11D,
+                0.08D,
+                0.04D,
+            };
 
-        //var trend = new MovingAverageTrend(maKeys[0], aapl);
-
-        //var trend = new MultipleMovingAverageTrend(aapl, maKeys);
-        //var trend = new PriceToMovingAverageTrend(maKeys[0], aapl);
-        trend.Calculate();
-
-        Debug.Assert(aapl.Length == trend.TrendValues.Length);
-
-        // write output
-        var rootFolder = Path.GetPathRoot(Environment.CurrentDirectory);
-        Debug.Assert(rootFolder != null);
-        var fullPath = Path.Combine(rootFolder, "temp", "kyna-tests");
-        if (!Directory.Exists(fullPath))
-            Directory.CreateDirectory(fullPath);
-
-        // fullPath will be like "C:\Your\Path\Here"
-        var outputFileFullName = Path.Combine(fullPath, $"{trend.GetType().Name}_{DateTime.Now:HHmmss}.csv");
-
-        using var outputFile = File.Create(outputFileFullName);
-
-        var headers = new string[] {
-            "Date","Symbol","Open","High","Low","Close","Volume","Trend"
-        };
-        outputFile.WriteLine(string.Join(',', headers));
-        for (int i = 0; i < aapl.Length; i++)
-        {
-            decimal percentPriceChange = 0M;
-            double percentTrendChange = 0D;
-
-            if (i > 0)
+            /*
+             * You can rearrange the indexes of weights[] below if you prefer a different setup,
+             * but the sum of the weights must be 1.0 when they are passed to the combined trend.
+             */
+            List<WeightedTrend> trends = new(5)
             {
-                if (aapl[i - 1].Close != 0M)
-                    percentPriceChange = (aapl[i].Close - aapl[i - 1].Close) / aapl[i - 1].Close;
-                if (trend.TrendValues[i - 1] != 0D)
-                    percentTrendChange = (trend.TrendValues[i] - trend.TrendValues[i - 1]) / trend.TrendValues[i - 1];
-            }
+                new WeightedTrend(new ExtremeTrend(priceActions), weights[0]),
+                new WeightedTrend(new PriceToMovingAverageTrend(maKeys[0], priceActions), weights[1]),
+                new WeightedTrend(new PriceToMovingAverageTrend(maKeys[1], priceActions), weights[2]),
+                new WeightedTrend(new PriceToMovingAverageTrend(maKeys[2], priceActions), weights[3]),
+                new WeightedTrend(new MultipleMovingAverageTrend(priceActions, maKeys), weights[4]),
+                new WeightedTrend(new CandlestickTrend(priceActions),weights[5])
+            };
 
-            var lineItems = new string[] {
-                aapl[i].Date.ToString("yyyy-MM-dd"),
-                aapl[i].Symbol,
-                aapl[i].Open.ToString("0.00"),
-                aapl[i].High.ToString("0.00"),
-                aapl[i].Low.ToString("0.00"),
-                aapl[i].Close.ToString("0.00"),
-                aapl[i].Volume.ToString("0.00"),
+            var trend = new CombinedWeightedTrend(trends.ToArray());
+            trend.Calculate();
+
+            //var trend = new ExtremeTrend(aapl);
+            //var trend = new MovingAverageTrend(maKeys[0], aapl);
+            //var trend = new MultipleMovingAverageTrend(aapl, maKeys);
+            //var trend = new PriceToMovingAverageTrend(maKeys[0], aapl);
+            //var trend = new CandlestickTrend(priceActions);
+
+            Debug.Assert(priceActions.Length == trend.TrendValues.Length);
+
+            // write output
+            var rootFolder = Path.GetPathRoot(Environment.CurrentDirectory);
+            Debug.Assert(rootFolder != null);
+            var fullPath = Path.Combine(rootFolder, "temp", "kyna-tests");
+            if (!Directory.Exists(fullPath))
+                Directory.CreateDirectory(fullPath);
+
+            // fullPath will be like "C:\Your\Path\Here"
+            var outputFileFullName = Path.Combine(fullPath, $"{ticker}_{trend.GetType().Name}_{DateTime.Now:HHmmss}.csv");
+
+            using var outputFile = File.Create(outputFileFullName);
+
+            var headers = new string[] {
+                "Date","Symbol","Open","High","Low","Close","Volume","Trend"
+            };
+            outputFile.WriteLine(string.Join(',', headers));
+            for (int i = 0; i < priceActions.Length; i++)
+            {
+                decimal percentPriceChange = 0M;
+                double percentTrendChange = 0D;
+
+                if (i > 0)
+                {
+                    if (priceActions[i - 1].Close != 0M)
+                        percentPriceChange = (priceActions[i].Close - priceActions[i - 1].Close) / priceActions[i - 1].Close;
+                    if (trend.TrendValues[i - 1] != 0D)
+                        percentTrendChange = (trend.TrendValues[i] - trend.TrendValues[i - 1]) / trend.TrendValues[i - 1];
+                }
+
+                var lineItems = new string[] {
+                priceActions[i].Date.ToString("yyyy-MM-dd"),
+                priceActions[i].Symbol,
+                priceActions[i].Open.ToString("0.00"),
+                priceActions[i].High.ToString("0.00"),
+                priceActions[i].Low.ToString("0.00"),
+                priceActions[i].Close.ToString("0.00"),
+                priceActions[i].Volume.ToString("0.00"),
                 trend.TrendValues[i].ToString("0.000")
             };
-            outputFile.WriteLine(string.Join(',', lineItems));
+                outputFile.WriteLine(string.Join(',', lineItems));
+            }
+            outputFile.Flush();
+            outputFile.Close();
+            Console.WriteLine(outputFileFullName);
         }
-        outputFile.Flush();
     }
     exitCode = 0;
 }

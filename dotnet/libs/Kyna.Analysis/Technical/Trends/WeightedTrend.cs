@@ -21,7 +21,7 @@ public record class WeightedTrend
 
         Trend.Calculate();
         TrendValues = new double[Trend.TrendValues.Length];
-
+            
         for (int t = 0; t < Trend!.TrendValues.Length; t++)
         {
             var weightedValue = Trend.TrendValues[t] * weight;
@@ -30,5 +30,5 @@ public record class WeightedTrend
     }
 
     public double[] TrendValues { get; }
-    public string Name => $"{Trend.ToString}:{(Weight*100):F2}%";
+    public string Name => $"{Trend.Name}:{(Weight*100):F2}%";
 }

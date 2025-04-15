@@ -362,26 +362,30 @@ internal sealed class PolygonMigrator : ImportsMigratorBase, IImportsMigrator, I
             commandTimeout: 0, cancellationToken: cancellationToken).ConfigureAwait(false);
         timer.Stop();
 
+        Printf(timer.Elapsed.ConvertToText());
+
         timer = Stopwatch.StartNew();
         /*
          * Some of the inbound data has big gaps in it. Not sure why; don't care. Need consecutive data points.
          * So, remove all the data before the last big price gap (currently set at '30 days') for any given ticker.
          */
-        Printf($"Deleting leading price gaps.");
-        await tgtConn.ExecuteAsync(_targetDbDef.Sql.GetSql(SqlKeys.DeleteLeadingPriceGaps),
-            new { _configuration.Source, ProcessId = _processId },
-            commandTimeout: 0, cancellationToken: cancellationToken).ConfigureAwait(false);
-        timer.Stop();
+        // TODO: removing this code to see if this is causing a problem with DJIA history.
+        //Printf($"Deleting leading price gaps.");
+        //await tgtConn.ExecuteAsync(_targetDbDef.Sql.GetSql(SqlKeys.DeleteLeadingPriceGaps),
+        //    new { _configuration.Source, ProcessId = _processId },
+        //    commandTimeout: 0, cancellationToken: cancellationToken).ConfigureAwait(false);
+        //timer.Stop();
+
+        //Printf(timer.Elapsed.ConvertToText());
 
         timer = Stopwatch.StartNew();
         Printf($"Fetching codes with splits.");
         var codesWithSplits = (await tgtConn.QueryAsync<string>(
             _targetDbDef.Sql.GetSql(SqlKeys.FetchCodesWithSplits), new { Source },
             cancellationToken: cancellationToken).ConfigureAwait(false)).ToArray();
-        timer.Stop();
-
+        
         tgtConn.Close();
-
+        
         if (_configuration.MaxParallelization > 1 && codesWithSplits.Length > 0)
         {
             await Parallel.ForEachAsync(codesWithSplits,
@@ -399,6 +403,8 @@ internal sealed class PolygonMigrator : ImportsMigratorBase, IImportsMigrator, I
                 await AdjustPriceForCodeAsync(code, cancellationToken);
             }
         }
+        timer.Stop();
+        Printf(timer.Elapsed.ConvertToText());
     }
 
     private static readonly string[] _whereClauses = ["source = @Source", "code = @Code"];

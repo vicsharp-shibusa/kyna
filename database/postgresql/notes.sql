@@ -1,3 +1,11 @@
+```sql
+select source, code, count(*) as Count
+FROM eod_adjusted_prices
+where code in ('AAPL','SPY','QQQ','DJIA')
+GROUP BY source, code;
+```
+---
+
 WITH Prices AS (
     SELECT id, timestamp_utc, category, sub_category,
 	ROW_NUMBER() OVER (PARTITION BY source --, category, sub_category
