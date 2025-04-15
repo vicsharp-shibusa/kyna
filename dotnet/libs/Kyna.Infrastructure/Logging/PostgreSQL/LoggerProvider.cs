@@ -35,7 +35,7 @@ internal class LoggerProvider : ILoggerProvider
 
     internal void PreserveLog(Database.DataAccessObjects.Log? logDao)
     {
-        if (logDao is not null)
+        if (logDao is not null && _runQueues)
         {
             _logQueue.Enqueue(logDao);
         }
@@ -43,7 +43,7 @@ internal class LoggerProvider : ILoggerProvider
 
     internal void PreserveLog(Database.DataAccessObjects.AppEvent appEventDao)
     {
-        if (appEventDao is not null)
+        if (appEventDao is not null && _runQueues)
         {
             _appEventQueue.Enqueue(appEventDao);
         }
@@ -54,6 +54,16 @@ internal class LoggerProvider : ILoggerProvider
         Task.Run(() =>
         {
             while (_runQueues)
+            {
+                if (_logQueue.TryDequeue(out Database.DataAccessObjects.Log? logItem))
+                {
+                    if (logItem is not null)
+                    {
+                        _connection.Execute(_dbDef.Sql.GetSql(SqlKeys.InsertLog), logItem);
+                    }
+                }
+            }
+            while (!_logQueue.IsEmpty)
             {
                 if (_logQueue.TryDequeue(out Database.DataAccessObjects.Log? logItem))
                 {
@@ -77,8 +87,19 @@ internal class LoggerProvider : ILoggerProvider
                     }
                 }
             }
+            while (!_appEventQueue.IsEmpty)
+            {
+                if (_appEventQueue.TryDequeue(out Database.DataAccessObjects.AppEvent? appEvent))
+                {
+                    if (appEvent is not null)
+                    {
+                        _connection.Execute(_dbDef.Sql.GetSql(SqlKeys.InsertAppEvent), appEvent);
+                    }
+                }
+            }
         });
     }
+
     public void Dispose()
     {
         const int NumberOfCycles = 10;

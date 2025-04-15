@@ -3,6 +3,7 @@ using Kyna.Analysis.Technical.Charts;
 using Kyna.Analysis.Technical.Signals;
 using Kyna.Analysis.Technical.Trends;
 using Kyna.ApplicationServices.Analysis;
+using Kyna.Backtests;
 using Kyna.Backtests.AlphaModel;
 using Kyna.Infrastructure.Database;
 using Kyna.Infrastructure.Database.DataAccessObjects;

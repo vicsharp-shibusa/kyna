@@ -1,4 +1,5 @@
 ﻿using Kyna.ApplicationServices.Analysis;
+using Kyna.Backtests;
 using Kyna.Backtests.AlphaModel;
 using Kyna.Infrastructure.Database;
 using Kyna.Infrastructure.Events;

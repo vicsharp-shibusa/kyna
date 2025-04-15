@@ -1,9 +1,9 @@
-﻿using Amazon.S3.Model;
-using Kyna.Analysis.Technical.Charts;
+﻿using Kyna.Analysis.Technical.Charts;
 using Kyna.Analysis.Technical.Trends;
 using Kyna.ApplicationServices.Analysis;
 using Kyna.ApplicationServices.Cli;
 using Kyna.ApplicationServices.Configuration;
+using Kyna.ApplicationServices.DataManagement;
 using Kyna.Common;
 using Kyna.Infrastructure.Database;
 using Kyna.Infrastructure.Logging;
@@ -55,14 +55,14 @@ try
             new MovingAverageKey(21), new MovingAverageKey(50), new MovingAverageKey(200)
             ];
 
-            double[] weights = new double[] {
+            double[] weights = [
                 0.37D, // best indicator
                 0.24D, // next best
                 0.16D, // and so on ...
                 0.11D,
                 0.08D,
                 0.04D,
-            };
+            ];
 
             /*
              * You can rearrange the indexes of weights[] below if you prefer a different setup,
@@ -78,7 +78,7 @@ try
                 new WeightedTrend(new CandlestickTrend(priceActions),weights[5])
             };
 
-            var trend = new CombinedWeightedTrend(trends.ToArray());
+            var trend = new CombinedWeightedTrend([.. trends]);
             trend.Calculate();
 
             //var trend = new ExtremeTrend(aapl);

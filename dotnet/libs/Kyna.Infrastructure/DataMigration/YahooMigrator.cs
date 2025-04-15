@@ -1,5 +1,4 @@
 ﻿using Kyna.Infrastructure.Database;
-using Kyna.Infrastructure.Events;
 using System.Diagnostics;
 using System.Text;
 using System.Text.Json.Serialization;
@@ -157,7 +156,7 @@ internal sealed class YahooMigrator(DbDef sourceDef, DbDef targetDef,
             if (!decimal.TryParse(split[4], System.Globalization.NumberStyles.Float, null, out decimal close))
                 throw new Exception($"Could not parse close from line {i} in file {file.Name}");
 
-            if (!decimal.TryParse(split[5], System.Globalization.NumberStyles.Float, null, out decimal adjClose))
+            if (!decimal.TryParse(split[5], System.Globalization.NumberStyles.Float, null, out _))
                 throw new Exception($"Could not parse adjusted close from line {i} in file {file.Name}");
 
             if (!long.TryParse(split[6], out long volume))

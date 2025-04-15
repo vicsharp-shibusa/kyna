@@ -1,6 +1,7 @@
 ﻿using Kyna.ApplicationServices.Backtests.Runners;
 using Kyna.ApplicationServices.Cli;
 using Kyna.ApplicationServices.Configuration;
+using Kyna.ApplicationServices.DataManagement;
 using Kyna.Common;
 using Kyna.Infrastructure.Logging;
 using Microsoft.Extensions.Configuration;
