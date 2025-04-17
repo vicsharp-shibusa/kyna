@@ -8,4 +8,5 @@ namespace Kyna.ApplicationServices.Backtests.Readers;
 
 internal class ChartReader
 {
+    
 }

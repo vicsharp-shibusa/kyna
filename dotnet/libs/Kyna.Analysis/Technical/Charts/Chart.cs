@@ -9,19 +9,19 @@ public class Chart : IEquatable<Chart?>
     private decimal[] _averageHeights = [];
     private decimal[] _averageBodyHeights = [];
     private long[] _averageVolumes = [];
-    private TrendSentiment[] _prologueSentiment = [];
-    private readonly int _prologueLength = 15;
+    private TrendSentiment[] _lookbackSentiment = [];
+    private readonly int _lookbackLength = 15;
 
     internal Chart(string? source, string? name, string? industry, string? sector,
         ChartInterval interval = ChartInterval.Daily,
-        int prologueLength = 15)
+        int lookbackLength = 15)
     {
         Source = source;
         Code = name;
         Industry = industry;
         Sector = sector;
         Interval = interval;
-        _prologueLength = Math.Max(prologueLength, 0);
+        _lookbackLength = Math.Max(lookbackLength, 0);
     }
 
     public ChartInterval Interval { get; }
@@ -94,8 +94,8 @@ public class Chart : IEquatable<Chart?>
         }
     }
 
-    public TrendSentiment PrologueSentiment(int position) => position > -1 && position < _prologueSentiment.Length
-        ? _prologueSentiment[position]
+    public TrendSentiment LookbackSentiment(int position) => position > -1 && position < _lookbackSentiment.Length
+        ? _lookbackSentiment[position]
         : TrendSentiment.Neutral;
 
     public Chart WithMovingAverage(MovingAverageKey key)
@@ -156,22 +156,22 @@ public class Chart : IEquatable<Chart?>
         _averageHeights = new decimal[PriceActions.Length];
         _averageBodyHeights = new decimal[PriceActions.Length];
         _averageVolumes = new long[PriceActions.Length];
-        _prologueSentiment = new TrendSentiment[PriceActions.Length];
+        _lookbackSentiment = new TrendSentiment[PriceActions.Length];
 
         for (int p = 0; p < PriceActions.Length; p++)
         {
-            if (_prologueLength > 0 && p > _prologueLength)
+            if (_lookbackLength > 0 && p > _lookbackLength)
             {
-                var prologue = Candlesticks[(p - _prologueLength - 1)..(p - 1)];
-                _prologueSentiment[p] = prologue.All(pr => pr.High < Candlesticks[p].High)
+                var lookback = Candlesticks[(p - _lookbackLength - 1)..(p - 1)];
+                _lookbackSentiment[p] = lookback.All(pr => pr.High < Candlesticks[p].High)
                     ? TrendSentiment.Bull
-                    : prologue.All(pr => pr.Low > Candlesticks[p].Low)
+                    : lookback.All(pr => pr.Low > Candlesticks[p].Low)
                     ? TrendSentiment.Bear
                     : TrendSentiment.Neutral;
             }
             else
             {
-                _prologueSentiment[p] = TrendSentiment.Neutral;
+                _lookbackSentiment[p] = TrendSentiment.Neutral;
             }
 
             if (p == 0)
@@ -199,7 +199,7 @@ public class Chart : IEquatable<Chart?>
     public bool Equals(Chart? other)
     {
         return other is not null &&
-               _prologueLength == other._prologueLength &&
+               _lookbackLength == other._lookbackLength &&
                Interval == other.Interval &&
                Source == other.Source &&
                Code == other.Code &&
@@ -211,13 +211,13 @@ public class Chart : IEquatable<Chart?>
     }
 
     public static int GetCacheKey(string? source, string? code, string? industry, string? sector,
-        string? trend = null, int prologueLength = 15, ChartInterval interval = ChartInterval.Daily)
+        string? trend = null, int lookbackLength = 15, ChartInterval interval = ChartInterval.Daily)
     {
-        return HashCode.Combine(source, code, industry, sector, trend, prologueLength, interval);
+        return HashCode.Combine(source, code, industry, sector, trend, lookbackLength, interval);
     }
 
     public override int GetHashCode()
     {
-        return GetCacheKey(Source, Code, Industry, Sector, Trend?.Name, _prologueLength, Interval);
+        return GetCacheKey(Source, Code, Industry, Sector, Trend?.Name, _lookbackLength, Interval);
     }
 }

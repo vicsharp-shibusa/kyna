@@ -35,7 +35,7 @@ public abstract class OhlcSignalBase(
     /// Represents a function to determine if a given position on a chart
     /// is a match for a specified signal.
     /// The arguments are Chart, position in chart, number of OHLC required,
-    /// length of prologue, and volume factor.
+    /// length of lookback period, and volume factor.
     /// Volume factor is the factor applied to volume on the key candle, when appropriate.
     /// </summary>
     public abstract Func<Chart, int, int, int, double, int> IsMatch { get; init; }
@@ -43,11 +43,11 @@ public abstract class OhlcSignalBase(
     public virtual IEnumerable<SignalMatch> DiscoverMatches(Chart chart, Chart? market = null, bool signalOnlyWithMarket = false,
         double volumeFactor = 1D)
     {
-        if (chart.Length >= (NumberRequired + Options.LengthOfPrologue))
+        if (chart.Length >= (NumberRequired + Options.LookbackLength))
         {
             bool useMarket = signalOnlyWithMarket && market != null && market.PriceActions.Length > 0;
 
-            for (int i = Options.LengthOfPrologue; i < chart.Length - NumberRequired; i++)
+            for (int i = Options.LookbackLength; i < chart.Length - NumberRequired; i++)
             {
                 if (useMarket)
                 {
@@ -60,7 +60,7 @@ public abstract class OhlcSignalBase(
                         continue;
                     }
                 }
-                int position = IsMatch(chart, i, NumberRequired, Options.LengthOfPrologue, volumeFactor);
+                int position = IsMatch(chart, i, NumberRequired, Options.LookbackLength, volumeFactor);
                 if (position > -1)
                 {
                     yield return new SignalMatch()
@@ -69,7 +69,7 @@ public abstract class OhlcSignalBase(
                         Code = chart.Code ?? "None",
                         Industry = chart.Industry,
                         Sector = chart.Sector,
-                        Prologue = new ChartPositionRange(i - Options.LengthOfPrologue, i - 1),
+                        LookbackRange = new ChartPositionRange(i - Options.LookbackLength, i - 1),
                         Signal = new ChartPositionRange(i, i + NumberRequired - 1),
                         Position = position
                     };
@@ -80,14 +80,14 @@ public abstract class OhlcSignalBase(
 }
 
 public struct SignalMatch(string signalName, string code, string? industry, string? sector,
-    ChartPositionRange prologue, ChartPositionRange signal,
+    ChartPositionRange lookbackRange, ChartPositionRange signal,
     int position)
 {
     public string SignalName = signalName;
     public string Code = code;
     public string? Industry = industry;
     public string? Sector = sector;
-    public ChartPositionRange Prologue = prologue;
+    public ChartPositionRange LookbackRange = lookbackRange;
     public ChartPositionRange Signal = signal;
     public int Position = position;
 }
@@ -98,7 +98,7 @@ public struct ChartPositionRange(int start, int end)
     public int End = end;
 }
 
-public struct SignalOptions(int lengthOfPrologue)
+public struct SignalOptions(int lookbackLength)
 {
-    public int LengthOfPrologue = lengthOfPrologue;
+    public int LookbackLength = lookbackLength;
 }

@@ -7,12 +7,11 @@ public sealed partial class CandlestickSignalRepository
     private static int IsTallWhiteCandle(Chart chart,
         int position,
         int numberRequired,
-        int lengthOfPrologue,
+        int lookbackLength,
         double volumeFactor = 1D)
     {
-        CheckSignalArgs(chart, position, numberRequired, lengthOfPrologue);
+        CheckSignalArgs(chart, position, numberRequired, lookbackLength);
 
-        //var prologue = chart.Candlesticks[(position - lengthOfPrologue)..(position - 1)];
         var first = chart.Candlesticks[position];
         var second = chart.Candlesticks[position + 1];
 

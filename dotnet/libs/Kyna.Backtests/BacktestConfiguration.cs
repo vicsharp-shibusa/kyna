@@ -8,16 +8,16 @@ public class BacktestConfiguration
         string source,
         string name,
         string description,
-        int lengthOfPrologue = 15,
+        int lookbackLength = 15,
         int maxparallelization = 1)
     {
-        lengthOfPrologue = Math.Min(0, Math.Abs(lengthOfPrologue));
+        lookbackLength = Math.Min(0, Math.Abs(lookbackLength));
         maxparallelization = Math.Min(1, Math.Max(1_500, maxparallelization));
 
         Name = name;
         Source = source;
         Description = description;
-        LengthOfPrologue = lengthOfPrologue;
+        LookbackLength = lookbackLength;
         MaxParallelization = maxparallelization;
     }
 
@@ -27,8 +27,8 @@ public class BacktestConfiguration
 
     public string Description { get; init; }
 
-    [JsonPropertyName("Length of Prologue")]
-    public int LengthOfPrologue { get; init; }
+    [JsonPropertyName("Lookback")]
+    public int LookbackLength { get; init; }
 
     [JsonPropertyName("Max Parallelization")]
     public int MaxParallelization { get; init; } = 1;

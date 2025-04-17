@@ -12,7 +12,7 @@
     "Price Point": "Low",
     "Value": 0.1
   },
-  "Length O fPrologue": 15,
+  "Lookback": 15,
   "Volume Factor": 1.2,
   "Max Parallelization": 10,
   "Signal Names": [

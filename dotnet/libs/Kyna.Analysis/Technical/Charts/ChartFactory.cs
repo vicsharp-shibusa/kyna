@@ -16,8 +16,8 @@ public sealed class ChartConfiguration
 
     [JsonPropertyName("Trend Configuration")]
     public TrendConfiguration[]? Trends { get; init; }
-    [JsonPropertyName("Length of Prologue")]
-    public int LengthOfPrologue { get; init; } = 15;
+    [JsonPropertyName("Lookback")]
+    public int LookbackLength { get; init; } = 15;
 }
 
 public sealed class MarketConfiguration
@@ -218,17 +218,17 @@ public static class ChartFactory
                         Trend = "S200C"
                     }
                 ],
-                LengthOfPrologue = 15
+                LookbackLength = 15
             };
         }
 
         if (_memoryCache.TryGetValue(Chart.GetCacheKey(source, code, industry, sector, trend?.Name,
-            configuration.LengthOfPrologue, interval), out Chart? chart) && chart != null)
+            configuration.LookbackLength, interval), out Chart? chart) && chart != null)
         {
             return chart;
         }
 
-        chart = new Chart(source, code, industry, sector, interval, configuration.LengthOfPrologue).WithCandles(ohlc);
+        chart = new Chart(source, code, industry, sector, interval, configuration.LookbackLength).WithCandles(ohlc);
 
         if (movingAverageKeys.Count != 0)
         {

@@ -8,16 +8,16 @@ public sealed partial class CandlestickSignalRepository
     private static int IsBullishEngulfing(Chart chart,
         int position,
         int numberRequired,
-        int lengthOfPrologue,
+        int lookbackLength,
         double volumeFactor = 1D)
     {
-        CheckSignalArgs(chart, position, numberRequired, lengthOfPrologue);
+        CheckSignalArgs(chart, position, numberRequired, lookbackLength);
 
         var first = chart.Candlesticks[position];
         var second = chart.Candlesticks[position + 1];
 
         return chart.TrendValues[position].AsSentiment().IsBearish() &&
-            chart.PrologueSentiment(position).IsBearish() &&
+            chart.LookbackSentiment(position).IsBearish() &&
             first.IsDark &&
             second.IsLight &&
             second.Body.Low < first.Body.Low &&
@@ -29,16 +29,16 @@ public sealed partial class CandlestickSignalRepository
     private static int IsBullishEngulfingWithFollowThru(Chart chart,
         int position,
         int numberRequired,
-        int lengthOfPrologue,
+        int lookupLength,
         double volumeFactor = 1D)
     {
-        CheckSignalArgs(chart, position, numberRequired, lengthOfPrologue);
+        CheckSignalArgs(chart, position, numberRequired, lookupLength);
 
         var first = chart.Candlesticks[position];
         var second = chart.Candlesticks[position + 1];
 
         if (chart.TrendValues[position].AsSentiment().IsBearish() &&
-            chart.PrologueSentiment(position).IsBearish() &&
+            chart.LookbackSentiment(position).IsBearish() &&
             first.IsDark &&
             second.IsLight &&
             second.Body.Low < first.Body.Low &&
@@ -64,16 +64,16 @@ public sealed partial class CandlestickSignalRepository
     private static int IsBullishEngulfingWithTallCandles(Chart chart,
         int position,
         int numberRequired,
-        int lengthOfPrologue,
+        int lookupLength,
         double volumeFactor = 1D)
     {
-        CheckSignalArgs(chart, position, numberRequired, lengthOfPrologue);
+        CheckSignalArgs(chart, position, numberRequired, lookupLength);
 
         var first = chart.Candlesticks[position];
         var second = chart.Candlesticks[position + 1];
 
         return chart.TrendValues[position].AsSentiment().IsBearish() &&
-            chart.PrologueSentiment(position).IsBearish() &&
+            chart.LookbackSentiment(position).IsBearish() &&
             first.IsDark &&
             chart.IsTall(position) &&
             second.IsLight &&
@@ -86,10 +86,10 @@ public sealed partial class CandlestickSignalRepository
     private static int IsBullishEngulfingWithFourBlackPredecessors(Chart chart,
         int position,
         int numberRequired,
-        int lengthOfPrologue,
+        int lookupLength,
         double volumeFactor = 1D)
     {
-        CheckSignalArgs(chart, position, numberRequired, lengthOfPrologue);
+        CheckSignalArgs(chart, position, numberRequired, lookupLength);
 
         var first = chart.Candlesticks[position];
         var second = chart.Candlesticks[position + 1];
@@ -99,7 +99,7 @@ public sealed partial class CandlestickSignalRepository
         var sixth = chart.Candlesticks[position + 5];
 
         if (chart.TrendValues[position + 4].AsSentiment().IsBearish() &&
-            chart.PrologueSentiment(position + 4).IsBearish() &&
+            chart.LookbackSentiment(position + 4).IsBearish() &&
             first.IsDark && second.IsDark && third.IsDark && fourth.IsDark &&
             fifth.IsDark &&
             sixth.IsLight &&
@@ -116,16 +116,16 @@ public sealed partial class CandlestickSignalRepository
     private static int IsBearishEngulfing(Chart chart,
         int position,
         int numberRequired,
-        int lengthOfPrologue,
+        int lookupLength,
         double volumeFactor = 1D)
     {
-        CheckSignalArgs(chart, position, numberRequired, lengthOfPrologue);
+        CheckSignalArgs(chart, position, numberRequired, lookupLength);
 
         var first = chart.Candlesticks[position];
         var second = chart.Candlesticks[position + 1];
 
         return chart.TrendValues[position].AsSentiment().IsBullish() &&
-            chart.PrologueSentiment(position).IsBullish() &&
+            chart.LookbackSentiment(position).IsBullish() &&
             first.IsLight &&
             second.IsDark &&
             second.Body.Low < first.Body.Low &&
@@ -137,16 +137,16 @@ public sealed partial class CandlestickSignalRepository
     private static int IsBearishEngulfingWithFollowThru(Chart chart,
         int position,
         int numberRequired,
-        int lengthOfPrologue,
+        int lookupLength,
         double volumeFactor = 1D)
     {
-        CheckSignalArgs(chart, position, numberRequired, lengthOfPrologue);
+        CheckSignalArgs(chart, position, numberRequired, lookupLength);
 
         var first = chart.Candlesticks[position];
         var second = chart.Candlesticks[position + 1];
 
         if (chart.TrendValues[position].AsSentiment().IsBullish() &&
-            chart.PrologueSentiment(position).IsBullish() &&
+            chart.LookbackSentiment(position).IsBullish() &&
             first.IsLight &&
             second.IsDark &&
             second.Body.Low < first.Body.Low &&
@@ -171,16 +171,16 @@ public sealed partial class CandlestickSignalRepository
     private static int IsBearishEngulfingWithTallCandles(Chart chart,
         int position,
         int numberRequired,
-        int lengthOfPrologue,
+        int lookupLength,
         double volumeFactor = 1D)
     {
-        CheckSignalArgs(chart, position, numberRequired, lengthOfPrologue);
+        CheckSignalArgs(chart, position, numberRequired, lookupLength);
 
         var first = chart.Candlesticks[position];
         var second = chart.Candlesticks[position + 1];
 
         return chart.TrendValues[position].AsSentiment().IsBullish() &&
-            chart.PrologueSentiment(position).IsBullish() &&
+            chart.LookbackSentiment(position).IsBullish() &&
             first.IsLight &&
             chart.IsTall(position) &&
             second.IsDark &&
@@ -193,10 +193,10 @@ public sealed partial class CandlestickSignalRepository
     private static int IsBearishEngulfingWithFourWhitePredecessors(Chart chart,
         int position,
         int numberRequired,
-        int lengthOfPrologue,
+        int lookupLength,
         double volumeFactor = 1D)
     {
-        CheckSignalArgs(chart, position, numberRequired, lengthOfPrologue);
+        CheckSignalArgs(chart, position, numberRequired, lookupLength);
 
         var first = chart.Candlesticks[position];
         var second = chart.Candlesticks[position + 1];
@@ -206,7 +206,7 @@ public sealed partial class CandlestickSignalRepository
         var sixth = chart.Candlesticks[position + 5];
 
         return chart.TrendValues[position + 4].AsSentiment().IsBullish() &&
-            chart.PrologueSentiment(position + 4).IsBullish() &&
+            chart.LookbackSentiment(position + 4).IsBullish() &&
             first.IsLight && second.IsLight && third.IsLight && fourth.IsLight &&
             fifth.IsLight &&
             sixth.IsDark &&
@@ -219,32 +219,32 @@ public sealed partial class CandlestickSignalRepository
     private static int IsBullishHammer(Chart chart,
         int position,
         int numberRequired,
-        int lengthOfPrologue,
+        int lookupLength,
         double volumeFactor = 1D)
     {
-        CheckSignalArgs(chart, position, numberRequired, lengthOfPrologue);
+        CheckSignalArgs(chart, position, numberRequired, lookupLength);
 
         var first = chart.Candlesticks[position];
 
         return first.IsUmbrella &&
             chart.TrendValues[position].AsSentiment().IsBearish() &&
-            chart.PrologueSentiment(position).IsBearish()
+            chart.LookbackSentiment(position).IsBearish()
             ? position : -1;
     }
 
     private static int IsBullishHammerWithFollowThru(Chart chart,
       int position,
       int numberRequired,
-      int lengthOfPrologue,
+      int lookupLength,
       double volumeFactor = 1D)
     {
-        CheckSignalArgs(chart, position, numberRequired, lengthOfPrologue);
+        CheckSignalArgs(chart, position, numberRequired, lookupLength);
 
         var first = chart.Candlesticks[position];
 
         if (first.IsUmbrella &&
             chart.TrendValues[position].AsSentiment().IsBearish() &&
-            chart.PrologueSentiment(position).IsBearish())
+            chart.LookbackSentiment(position).IsBearish())
         {
             for (int i = position + 1; i < (position + numberRequired); i++)
             {
@@ -267,32 +267,32 @@ public sealed partial class CandlestickSignalRepository
     private static int IsBearishHammer(Chart chart,
         int position,
         int numberRequired,
-        int lengthOfPrologue,
+        int lookupLength,
         double volumeFactor = 1D)
     {
-        CheckSignalArgs(chart, position, numberRequired, lengthOfPrologue);
+        CheckSignalArgs(chart, position, numberRequired, lookupLength);
 
         var first = chart.Candlesticks[position];
 
         return first.IsUmbrella &&
             chart.TrendValues[position].AsSentiment().IsBullish() &&
-            chart.PrologueSentiment(position).IsBullish()
+            chart.LookbackSentiment(position).IsBullish()
             ? position : -1;
     }
 
     private static int IsBearishHammerWithFollowThru(Chart chart,
         int position,
         int numberRequired,
-        int lengthOfPrologue,
+        int lookupLength,
         double volumeFactor = 1D)
     {
-        CheckSignalArgs(chart, position, numberRequired, lengthOfPrologue);
+        CheckSignalArgs(chart, position, numberRequired, lookupLength);
 
         var first = chart.Candlesticks[position];
 
         if (first.IsUmbrella &&
             chart.TrendValues[position].AsSentiment().IsBullish() &&
-            chart.PrologueSentiment(position).IsBullish())
+            chart.LookbackSentiment(position).IsBullish())
         {
             for (int i = position + 1; i < (position + numberRequired); i++)
             {
@@ -312,16 +312,16 @@ public sealed partial class CandlestickSignalRepository
     private static int IsDarkCloudCover(Chart chart,
         int position,
         int numberRequired,
-        int lengthOfPrologue,
+        int lookupLength,
         double volumeFactor = 1D)
     {
-        CheckSignalArgs(chart, position, numberRequired, lengthOfPrologue);
+        CheckSignalArgs(chart, position, numberRequired, lookupLength);
 
         var first = chart.Candlesticks[position];
         var second = chart.Candlesticks[position + 1];
 
         return chart.TrendValues[position].AsSentiment().IsBullish() &&
-            chart.PrologueSentiment(position).IsBullish() &&
+            chart.LookbackSentiment(position).IsBullish() &&
             first.IsLight &&
             chart.IsTall(position) &&
             second.IsDark &&
@@ -334,17 +334,17 @@ public sealed partial class CandlestickSignalRepository
     private static int IsDarkCloudCoverWithFollowThru(Chart chart,
         int position,
         int numberRequired,
-        int lengthOfPrologue,
+        int lookupLength,
         double volumeFactor = 1D)
     {
-        CheckSignalArgs(chart, position, numberRequired, lengthOfPrologue);
+        CheckSignalArgs(chart, position, numberRequired, lookupLength);
 
         var first = chart.Candlesticks[position];
         var second = chart.Candlesticks[position + 1];
         var third = chart.Candlesticks[position + 2];
 
         return chart.TrendValues[position].AsSentiment().IsBullish() &&
-            chart.PrologueSentiment(position).IsBullish() &&
+            chart.LookbackSentiment(position).IsBullish() &&
             first.IsLight &&
             chart.IsTall(position) &&
             second.IsDark &&
@@ -358,16 +358,16 @@ public sealed partial class CandlestickSignalRepository
     private static int IsPiercing(Chart chart,
         int position,
         int numberRequired,
-        int lengthOfPrologue,
+        int lookupLength,
         double volumeFactor = 1D)
     {
-        CheckSignalArgs(chart, position, numberRequired, lengthOfPrologue);
+        CheckSignalArgs(chart, position, numberRequired, lookupLength);
 
         var first = chart.Candlesticks[position];
         var second = chart.Candlesticks[position + 1];
 
         return chart.TrendValues[position].AsSentiment().IsBearish() &&
-            chart.PrologueSentiment(position).IsBearish() &&
+            chart.LookbackSentiment(position).IsBearish() &&
             first.IsDark &&
             chart.IsTall(position) &&
             second.IsLight &&
@@ -380,17 +380,17 @@ public sealed partial class CandlestickSignalRepository
     private static int IsPiercingWithFollowThru(Chart chart,
         int position,
         int numberRequired,
-        int lengthOfPrologue,
+        int lookupLength,
         double volumeFactor = 1D)
     {
-        CheckSignalArgs(chart, position, numberRequired, lengthOfPrologue);
+        CheckSignalArgs(chart, position, numberRequired, lookupLength);
 
         var first = chart.Candlesticks[position];
         var second = chart.Candlesticks[position + 1];
         var third = chart.Candlesticks[position + 2];
 
         return chart.TrendValues[position].AsSentiment().IsBearish() &&
-            chart.PrologueSentiment(position).IsBearish() &&
+            chart.LookbackSentiment(position).IsBearish() &&
             first.IsDark &&
             chart.IsTall(position) &&
             second.IsLight &&
@@ -404,17 +404,17 @@ public sealed partial class CandlestickSignalRepository
     private static int IsMorningStar(Chart chart,
        int position,
        int numberRequired,
-       int lengthOfPrologue,
+       int lookupLength,
        double volumeFactor = 1D)
     {
-        CheckSignalArgs(chart, position, numberRequired, lengthOfPrologue);
+        CheckSignalArgs(chart, position, numberRequired, lookupLength);
 
         var first = chart.Candlesticks[position];
         var second = chart.Candlesticks[position + 1];
         var third = chart.Candlesticks[position + 2];
 
         return chart.TrendValues[position].AsSentiment().IsBearish() &&
-            chart.PrologueSentiment(position).IsBearish() &&
+            chart.LookbackSentiment(position).IsBearish() &&
             first.IsDark &&
             second.Body.High < first.Body.Low &&
             chart.IsTall(position) &&
@@ -431,17 +431,17 @@ public sealed partial class CandlestickSignalRepository
     private static int IsEveningStar(Chart chart,
        int position,
        int numberRequired,
-       int lengthOfPrologue,
+       int lookupLength,
        double volumeFactor = 1D)
     {
-        CheckSignalArgs(chart, position, numberRequired, lengthOfPrologue);
+        CheckSignalArgs(chart, position, numberRequired, lookupLength);
 
         var first = chart.Candlesticks[position];
         var second = chart.Candlesticks[position + 1];
         var third = chart.Candlesticks[position + 2];
 
         return chart.TrendValues[position].AsSentiment().IsBullish() &&
-            chart.PrologueSentiment(position).IsBullish() &&
+            chart.LookbackSentiment(position).IsBullish() &&
             first.IsLight &&
             second.Body.Low > first.Body.High &&
             chart.IsTall(position) &&
@@ -458,17 +458,17 @@ public sealed partial class CandlestickSignalRepository
     private static int IsMorningDojiStar(Chart chart,
        int position,
        int numberRequired,
-       int lengthOfPrologue,
+       int lookupLength,
        double volumeFactor = 1D)
     {
-        CheckSignalArgs(chart, position, numberRequired, lengthOfPrologue);
+        CheckSignalArgs(chart, position, numberRequired, lookupLength);
 
         var first = chart.Candlesticks[position];
         var second = chart.Candlesticks[position + 1];
         var third = chart.Candlesticks[position + 2];
 
         return chart.TrendValues[position].AsSentiment().IsBearish() &&
-            chart.PrologueSentiment(position).IsBearish() &&
+            chart.LookbackSentiment(position).IsBearish() &&
             first.IsDark &&
             chart.IsTall(position) &&
             second.Body.High < first.Body.Low &&
@@ -485,17 +485,17 @@ public sealed partial class CandlestickSignalRepository
     private static int IsEveningDojiStar(Chart chart,
        int position,
        int numberRequired,
-       int lengthOfPrologue,
+       int lookupLength,
        double volumeFactor = 1D)
     {
-        CheckSignalArgs(chart, position, numberRequired, lengthOfPrologue);
+        CheckSignalArgs(chart, position, numberRequired, lookupLength);
 
         var first = chart.Candlesticks[position];
         var second = chart.Candlesticks[position + 1];
         var third = chart.Candlesticks[position + 2];
 
         return chart.TrendValues[position].AsSentiment().IsBullish() &&
-            chart.PrologueSentiment(position).IsBullish() &&
+            chart.LookbackSentiment(position).IsBullish() &&
             first.IsLight &&
             second.Body.Low > first.Body.High &&
             chart.IsTall(position) &&
@@ -512,15 +512,15 @@ public sealed partial class CandlestickSignalRepository
     private static int IsShootingStar(Chart chart,
        int position,
        int numberRequired,
-       int lengthOfPrologue,
+       int lookupLength,
        double volumeFactor = 1D)
     {
-        CheckSignalArgs(chart, position, numberRequired, lengthOfPrologue);
+        CheckSignalArgs(chart, position, numberRequired, lookupLength);
 
         var first = chart.Candlesticks[position];
 
         return chart.TrendValues[position].AsSentiment().IsBullish() &&
-            chart.PrologueSentiment(position).IsBullish() &&
+            chart.LookbackSentiment(position).IsBullish() &&
             (first.IsInvertedUmbrella || first.IsGravestoneDoji)
             ? position : -1;
     }
@@ -528,15 +528,15 @@ public sealed partial class CandlestickSignalRepository
     private static int IsInvertedHammer(Chart chart,
        int position,
        int numberRequired,
-       int lengthOfPrologue,
+       int lookupLength,
        double volumeFactor = 1D)
     {
-        CheckSignalArgs(chart, position, numberRequired, lengthOfPrologue);
+        CheckSignalArgs(chart, position, numberRequired, lookupLength);
 
         var first = chart.Candlesticks[position];
 
         return chart.TrendValues[position].AsSentiment().IsBearish() &&
-            chart.PrologueSentiment(position).IsBearish() &&
+            chart.LookbackSentiment(position).IsBearish() &&
             (first.IsInvertedUmbrella || first.IsGravestoneDoji)
             ? position : -1;
     }
@@ -544,16 +544,16 @@ public sealed partial class CandlestickSignalRepository
     private static int IsBullishHarami(Chart chart,
        int position,
        int numberRequired,
-       int lengthOfPrologue,
+       int lookupLength,
        double volumeFactor = 1D)
     {
-        CheckSignalArgs(chart, position, numberRequired, lengthOfPrologue);
+        CheckSignalArgs(chart, position, numberRequired, lookupLength);
 
         var first = chart.Candlesticks[position];
         var second = chart.Candlesticks[position + 1];
 
         return chart.TrendValues[position].AsSentiment().IsBearish() &&
-            chart.PrologueSentiment(position).IsBearish() &&
+            chart.LookbackSentiment(position).IsBearish() &&
             chart.IsTall(position, 0, 1.2M) &&
             chart.IsShort(position + 1) &&
             !second.IsDoji &&
@@ -565,16 +565,16 @@ public sealed partial class CandlestickSignalRepository
     private static int IsBearishHarami(Chart chart,
        int position,
        int numberRequired,
-       int lengthOfPrologue,
+       int lookupLength,
        double volumeFactor = 1D)
     {
-        CheckSignalArgs(chart, position, numberRequired, lengthOfPrologue);
+        CheckSignalArgs(chart, position, numberRequired, lookupLength);
 
         var first = chart.Candlesticks[position];
         var second = chart.Candlesticks[position + 1];
 
         return chart.TrendValues[position].AsSentiment().IsBullish() &&
-            chart.PrologueSentiment(position).IsBullish() &&
+            chart.LookbackSentiment(position).IsBullish() &&
             chart.IsTall(position, 0, 1.2M) &&
             chart.IsShort(position + 1) &&
             !second.IsDoji &&
@@ -586,16 +586,16 @@ public sealed partial class CandlestickSignalRepository
     private static int IsBullishHaramiCross(Chart chart,
        int position,
        int numberRequired,
-       int lengthOfPrologue,
+       int lookupLength,
        double volumeFactor = 1D)
     {
-        CheckSignalArgs(chart, position, numberRequired, lengthOfPrologue);
+        CheckSignalArgs(chart, position, numberRequired, lookupLength);
 
         var first = chart.Candlesticks[position];
         var second = chart.Candlesticks[position + 1];
 
         return chart.TrendValues[position].AsSentiment().IsBearish() &&
-            chart.PrologueSentiment(position).IsBearish() &&
+            chart.LookbackSentiment(position).IsBearish() &&
             chart.IsTall(position, 0, 1.2M) &&
             second.IsDoji &&
             second.Body.High < first.Body.High &&
@@ -606,16 +606,16 @@ public sealed partial class CandlestickSignalRepository
     private static int IsBearishHaramiCross(Chart chart,
        int position,
        int numberRequired,
-       int lengthOfPrologue,
+       int lookupLength,
        double volumeFactor = 1D)
     {
-        CheckSignalArgs(chart, position, numberRequired, lengthOfPrologue);
+        CheckSignalArgs(chart, position, numberRequired, lookupLength);
 
         var first = chart.Candlesticks[position];
         var second = chart.Candlesticks[position + 1];
 
         return chart.TrendValues[position].AsSentiment().IsBullish() &&
-            chart.PrologueSentiment(position).IsBullish() &&
+            chart.LookbackSentiment(position).IsBullish() &&
             chart.IsTall(position, 0, 1.2M) &&
             second.IsDoji &&
             second.Body.High < first.Body.High &&
@@ -626,16 +626,16 @@ public sealed partial class CandlestickSignalRepository
     private static int IsTweezerTop(Chart chart,
        int position,
        int numberRequired,
-       int lengthOfPrologue,
+       int lookupLength,
        double volumeFactor = 1D)
     {
-        CheckSignalArgs(chart, position, numberRequired, lengthOfPrologue);
+        CheckSignalArgs(chart, position, numberRequired, lookupLength);
 
         var first = chart.Candlesticks[position];
         var second = chart.Candlesticks[position + 1];
 
         return chart.TrendValues[position].AsSentiment().IsBullish() &&
-            chart.PrologueSentiment(position).IsBullish() &&
+            chart.LookbackSentiment(position).IsBullish() &&
             first.High == second.High &&
             chart.IsTall(position) &&
             chart.IsShort(position + 1)
@@ -645,16 +645,16 @@ public sealed partial class CandlestickSignalRepository
     private static int IsTweezerBottom(Chart chart,
        int position,
        int numberRequired,
-       int lengthOfPrologue,
+       int lookupLength,
        double volumeFactor = 1D)
     {
-        CheckSignalArgs(chart, position, numberRequired, lengthOfPrologue);
+        CheckSignalArgs(chart, position, numberRequired, lookupLength);
 
         var first = chart.Candlesticks[position];
         var second = chart.Candlesticks[position + 1];
 
         return chart.TrendValues[position].AsSentiment().IsBearish() &&
-            chart.PrologueSentiment(position).IsBearish() &&
+            chart.LookbackSentiment(position).IsBearish() &&
             first.Low == second.Low &&
             chart.IsTall(position) &&
             chart.IsShort(position + 1)
@@ -664,15 +664,15 @@ public sealed partial class CandlestickSignalRepository
     private static int IsBullishBelthold(Chart chart,
        int position,
        int numberRequired,
-       int lengthOfPrologue,
+       int lookupLength,
        double volumeFactor = 1D)
     {
-        CheckSignalArgs(chart, position, numberRequired, lengthOfPrologue);
+        CheckSignalArgs(chart, position, numberRequired, lookupLength);
 
         var first = chart.Candlesticks[position];
 
         return chart.TrendValues[position].AsSentiment().IsBearish() &&
-            chart.PrologueSentiment(position).IsBearish() &&
+            chart.LookbackSentiment(position).IsBearish() &&
             first.IsBullishBelthold &&
             chart.IsTall(position)
             ? position : -1;
@@ -681,15 +681,15 @@ public sealed partial class CandlestickSignalRepository
     private static int IsBearishBelthold(Chart chart,
        int position,
        int numberRequired,
-       int lengthOfPrologue,
+       int lookupLength,
        double volumeFactor = 1D)
     {
-        CheckSignalArgs(chart, position, numberRequired, lengthOfPrologue);
+        CheckSignalArgs(chart, position, numberRequired, lookupLength);
 
         var first = chart.Candlesticks[position];
 
         return chart.TrendValues[position].AsSentiment().IsBullish() &&
-            chart.PrologueSentiment(position).IsBullish() &&
+            chart.LookbackSentiment(position).IsBullish() &&
             first.IsBearishBelthold &&
             chart.IsTall(position)
             ? position : -1;
@@ -698,17 +698,17 @@ public sealed partial class CandlestickSignalRepository
     private static int IsUpsideGapTwoCrows(Chart chart,
        int position,
        int numberRequired,
-       int lengthOfPrologue,
+       int lookupLength,
        double volumeFactor = 1D)
     {
-        CheckSignalArgs(chart, position, numberRequired, lengthOfPrologue);
+        CheckSignalArgs(chart, position, numberRequired, lookupLength);
 
         var first = chart.Candlesticks[position];
         var second = chart.Candlesticks[position + 1];
         var third = chart.Candlesticks[position + 2];
 
         return chart.TrendValues[position].AsSentiment().IsBullish() &&
-            chart.PrologueSentiment(position).IsBullish() &&
+            chart.LookbackSentiment(position).IsBullish() &&
             first.IsLight &&
             second.IsDark &&
             third.IsDark &&
@@ -722,17 +722,17 @@ public sealed partial class CandlestickSignalRepository
     private static int IsThreeBlackCrows(Chart chart,
        int position,
        int numberRequired,
-       int lengthOfPrologue,
+       int lookupLength,
        double volumeFactor = 1D)
     {
-        CheckSignalArgs(chart, position, numberRequired, lengthOfPrologue);
+        CheckSignalArgs(chart, position, numberRequired, lookupLength);
 
         var first = chart.Candlesticks[position];
         var second = chart.Candlesticks[position + 1];
         var third = chart.Candlesticks[position + 2];
 
         return chart.TrendValues[position].AsSentiment().IsBullish() &&
-            chart.PrologueSentiment(position).IsBullish() &&
+            chart.LookbackSentiment(position).IsBullish() &&
             first.IsDark &&
             second.IsDark &&
             third.IsDark &&
@@ -751,17 +751,17 @@ public sealed partial class CandlestickSignalRepository
     private static int IsThreeWhiteSoldiers(Chart chart,
        int position,
        int numberRequired,
-       int lengthOfPrologue,
+       int lookupLength,
        double volumeFactor = 1D)
     {
-        CheckSignalArgs(chart, position, numberRequired, lengthOfPrologue);
+        CheckSignalArgs(chart, position, numberRequired, lookupLength);
 
         var first = chart.Candlesticks[position];
         var second = chart.Candlesticks[position + 1];
         var third = chart.Candlesticks[position + 2];
 
         return chart.TrendValues[position].AsSentiment().IsBearish() &&
-            chart.PrologueSentiment(position).IsBearish() &&
+            chart.LookbackSentiment(position).IsBearish() &&
             first.IsLight &&
             second.IsLight &&
             third.IsLight &&
@@ -780,16 +780,16 @@ public sealed partial class CandlestickSignalRepository
     private static int IsBullishCounterattack(Chart chart,
        int position,
        int numberRequired,
-       int lengthOfPrologue,
+       int lookupLength,
        double volumeFactor = 1D)
     {
-        CheckSignalArgs(chart, position, numberRequired, lengthOfPrologue);
+        CheckSignalArgs(chart, position, numberRequired, lookupLength);
 
         var first = chart.Candlesticks[position];
         var second = chart.Candlesticks[position + 1];
 
         return chart.TrendValues[position].AsSentiment().IsBearish() &&
-            chart.PrologueSentiment(position).IsBearish() &&
+            chart.LookbackSentiment(position).IsBearish() &&
             first.IsDark &&
             chart.IsTall(position) &&
             second.IsLight &&
@@ -800,16 +800,16 @@ public sealed partial class CandlestickSignalRepository
     private static int IsBearishCounterattack(Chart chart,
        int position,
        int numberRequired,
-       int lengthOfPrologue,
+       int lookupLength,
        double volumeFactor = 1D)
     {
-        CheckSignalArgs(chart, position, numberRequired, lengthOfPrologue);
+        CheckSignalArgs(chart, position, numberRequired, lookupLength);
 
         var first = chart.Candlesticks[position];
         var second = chart.Candlesticks[position + 1];
 
         return chart.TrendValues[position].AsSentiment().IsBullish() &&
-            chart.PrologueSentiment(position).IsBullish() &&
+            chart.LookbackSentiment(position).IsBullish() &&
             first.IsLight &&
             chart.IsTall(position) &&
             second.IsDark &&

@@ -2,7 +2,7 @@
     "Type": "Candlestick Pattern",
     "Name": "Bullish Engulfing 1",
     "Source": "polygon.io",
-    "Description": "move: 0.1;prologue len: 15;trend desc: S21C;vol factor: 1",
+    "Description": "move: 0.1;lookback len: 15;trend desc: S21C;vol factor: 1",
     "Entry Price Point": "Close",
     "Target Up": {
         "Price Point": "High",
@@ -15,7 +15,7 @@
     "Signal Names": [
         "Bullish Engulfing"
     ],
-    "Length of Prologue": 15,
+    "Lookback": 15,
     "Max Parallelization": 1,
     "Only Signal With Market": false,
     "Volume Factor": 1,

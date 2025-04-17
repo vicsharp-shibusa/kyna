@@ -313,7 +313,7 @@ public sealed partial class CandlestickSignalRepository
     private static void CheckSignalArgs(Chart? chart,
         int position,
         int numberRequired,
-        int lengthOfPrologue)
+        int lookbackLength)
     {
         ArgumentNullException.ThrowIfNull(chart);
         if (chart.Candlesticks.Length == 0)
@@ -324,9 +324,9 @@ public sealed partial class CandlestickSignalRepository
         {
             throw new IndexOutOfRangeException(nameof(position));
         }
-        if (position < lengthOfPrologue)
+        if (position < lookbackLength)
         {
-            throw new ArgumentException($"{nameof(position)} must be greater than length of prologue.");
+            throw new ArgumentException($"{nameof(position)} must be greater than length of lookback.");
         }
         if (position > chart.Length - numberRequired)
         {

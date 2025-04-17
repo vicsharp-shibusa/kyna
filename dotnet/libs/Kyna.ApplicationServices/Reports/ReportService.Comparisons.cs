@@ -123,7 +123,7 @@ public sealed partial class ReportService
                     new ChartConfiguration()
                     {
                         Interval = ChartInterval.Daily.ToString(),
-                        LengthOfPrologue = 0,
+                        LookbackLength = 0,
                         MovingAverages = null,
                         Trends = null
                     },

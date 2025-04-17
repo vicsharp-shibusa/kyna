@@ -53,7 +53,7 @@ internal abstract class RunnerBase
                 sb.AppendLine($"Entry Price Point  : {configuration.EntryPricePoint.GetEnumDescription()}");
                 sb.AppendLine($"Target Up          : {configuration.TargetUp}");
                 sb.AppendLine($"Target Down        : {configuration.TargetDown}");
-                sb.AppendLine($"Length of Prologue : {configuration.LengthOfPrologue}");
+                sb.AppendLine($"Length of Lookback : {configuration.LookbackLength}");
                 if ((configuration.SignalNames?.Length ?? 0) > 0)
                 {
                     sb.AppendLine("Signal Names:");
