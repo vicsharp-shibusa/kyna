@@ -144,8 +144,8 @@ void ShowHelp()
     Communicate("Use 'help <command>' or '<command> --help' to get help on a specific sub-command.", true);
 
     Communicate(@"
-    kyna help import
-    kyna importer --help", true);
+    kyna help migrate
+    kyna backtest --help", true);
     Communicate(null, true);
 }
 
@@ -155,6 +155,8 @@ void ParseArguments(string[] args, out string[] childArgs)
         "Control CLI for Kyna applications.");
 
     childArgs = [];
+
+    List<string> unknownCommands = new List<string>();
 
     for (int a = 0; a < args.Length; a++)
     {
@@ -184,12 +186,34 @@ void ParseArguments(string[] args, out string[] childArgs)
                     config.Subcommand ??= key;
                     childArgs = args[++a..];
                 }
+                else
+                {
+                    unknownCommands.Add(args[a]);
+                }
                 break;
         }
 
         if (!string.IsNullOrWhiteSpace(config.Subcommand))
         {
             break; // If we hit a subcommand, we're done; everything that follows belongs to the subcommand.
+        }
+    }
+
+    if (string.IsNullOrEmpty(config.Subcommand))
+    {
+        if (unknownCommands.Count > 0)
+        {
+            var candidate = unknownCommands.First();
+            foreach (var possible in commandDict.Values.SelectMany(k => k.Aliases))
+            {
+                if (possible.Contains(candidate, StringComparison.OrdinalIgnoreCase))
+                {
+                    Console.WriteLine($"Did you mean '{possible}'?");
+                    ShowHelp();
+                    Environment.Exit(-2);
+                }
+            }
+            throw new ArgumentException(unknownCommands.First());
         }
     }
 }
