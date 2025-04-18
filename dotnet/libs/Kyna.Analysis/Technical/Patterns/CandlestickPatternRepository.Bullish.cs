@@ -1,16 +1,15 @@
 ﻿using Kyna.Analysis.Technical.Charts;
 
-namespace Kyna.Analysis.Technical.Signals;
+namespace Kyna.Analysis.Technical.Patterns;
 
-public sealed partial class CandlestickSignalRepository
+public sealed partial class CandlestickPatternRepository
 {
     private static int IsTallWhiteCandle(Chart chart,
         int position,
         int numberRequired,
-        int lookbackLength,
         double volumeFactor = 1D)
     {
-        CheckSignalArgs(chart, position, numberRequired, lookbackLength);
+        CheckSignalArgs(chart, position, numberRequired);
 
         var first = chart.Candlesticks[position];
         var second = chart.Candlesticks[position + 1];

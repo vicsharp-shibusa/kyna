@@ -11,67 +11,71 @@ public enum MovingAverageType
     Exponential = 1
 }
 
-public struct MovingAverageKey(int period, PricePoint pricePoint = PricePoint.Close,
-    MovingAverageType type = MovingAverageType.Simple)
+public readonly struct MovingAverageKey : IEquatable<MovingAverageKey>
 {
-    public int Period = period;
-    public MovingAverageType Type = type;
-    public PricePoint PricePoint = pricePoint;
+    public int Period { get; }
+    public MovingAverageType Type { get; }
+    public PricePoint PricePoint { get; }
+
+    public MovingAverageKey(int period, PricePoint pricePoint = PricePoint.Close,
+        MovingAverageType type = MovingAverageType.Simple)
+    {
+        if (period < 1)
+            throw new ArgumentOutOfRangeException(nameof(period), $"{nameof(period)} cannot be less than 1.");
+        Period = period;
+        Type = type;
+        PricePoint = pricePoint;
+    }
+
+    public override bool Equals(object? obj) => obj is MovingAverageKey key && Equals(key);
+
+    public bool Equals(MovingAverageKey other) => Period == other.Period &&
+               Type == other.Type &&
+               PricePoint == other.PricePoint;
+
+    public override int GetHashCode() => HashCode.Combine(Period, Type, PricePoint);
 
     public override readonly string ToString() =>
         $"{Type.GetEnumDescription()[0]}{Period}{PricePoint.GetEnumDescription()[0]}";
+
+    public static bool operator ==(MovingAverageKey left, MovingAverageKey right) => left.Equals(right);
+
+    public static bool operator !=(MovingAverageKey left, MovingAverageKey right) => !(left == right);
 }
 
-public struct MovingAverage
+public readonly struct MovingAverage
 {
-    public MovingAverageKey Key;
-    public decimal[] Values;
-
-    public MovingAverage(MovingAverageKey key, Ohlc[] prices)
-        : this(key, prices?.Length > 0
-            ? prices.Select(p => p.GetPricePoint(key.PricePoint)).ToArray()
-            : throw new ArgumentException("Prices array cannot be null or empty.", nameof(prices)))
-    {
-    }
+    public MovingAverageKey Key { get; }
+    public decimal[] Values { get; }
 
     public MovingAverage(MovingAverageKey key, decimal[] values)
     {
         Key = key;
 
-        if ((values?.Length ?? 0) == 0)
-        {
-            Values = [];
+        Values = (values?.Length ?? 0) == 0
+            ? []
+            : new decimal[values!.Length];
+
+        if (Values.Length < key.Period)
             return;
-        }
 
-        Values = new decimal[values!.Length];
-
-        if (values.Length < key.Period)
+        ComputeAverage compute = key.Type switch
         {
-            Array.Fill(Values, 0M);
-            return;
-        }
+            MovingAverageType.Simple => ComputeSma,
+            MovingAverageType.Exponential => ComputeEma,
+            _ => throw new ArgumentException($"Unsupported moving average type: {key.Type}", nameof(key))
+        };
 
-        // Pad initial values
-        for (int i = 0; i < Math.Min(key.Period - 1, values.Length); i++)
-        {
-            Values[i] = 0M;
-        }
-
-        switch (key.Type)
-        {
-            case MovingAverageType.Simple:
-                ComputeSma(key.Period, values);
-                break;
-
-            case MovingAverageType.Exponential:
-                ComputeEma(key.Period, values);
-                break;
-
-            default:
-                throw new ArgumentException($"Unsupported moving average type: {key.Type}", nameof(key));
-        }
+        compute(key.Period, values!);
     }
+
+    public MovingAverage(MovingAverageKey key, Ohlc[] prices)
+        : this(key, prices?.Length > 0
+            ? prices.Select(p => p.GetPricePoint(key.PricePoint)).ToArray()
+            : throw new ArgumentException("Prices array cannot be null or empty.", nameof(prices)))
+    { }
+
+    private delegate void ComputeAverage(int period, decimal[] values);
 
     private void ComputeSma(int period, decimal[] values)
     {

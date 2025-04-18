@@ -1,17 +1,16 @@
 ﻿using Kyna.Analysis.Technical.Charts;
 using Kyna.Analysis.Technical.Trends;
 
-namespace Kyna.Analysis.Technical.Signals;
+namespace Kyna.Analysis.Technical.Patterns;
 
-public sealed partial class CandlestickSignalRepository
+public sealed partial class CandlestickPatternRepository
 {
     private static int IsBullishEngulfing(Chart chart,
         int position,
         int numberRequired,
-        int lookbackLength,
         double volumeFactor = 1D)
     {
-        CheckSignalArgs(chart, position, numberRequired, lookbackLength);
+        CheckSignalArgs(chart, position, numberRequired);
 
         var first = chart.Candlesticks[position];
         var second = chart.Candlesticks[position + 1];
@@ -29,10 +28,9 @@ public sealed partial class CandlestickSignalRepository
     private static int IsBullishEngulfingWithFollowThru(Chart chart,
         int position,
         int numberRequired,
-        int lookupLength,
         double volumeFactor = 1D)
     {
-        CheckSignalArgs(chart, position, numberRequired, lookupLength);
+        CheckSignalArgs(chart, position, numberRequired);
 
         var first = chart.Candlesticks[position];
         var second = chart.Candlesticks[position + 1];
@@ -64,10 +62,9 @@ public sealed partial class CandlestickSignalRepository
     private static int IsBullishEngulfingWithTallCandles(Chart chart,
         int position,
         int numberRequired,
-        int lookupLength,
         double volumeFactor = 1D)
     {
-        CheckSignalArgs(chart, position, numberRequired, lookupLength);
+        CheckSignalArgs(chart, position, numberRequired);
 
         var first = chart.Candlesticks[position];
         var second = chart.Candlesticks[position + 1];
@@ -86,10 +83,9 @@ public sealed partial class CandlestickSignalRepository
     private static int IsBullishEngulfingWithFourBlackPredecessors(Chart chart,
         int position,
         int numberRequired,
-        int lookupLength,
         double volumeFactor = 1D)
     {
-        CheckSignalArgs(chart, position, numberRequired, lookupLength);
+        CheckSignalArgs(chart, position, numberRequired);
 
         var first = chart.Candlesticks[position];
         var second = chart.Candlesticks[position + 1];
@@ -116,10 +112,9 @@ public sealed partial class CandlestickSignalRepository
     private static int IsBearishEngulfing(Chart chart,
         int position,
         int numberRequired,
-        int lookupLength,
         double volumeFactor = 1D)
     {
-        CheckSignalArgs(chart, position, numberRequired, lookupLength);
+        CheckSignalArgs(chart, position, numberRequired);
 
         var first = chart.Candlesticks[position];
         var second = chart.Candlesticks[position + 1];
@@ -137,10 +132,9 @@ public sealed partial class CandlestickSignalRepository
     private static int IsBearishEngulfingWithFollowThru(Chart chart,
         int position,
         int numberRequired,
-        int lookupLength,
         double volumeFactor = 1D)
     {
-        CheckSignalArgs(chart, position, numberRequired, lookupLength);
+        CheckSignalArgs(chart, position, numberRequired);
 
         var first = chart.Candlesticks[position];
         var second = chart.Candlesticks[position + 1];
@@ -171,10 +165,9 @@ public sealed partial class CandlestickSignalRepository
     private static int IsBearishEngulfingWithTallCandles(Chart chart,
         int position,
         int numberRequired,
-        int lookupLength,
         double volumeFactor = 1D)
     {
-        CheckSignalArgs(chart, position, numberRequired, lookupLength);
+        CheckSignalArgs(chart, position, numberRequired);
 
         var first = chart.Candlesticks[position];
         var second = chart.Candlesticks[position + 1];
@@ -193,10 +186,9 @@ public sealed partial class CandlestickSignalRepository
     private static int IsBearishEngulfingWithFourWhitePredecessors(Chart chart,
         int position,
         int numberRequired,
-        int lookupLength,
         double volumeFactor = 1D)
     {
-        CheckSignalArgs(chart, position, numberRequired, lookupLength);
+        CheckSignalArgs(chart, position, numberRequired);
 
         var first = chart.Candlesticks[position];
         var second = chart.Candlesticks[position + 1];
@@ -219,10 +211,9 @@ public sealed partial class CandlestickSignalRepository
     private static int IsBullishHammer(Chart chart,
         int position,
         int numberRequired,
-        int lookupLength,
         double volumeFactor = 1D)
     {
-        CheckSignalArgs(chart, position, numberRequired, lookupLength);
+        CheckSignalArgs(chart, position, numberRequired);
 
         var first = chart.Candlesticks[position];
 
@@ -235,10 +226,9 @@ public sealed partial class CandlestickSignalRepository
     private static int IsBullishHammerWithFollowThru(Chart chart,
       int position,
       int numberRequired,
-      int lookupLength,
       double volumeFactor = 1D)
     {
-        CheckSignalArgs(chart, position, numberRequired, lookupLength);
+        CheckSignalArgs(chart, position, numberRequired);
 
         var first = chart.Candlesticks[position];
 
@@ -267,10 +257,9 @@ public sealed partial class CandlestickSignalRepository
     private static int IsBearishHammer(Chart chart,
         int position,
         int numberRequired,
-        int lookupLength,
         double volumeFactor = 1D)
     {
-        CheckSignalArgs(chart, position, numberRequired, lookupLength);
+        CheckSignalArgs(chart, position, numberRequired);
 
         var first = chart.Candlesticks[position];
 
@@ -283,10 +272,9 @@ public sealed partial class CandlestickSignalRepository
     private static int IsBearishHammerWithFollowThru(Chart chart,
         int position,
         int numberRequired,
-        int lookupLength,
         double volumeFactor = 1D)
     {
-        CheckSignalArgs(chart, position, numberRequired, lookupLength);
+        CheckSignalArgs(chart, position, numberRequired);
 
         var first = chart.Candlesticks[position];
 
@@ -312,10 +300,9 @@ public sealed partial class CandlestickSignalRepository
     private static int IsDarkCloudCover(Chart chart,
         int position,
         int numberRequired,
-        int lookupLength,
         double volumeFactor = 1D)
     {
-        CheckSignalArgs(chart, position, numberRequired, lookupLength);
+        CheckSignalArgs(chart, position, numberRequired);
 
         var first = chart.Candlesticks[position];
         var second = chart.Candlesticks[position + 1];
@@ -334,10 +321,9 @@ public sealed partial class CandlestickSignalRepository
     private static int IsDarkCloudCoverWithFollowThru(Chart chart,
         int position,
         int numberRequired,
-        int lookupLength,
         double volumeFactor = 1D)
     {
-        CheckSignalArgs(chart, position, numberRequired, lookupLength);
+        CheckSignalArgs(chart, position, numberRequired);
 
         var first = chart.Candlesticks[position];
         var second = chart.Candlesticks[position + 1];
@@ -358,10 +344,9 @@ public sealed partial class CandlestickSignalRepository
     private static int IsPiercing(Chart chart,
         int position,
         int numberRequired,
-        int lookupLength,
         double volumeFactor = 1D)
     {
-        CheckSignalArgs(chart, position, numberRequired, lookupLength);
+        CheckSignalArgs(chart, position, numberRequired);
 
         var first = chart.Candlesticks[position];
         var second = chart.Candlesticks[position + 1];
@@ -380,10 +365,9 @@ public sealed partial class CandlestickSignalRepository
     private static int IsPiercingWithFollowThru(Chart chart,
         int position,
         int numberRequired,
-        int lookupLength,
         double volumeFactor = 1D)
     {
-        CheckSignalArgs(chart, position, numberRequired, lookupLength);
+        CheckSignalArgs(chart, position, numberRequired);
 
         var first = chart.Candlesticks[position];
         var second = chart.Candlesticks[position + 1];
@@ -404,10 +388,9 @@ public sealed partial class CandlestickSignalRepository
     private static int IsMorningStar(Chart chart,
        int position,
        int numberRequired,
-       int lookupLength,
        double volumeFactor = 1D)
     {
-        CheckSignalArgs(chart, position, numberRequired, lookupLength);
+        CheckSignalArgs(chart, position, numberRequired);
 
         var first = chart.Candlesticks[position];
         var second = chart.Candlesticks[position + 1];
@@ -431,10 +414,9 @@ public sealed partial class CandlestickSignalRepository
     private static int IsEveningStar(Chart chart,
        int position,
        int numberRequired,
-       int lookupLength,
        double volumeFactor = 1D)
     {
-        CheckSignalArgs(chart, position, numberRequired, lookupLength);
+        CheckSignalArgs(chart, position, numberRequired);
 
         var first = chart.Candlesticks[position];
         var second = chart.Candlesticks[position + 1];
@@ -458,10 +440,9 @@ public sealed partial class CandlestickSignalRepository
     private static int IsMorningDojiStar(Chart chart,
        int position,
        int numberRequired,
-       int lookupLength,
        double volumeFactor = 1D)
     {
-        CheckSignalArgs(chart, position, numberRequired, lookupLength);
+        CheckSignalArgs(chart, position, numberRequired);
 
         var first = chart.Candlesticks[position];
         var second = chart.Candlesticks[position + 1];
@@ -485,10 +466,9 @@ public sealed partial class CandlestickSignalRepository
     private static int IsEveningDojiStar(Chart chart,
        int position,
        int numberRequired,
-       int lookupLength,
        double volumeFactor = 1D)
     {
-        CheckSignalArgs(chart, position, numberRequired, lookupLength);
+        CheckSignalArgs(chart, position, numberRequired);
 
         var first = chart.Candlesticks[position];
         var second = chart.Candlesticks[position + 1];
@@ -512,10 +492,9 @@ public sealed partial class CandlestickSignalRepository
     private static int IsShootingStar(Chart chart,
        int position,
        int numberRequired,
-       int lookupLength,
        double volumeFactor = 1D)
     {
-        CheckSignalArgs(chart, position, numberRequired, lookupLength);
+        CheckSignalArgs(chart, position, numberRequired);
 
         var first = chart.Candlesticks[position];
 
@@ -528,10 +507,9 @@ public sealed partial class CandlestickSignalRepository
     private static int IsInvertedHammer(Chart chart,
        int position,
        int numberRequired,
-       int lookupLength,
        double volumeFactor = 1D)
     {
-        CheckSignalArgs(chart, position, numberRequired, lookupLength);
+        CheckSignalArgs(chart, position, numberRequired);
 
         var first = chart.Candlesticks[position];
 
@@ -544,10 +522,9 @@ public sealed partial class CandlestickSignalRepository
     private static int IsBullishHarami(Chart chart,
        int position,
        int numberRequired,
-       int lookupLength,
        double volumeFactor = 1D)
     {
-        CheckSignalArgs(chart, position, numberRequired, lookupLength);
+        CheckSignalArgs(chart, position, numberRequired);
 
         var first = chart.Candlesticks[position];
         var second = chart.Candlesticks[position + 1];
@@ -565,10 +542,9 @@ public sealed partial class CandlestickSignalRepository
     private static int IsBearishHarami(Chart chart,
        int position,
        int numberRequired,
-       int lookupLength,
        double volumeFactor = 1D)
     {
-        CheckSignalArgs(chart, position, numberRequired, lookupLength);
+        CheckSignalArgs(chart, position, numberRequired);
 
         var first = chart.Candlesticks[position];
         var second = chart.Candlesticks[position + 1];
@@ -586,10 +562,9 @@ public sealed partial class CandlestickSignalRepository
     private static int IsBullishHaramiCross(Chart chart,
        int position,
        int numberRequired,
-       int lookupLength,
        double volumeFactor = 1D)
     {
-        CheckSignalArgs(chart, position, numberRequired, lookupLength);
+        CheckSignalArgs(chart, position, numberRequired);
 
         var first = chart.Candlesticks[position];
         var second = chart.Candlesticks[position + 1];
@@ -606,10 +581,9 @@ public sealed partial class CandlestickSignalRepository
     private static int IsBearishHaramiCross(Chart chart,
        int position,
        int numberRequired,
-       int lookupLength,
        double volumeFactor = 1D)
     {
-        CheckSignalArgs(chart, position, numberRequired, lookupLength);
+        CheckSignalArgs(chart, position, numberRequired);
 
         var first = chart.Candlesticks[position];
         var second = chart.Candlesticks[position + 1];
@@ -626,10 +600,9 @@ public sealed partial class CandlestickSignalRepository
     private static int IsTweezerTop(Chart chart,
        int position,
        int numberRequired,
-       int lookupLength,
        double volumeFactor = 1D)
     {
-        CheckSignalArgs(chart, position, numberRequired, lookupLength);
+        CheckSignalArgs(chart, position, numberRequired);
 
         var first = chart.Candlesticks[position];
         var second = chart.Candlesticks[position + 1];
@@ -645,10 +618,9 @@ public sealed partial class CandlestickSignalRepository
     private static int IsTweezerBottom(Chart chart,
        int position,
        int numberRequired,
-       int lookupLength,
        double volumeFactor = 1D)
     {
-        CheckSignalArgs(chart, position, numberRequired, lookupLength);
+        CheckSignalArgs(chart, position, numberRequired);
 
         var first = chart.Candlesticks[position];
         var second = chart.Candlesticks[position + 1];
@@ -664,10 +636,9 @@ public sealed partial class CandlestickSignalRepository
     private static int IsBullishBelthold(Chart chart,
        int position,
        int numberRequired,
-       int lookupLength,
        double volumeFactor = 1D)
     {
-        CheckSignalArgs(chart, position, numberRequired, lookupLength);
+        CheckSignalArgs(chart, position, numberRequired);
 
         var first = chart.Candlesticks[position];
 
@@ -681,10 +652,9 @@ public sealed partial class CandlestickSignalRepository
     private static int IsBearishBelthold(Chart chart,
        int position,
        int numberRequired,
-       int lookupLength,
        double volumeFactor = 1D)
     {
-        CheckSignalArgs(chart, position, numberRequired, lookupLength);
+        CheckSignalArgs(chart, position, numberRequired);
 
         var first = chart.Candlesticks[position];
 
@@ -698,10 +668,9 @@ public sealed partial class CandlestickSignalRepository
     private static int IsUpsideGapTwoCrows(Chart chart,
        int position,
        int numberRequired,
-       int lookupLength,
        double volumeFactor = 1D)
     {
-        CheckSignalArgs(chart, position, numberRequired, lookupLength);
+        CheckSignalArgs(chart, position, numberRequired);
 
         var first = chart.Candlesticks[position];
         var second = chart.Candlesticks[position + 1];
@@ -722,10 +691,9 @@ public sealed partial class CandlestickSignalRepository
     private static int IsThreeBlackCrows(Chart chart,
        int position,
        int numberRequired,
-       int lookupLength,
        double volumeFactor = 1D)
     {
-        CheckSignalArgs(chart, position, numberRequired, lookupLength);
+        CheckSignalArgs(chart, position, numberRequired);
 
         var first = chart.Candlesticks[position];
         var second = chart.Candlesticks[position + 1];
@@ -751,10 +719,9 @@ public sealed partial class CandlestickSignalRepository
     private static int IsThreeWhiteSoldiers(Chart chart,
        int position,
        int numberRequired,
-       int lookupLength,
        double volumeFactor = 1D)
     {
-        CheckSignalArgs(chart, position, numberRequired, lookupLength);
+        CheckSignalArgs(chart, position, numberRequired);
 
         var first = chart.Candlesticks[position];
         var second = chart.Candlesticks[position + 1];
@@ -780,10 +747,9 @@ public sealed partial class CandlestickSignalRepository
     private static int IsBullishCounterattack(Chart chart,
        int position,
        int numberRequired,
-       int lookupLength,
        double volumeFactor = 1D)
     {
-        CheckSignalArgs(chart, position, numberRequired, lookupLength);
+        CheckSignalArgs(chart, position, numberRequired);
 
         var first = chart.Candlesticks[position];
         var second = chart.Candlesticks[position + 1];
@@ -800,10 +766,9 @@ public sealed partial class CandlestickSignalRepository
     private static int IsBearishCounterattack(Chart chart,
        int position,
        int numberRequired,
-       int lookupLength,
        double volumeFactor = 1D)
     {
-        CheckSignalArgs(chart, position, numberRequired, lookupLength);
+        CheckSignalArgs(chart, position, numberRequired);
 
         var first = chart.Candlesticks[position];
         var second = chart.Candlesticks[position + 1];

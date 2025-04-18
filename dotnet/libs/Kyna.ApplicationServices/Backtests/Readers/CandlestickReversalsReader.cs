@@ -7,7 +7,10 @@ using System.Threading.Tasks;
 
 namespace Kyna.ApplicationServices.Backtests.Readers;
 
-internal abstract class ChartReader
+internal class CandlestickReversalsReader : ChartReader
 {
-    public abstract IEnumerable<TradeSignal> Read(Chart chart);
+    public override IEnumerable<TradeSignal> Read(Chart chart)
+    {
+        throw new NotImplementedException();
+    }
 }

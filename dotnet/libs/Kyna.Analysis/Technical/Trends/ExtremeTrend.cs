@@ -22,7 +22,7 @@ public class ExtremeTrend : PriceTrendBase, ITrend
         if (alpha < 0 || alpha > 1D)
             throw new ArgumentOutOfRangeException(nameof(alpha));
 
-        _lookbackPeriod = lookbackPeriod;
+        _lookbackPeriod = lookbackPeriod;  
         _alpha = alpha;
         _beta = beta;
     }

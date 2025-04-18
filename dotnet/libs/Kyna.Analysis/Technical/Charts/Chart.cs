@@ -31,7 +31,7 @@ public class Chart : IEquatable<Chart?>
     public string? Sector { get; }
     private ITrend? Trend { get; set; } = null;
     public double[] TrendValues => Trend?.TrendValues ??
-        Enumerable.Repeat(0D, PriceActions.Length).ToArray();
+        [.. Enumerable.Repeat(0D, PriceActions.Length)];
     public Ohlc[] PriceActions { get; private set; } = [];
     public Candlestick[] Candlesticks { get; private set; } = [];
     public int Length => PriceActions.Length;
@@ -39,6 +39,99 @@ public class Chart : IEquatable<Chart?>
     public DateOnly Start => PriceActions[0].Date;
     public DateOnly End => PriceActions[^1].Date;
     public MovingAverage[] MovingAverages => [.. _movingaverages];
+
+    public Chart WithMovingAverage(MovingAverageKey key)
+    {
+        _movingAverageKeys.Add(key);
+        return this;
+    }
+
+    public Chart WithMovingAverage(int period, MovingAverageType type, PricePoint pricePoint = PricePoint.Close)
+    {
+        var key = new MovingAverageKey(period, pricePoint, type);
+        return WithMovingAverage(key);
+    }
+
+    public Chart WithMovingAverages(params MovingAverageKey[] keys)
+    {
+        foreach (var key in keys)
+        {
+            _movingAverageKeys.Add(key);
+        }
+        return this;
+    }
+
+    public Chart WithPriceActions(IEnumerable<Ohlc> priceActions)
+    {
+        PriceActions = [.. priceActions];
+        return this;
+    }
+
+    public Chart WithCandles(IEnumerable<Ohlc> priceActions)
+    {
+        return WithPriceActions(priceActions);
+    }
+
+    public Chart WithTrend(ITrend trend)
+    {
+        Trend = trend;
+        return this;
+    }
+
+    public Chart Build()
+    {
+        if (PriceActions.Length < 1)
+        {
+            throw new Exception($"Cannot construct a chart with {PriceActions.Length} price actions.");
+        }
+
+        Candlesticks = [.. PriceActions.Select(p => new Candlestick(p))];
+
+        _movingaverages.Clear();
+        foreach (var key in _movingAverageKeys)
+        {
+            _movingaverages.Add(new MovingAverage(key, PriceActions));
+        }
+
+        Trend?.Calculate();
+
+        _averageHeights = new decimal[PriceActions.Length];
+        _averageBodyHeights = new decimal[PriceActions.Length];
+        _averageVolumes = new long[PriceActions.Length];
+        _lookbackSentiment = new TrendSentiment[PriceActions.Length];
+
+        for (int p = 0; p < PriceActions.Length; p++)
+        {
+            if (_lookbackLength > 0 && p > _lookbackLength)
+            {
+                var lookback = Candlesticks[(p - _lookbackLength - 1)..(p - 1)];
+                _lookbackSentiment[p] = lookback.All(pr => pr.High < Candlesticks[p].High)
+                    ? TrendSentiment.Bullish
+                    : lookback.All(pr => pr.Low > Candlesticks[p].Low)
+                    ? TrendSentiment.Bearish
+                    : TrendSentiment.Neutral;
+            }
+            else
+            {
+                _lookbackSentiment[p] = TrendSentiment.Neutral;
+            }
+
+            if (p == 0)
+            {
+                _averageHeights[p] = Candlesticks[p].Length;
+                _averageBodyHeights[p] = Candlesticks[p].Body.Length;
+                _averageVolumes[p] = Candlesticks[p].Volume;
+            }
+            else
+            {
+                _averageHeights[p] = _averageHeights[p - 1] + (Candlesticks[p].Length - _averageHeights[p - 1]) / (p + 1);
+                _averageBodyHeights[p] = _averageBodyHeights[p - 1] + (Candlesticks[p].Body.Length - _averageBodyHeights[p - 1]) / (p + 1);
+                _averageVolumes[p] = Convert.ToInt64(Math.Ceiling((decimal)_averageVolumes[p - 1] + (Candlesticks[p].Volume - _averageVolumes[p - 1]) / (p + 1)));
+            }
+        }
+
+        return this;
+    }
 
     public int GetIndexOfDate(DateOnly date)
     {
@@ -97,99 +190,6 @@ public class Chart : IEquatable<Chart?>
     public TrendSentiment LookbackSentiment(int position) => position > -1 && position < _lookbackSentiment.Length
         ? _lookbackSentiment[position]
         : TrendSentiment.Neutral;
-
-    public Chart WithMovingAverage(MovingAverageKey key)
-    {
-        _movingAverageKeys.Add(key);
-        return this;
-    }
-
-    public Chart WithMovingAverage(int period, MovingAverageType type, PricePoint pricePoint = PricePoint.Close)
-    {
-        var key = new MovingAverageKey(period, pricePoint, type);
-        return WithMovingAverage(key);
-    }
-
-    public Chart WithMovingAverages(params MovingAverageKey[] keys)
-    {
-        foreach (var key in keys)
-        {
-            _movingAverageKeys.Add(key);
-        }
-        return this;
-    }
-
-    public Chart WithPriceActions(IEnumerable<Ohlc> priceActions)
-    {
-        PriceActions = priceActions.ToArray();
-        return this;
-    }
-
-    public Chart WithCandles(IEnumerable<Ohlc> priceActions)
-    {
-        return WithPriceActions(priceActions);
-    }
-
-    public Chart WithTrend(ITrend trend)
-    {
-        Trend = trend;
-        return this;
-    }
-
-    public Chart Build()
-    {
-        if (PriceActions.Length < 1)
-        {
-            throw new Exception($"Cannot construct a chart with {PriceActions.Length} price actions.");
-        }
-
-        Candlesticks = PriceActions.Select(p => new Candlestick(p)).ToArray();
-
-        _movingaverages.Clear();
-        foreach (var key in _movingAverageKeys)
-        {
-            _movingaverages.Add(new MovingAverage(key, PriceActions));
-        }
-
-        Trend?.Calculate();
-
-        _averageHeights = new decimal[PriceActions.Length];
-        _averageBodyHeights = new decimal[PriceActions.Length];
-        _averageVolumes = new long[PriceActions.Length];
-        _lookbackSentiment = new TrendSentiment[PriceActions.Length];
-
-        for (int p = 0; p < PriceActions.Length; p++)
-        {
-            if (_lookbackLength > 0 && p > _lookbackLength)
-            {
-                var lookback = Candlesticks[(p - _lookbackLength - 1)..(p - 1)];
-                _lookbackSentiment[p] = lookback.All(pr => pr.High < Candlesticks[p].High)
-                    ? TrendSentiment.Bull
-                    : lookback.All(pr => pr.Low > Candlesticks[p].Low)
-                    ? TrendSentiment.Bear
-                    : TrendSentiment.Neutral;
-            }
-            else
-            {
-                _lookbackSentiment[p] = TrendSentiment.Neutral;
-            }
-
-            if (p == 0)
-            {
-                _averageHeights[p] = Candlesticks[p].Length;
-                _averageBodyHeights[p] = Candlesticks[p].Body.Length;
-                _averageVolumes[p] = Candlesticks[p].Volume;
-            }
-            else
-            {
-                _averageHeights[p] = _averageHeights[p - 1] + (Candlesticks[p].Length - _averageHeights[p - 1]) / (p + 1);
-                _averageBodyHeights[p] = _averageBodyHeights[p - 1] + (Candlesticks[p].Body.Length - _averageBodyHeights[p - 1]) / (p + 1);
-                _averageVolumes[p] = Convert.ToInt64(Math.Ceiling((decimal)_averageVolumes[p - 1] + (Candlesticks[p].Volume - _averageVolumes[p - 1]) / (p + 1)));
-            }
-        }
-
-        return this;
-    }
 
     public override bool Equals(object? obj)
     {

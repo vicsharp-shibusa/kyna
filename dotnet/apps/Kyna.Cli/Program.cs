@@ -156,7 +156,7 @@ void ParseArguments(string[] args, out string[] childArgs)
 
     childArgs = [];
 
-    List<string> unknownCommands = new List<string>();
+    List<string> unknownCommands = [];
 
     for (int a = 0; a < args.Length; a++)
     {

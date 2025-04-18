@@ -75,8 +75,8 @@ internal static class BacktestRunnerFactory
             {
                 throw new ArgumentException($"Backtest configuration must contain at least one signal when the type is {configuration.Type.GetEnumDescription()}");
             }
-            var repo = new CandlestickSignalRepository(new SignalOptions(configuration.ChartConfiguration?.LookbackLength ?? 15));
-            CandlestickSignal[] signals = new CandlestickSignal[configuration.SignalNames!.Length];
+            var repo = new CandlestickPatternRepository();
+            CandlestickPattern[] signals = new CandlestickPattern[configuration.SignalNames!.Length];
             for (int c = 0; c < configuration.SignalNames.Length; c++)
             {
                 var signal = repo.Find(configuration.SignalNames[c]) ?? throw new Exception($"Could not find signal for '{configuration.SignalNames[c]}'");

@@ -116,7 +116,7 @@ internal sealed class RandomBaselineRunner : RunnerBase, IBacktestRunner
                             var detail = new BacktestResultDetail()
                             {
                                 BacktestId = result.BacktestId,
-                                SignalName = "Random",
+                                PatternName = "Random",
                                 Code = result.Code,
                                 Industry = result.Industry,
                                 Sector = result.Sector,

@@ -18,9 +18,9 @@ internal class CandlestickSignalRunner : RunnerBase, IBacktestRunner
 {
     private readonly FinancialsRepository _financialsRepository;
     private readonly ConcurrentQueue<(BacktestingConfiguration Configuration,
-        Guid BacktestId, SignalMatch SignalMatch)> _queue;
+        Guid BacktestId, PatternMatch SignalMatch)> _queue;
     private bool _runQueue = true;
-    private readonly CandlestickSignal[] _signals;
+    private readonly CandlestickPattern[] _signals;
     private readonly Task<IEnumerable<CodesAndCounts>> _codesAndCountsTask;
 
     private readonly MemoryCache _memoryCache = new(new MemoryCacheOptions()
@@ -29,7 +29,7 @@ internal class CandlestickSignalRunner : RunnerBase, IBacktestRunner
     });
 
     public CandlestickSignalRunner(DbDef finDef, DbDef backtestsDef, string source,
-        IEnumerable<CandlestickSignal> candlestickSignals)
+        IEnumerable<CandlestickPattern> candlestickSignals)
         : base(finDef, backtestsDef)
     {
         _codesAndCountsTask = GetCodesAndCount(source, CancellationToken.None);
@@ -126,7 +126,8 @@ internal class CandlestickSignalRunner : RunnerBase, IBacktestRunner
 
         foreach (var signal in _signals)
         {
-            foreach (var match in signal.DiscoverMatches(chart, market, configuration.OnlySignalWithMarket,
+            foreach (var match in signal.DiscoverMatches(chart, market, configuration.LookbackLength,
+                configuration.OnlySignalWithMarket,
                 configuration.VolumeFactor).ToArray())
             {
                 _queue.Enqueue((configuration, backtestId, match));
@@ -138,7 +139,7 @@ internal class CandlestickSignalRunner : RunnerBase, IBacktestRunner
         Guid backtestId,
         CancellationToken cancellationToken)
     {
-        var repo = new CandlestickSignalRepository(new SignalOptions(configuration.LookbackLength));
+        var repo = new CandlestickPatternRepository();
 
         var backtestResults = await _backtestDbContext.QueryAsync<BacktestResultsInfo>(
             _backtestDbDef.Sql.GetSql(SqlKeys.SelectBacktestResultInfo),
@@ -282,7 +283,7 @@ internal class CandlestickSignalRunner : RunnerBase, IBacktestRunner
                 try
                 {
                     if (_queue.TryDequeue(out (BacktestingConfiguration Configuration, Guid BacktestId,
-                        SignalMatch SignalMatch) result))
+                        PatternMatch SignalMatch) result))
                     {
                         if (!_memoryCache.TryGetValue(result.SignalMatch.Code, out Ohlc[]? ohlc))
                         {
@@ -307,7 +308,7 @@ internal class CandlestickSignalRunner : RunnerBase, IBacktestRunner
                         var detail = new BacktestResultDetail()
                         {
                             BacktestId = result.BacktestId,
-                            SignalName = result.SignalMatch.SignalName,
+                            PatternName = result.SignalMatch.SignalName,
                             Code = chart.Code ?? "UNKNOWN",
                             Industry = chart.Industry,
                             Sector = chart.Sector,
