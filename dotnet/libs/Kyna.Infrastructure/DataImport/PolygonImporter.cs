@@ -138,8 +138,7 @@ internal sealed class PolygonImporter : HttpImporterBase, IExternalDataImporter
                 var config = new AmazonS3Config
                 {
                     ServiceURL = "https://files.polygon.io/",
-                    ForcePathStyle = true,
-                    SignatureVersion = "V4"
+                    ForcePathStyle = true
                 };
 
                 var s3Client = new AmazonS3Client(credentials, config);
@@ -169,7 +168,7 @@ internal sealed class PolygonImporter : HttpImporterBase, IExternalDataImporter
                         }
 
                         request.ContinuationToken = response.NextContinuationToken;
-                    } while (response.IsTruncated);
+                    } while (response.IsTruncated.GetValueOrDefault());
 
                     if (s3Objects.Count > 0)
                     {
@@ -232,7 +231,7 @@ internal sealed class PolygonImporter : HttpImporterBase, IExternalDataImporter
                                         LocalName = targetFileName,
                                         ProcessId = _processId,
                                         Size = obj.Size,
-                                        UpdateDate = DateOnly.FromDateTime(obj.LastModified)
+                                        UpdateDate = DateOnly.FromDateTime(obj.LastModified.GetValueOrDefault())
                                     }, cancellationToken: cancellationToken).ConfigureAwait(false);
                                 conn.Close();
                             }
@@ -677,7 +676,7 @@ internal sealed class PolygonImporter : HttpImporterBase, IExternalDataImporter
             public const string Splits = "Splits";
             public const string Dividends = "Dividends";
 
-            private static FieldInfo[] _fields = typeof(Actions).GetFields(BindingFlags.Public | BindingFlags.Static);
+            private static readonly FieldInfo[] _fields = typeof(Actions).GetFields(BindingFlags.Public | BindingFlags.Static);
 
             public static bool ValueExists(string? text, bool caseSensitive = false)
             {
