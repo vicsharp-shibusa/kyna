@@ -30,19 +30,25 @@ public enum PricePoint
 [Flags]
 public enum TrendSentiment
 {
-    Neutral = 0,
-    FullBear = 1 << 0,
-    Bearish = 1 << 1,
-    MildBear = 1 << 2,
-    MildBull = 1 << 3,
-    Bullish = 1 << 4,
-    FullBull = 1 << 5
+    None = 0,
+    Neutral = 1 << 0,
+    FullBear = 1 << 1,
+    Bearish = 1 << 2,
+    MildBear = 1 << 3,
+    MildBull = 1 << 4,
+    Bullish = 1 << 5,
+    FullBull = 1 << 6
 }
 
 public enum ExtremeType
 {
     High = 0,
     Low = 1
+}
+
+public enum SelectPatternName
+{
+    TallWhiteCandle = PatternName.TallWhiteCandle
 }
 
 public enum PatternName

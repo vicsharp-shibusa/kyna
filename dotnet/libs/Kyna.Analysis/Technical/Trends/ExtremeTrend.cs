@@ -32,7 +32,6 @@ public class ExtremeTrend : PriceTrendBase, ITrend
         var highs = new decimal[_prices.Length];
         var lows = new decimal[_prices.Length];
 
-        // Calculate highs and lows (unchanged)
         for (int i = 0; i < _prices.Length; i++)
         {
             if (i < _lookbackPeriod - 1)
@@ -56,7 +55,6 @@ public class ExtremeTrend : PriceTrendBase, ITrend
                 continue;
             }
 
-            // Existing trend calculation
             var slope = CalculateRegressionSlope(i, _lookbackPeriod);
             var normalizedSlope = (2D / Math.PI) * Math.Atan(_beta * slope);
             var recentHigh = highs[i];
@@ -72,7 +70,6 @@ public class ExtremeTrend : PriceTrendBase, ITrend
             var volumeFactor = avgVolume > 0 ? currentVolume / avgVolume : 1.0; // Avoid division by zero
             volumeFactor = Math.Max(0.5, Math.Min(2.0, volumeFactor)); // Clamp between 0.5 and 2.0
 
-            // Apply volume-adjusted trend score
             TrendValues[i] = Math.Max(-1.0, Math.Min(1.0, baseTrendScore * volumeFactor));
         }
     }

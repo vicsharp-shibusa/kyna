@@ -13,7 +13,7 @@ public static class TrendExtensions
             var x when x < 0.25D => TrendSentiment.MildBull,
             var x when x < 0.75D => TrendSentiment.Bullish,
             var x when x <= 1.0D => TrendSentiment.FullBull,
-            _ => TrendSentiment.Neutral
+            _ => TrendSentiment.None
         };
     }
 

@@ -1,4 +1,4 @@
-﻿using Kyna.Analysis.Technical.Signals;
+﻿using Kyna.Analysis.Technical.Patterns;
 using Kyna.Backtests.AlphaModel;
 using Kyna.Common;
 using Kyna.Infrastructure.Database;
@@ -68,6 +68,7 @@ internal static class BacktestRunnerFactory
     public static IBacktestRunner? Create(DbDef finDef, DbDef backtestDef,
         FileInfo configFile)
     {
+        throw new NotImplementedException();
         var configuration = RunnerBase.DeserializeConfigFile(configFile);
         if (configuration.Type == BacktestType.CandlestickPattern)
         {
@@ -75,15 +76,15 @@ internal static class BacktestRunnerFactory
             {
                 throw new ArgumentException($"Backtest configuration must contain at least one signal when the type is {configuration.Type.GetEnumDescription()}");
             }
-            var repo = new CandlestickPatternRepository();
-            CandlestickPattern[] signals = new CandlestickPattern[configuration.SignalNames!.Length];
-            for (int c = 0; c < configuration.SignalNames.Length; c++)
-            {
-                var signal = repo.Find(configuration.SignalNames[c]) ?? throw new Exception($"Could not find signal for '{configuration.SignalNames[c]}'");
-                signals[c] = signal;
-            }
-            return new CandlestickSignalRunner(finDef, backtestDef, configuration.Source,
-                signals);
+            //var repo = new CandlestickPatternRepository();
+            //CandlestickPattern[] patterns = new CandlestickPattern[configuration.SignalNames!.Length];
+            //for (int c = 0; c < configuration.SignalNames.Length; c++)
+            //{
+            //    var pattern = repo.Find(configuration.SignalNames[c]) ?? throw new Exception($"Could not find signal for '{configuration.SignalNames[c]}'");
+            //    patterns[c] = pattern;
+            //}
+            //return new CandlestickSignalRunner(finDef, backtestDef, configuration.Source,
+            //    patterns);
         }
         if (configuration.Type == BacktestType.RandomBaseline)
         {

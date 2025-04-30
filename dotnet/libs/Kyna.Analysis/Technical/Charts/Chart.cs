@@ -12,23 +12,23 @@ public class Chart : IEquatable<Chart?>
     private TrendSentiment[] _lookbackSentiment = [];
     private readonly int _lookbackLength = 15;
 
-    internal Chart(string? source, string? name, string? industry, string? sector,
+    public ChartInfo Info { get; init; }
+    internal Chart(string name, string? source, string? industry, string? sector,
         ChartInterval interval = ChartInterval.Daily,
         int lookbackLength = 15)
     {
-        Source = source;
-        Code = name;
-        Industry = industry;
-        Sector = sector;
-        Interval = interval;
+        Info = new()
+        {
+            Code = name,
+            Source = source,
+            Industry = industry,
+            Sector = sector,
+            Interval = interval
+        };
+
         _lookbackLength = Math.Max(lookbackLength, 0);
     }
 
-    public ChartInterval Interval { get; }
-    public string? Source { get; }
-    public string? Code { get; }
-    public string? Industry { get; }
-    public string? Sector { get; }
     private ITrend? Trend { get; set; } = null;
     public double[] TrendValues => Trend?.TrendValues ??
         [.. Enumerable.Repeat(0D, PriceActions.Length)];
@@ -200,24 +200,24 @@ public class Chart : IEquatable<Chart?>
     {
         return other is not null &&
                _lookbackLength == other._lookbackLength &&
-               Interval == other.Interval &&
-               Source == other.Source &&
-               Code == other.Code &&
-               Industry == other.Industry &&
-               Sector == other.Sector &&
+               Info.Interval == other.Info.Interval &&
+               Info.Source == other.Info.Source &&
+               Info.Code == other.Info.Code &&
+               Info.Industry == other.Info.Industry &&
+               Info.Sector == other.Info.Sector &&
                Length == other.Length &&
                Start.Equals(other.Start) &&
                End.Equals(other.End);
     }
 
-    public static int GetCacheKey(string? source, string? code, string? industry, string? sector,
-        string? trend = null, int lookbackLength = 15, ChartInterval interval = ChartInterval.Daily)
+    public static int GetCacheKey(ChartInfo chartInfo,
+        string? trend = null, int lookbackLength = 15)
     {
-        return HashCode.Combine(source, code, industry, sector, trend, lookbackLength, interval);
+        return HashCode.Combine(chartInfo, trend, lookbackLength);
     }
 
     public override int GetHashCode()
     {
-        return GetCacheKey(Source, Code, Industry, Sector, Trend?.Name, _lookbackLength, Interval);
+        return GetCacheKey(Info, Trend?.Name, _lookbackLength);
     }
 }

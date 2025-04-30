@@ -43,9 +43,7 @@ try
             Communicate("No processes found", true);
         else
             foreach (var p in processInfo)
-            {
                 Communicate(p.ToString(), true);
-            }
     }
     else
     {

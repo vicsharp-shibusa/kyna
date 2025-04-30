@@ -153,7 +153,7 @@ public sealed partial class ReportService
                 {
                     totalTrouble++;
                     object[] data = new object[chartIndex + 3];
-                    data[0] = charts[0].Code!;
+                    data[0] = charts[0].Info.Code!;
                     data[1] = date;
                     for (int i = 0; i < closes.Length; i++)
                     {

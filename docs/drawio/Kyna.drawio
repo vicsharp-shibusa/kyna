@@ -1,4 +1,4 @@
-<mxfile host="Electron" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/26.2.2 Chrome/134.0.6998.178 Electron/35.1.2 Safari/537.36" version="26.2.2" pages="11">
+<mxfile host="Electron" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/26.2.2 Chrome/134.0.6998.178 Electron/35.1.2 Safari/537.36" version="26.2.2" pages="12">
   <diagram name="Context" id="mqAS-xSVoIPqpoYSdwAr">
     <mxGraphModel dx="1036" dy="702" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
       <root>
@@ -688,6 +688,51 @@
         </mxCell>
         <mxCell id="vr3q02fh5rnEFZhI58KU-5" value="For each chart, run through each chart reader.&lt;div&gt;&lt;br&gt;&lt;/div&gt;&lt;div&gt;Chart readers return Answers.&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;absoluteArcSize=1;arcSize=14;strokeWidth=2;" vertex="1" parent="1">
           <mxGeometry x="422" y="609" width="100" height="100" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram name="Backtesting 2" id="6SOobB4IZUcQL21Lyniv">
+    <mxGraphModel dx="1030" dy="611" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="0" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+      <root>
+        <mxCell id="35wdabKp2p-Ma3YY-u_P-0" />
+        <mxCell id="35wdabKp2p-Ma3YY-u_P-1" parent="35wdabKp2p-Ma3YY-u_P-0" />
+        <mxCell id="zkcoOhlWQPr4g7-vMC4v-0" value="Pattern&lt;br&gt;Repository" style="html=1;whiteSpace=wrap;" vertex="1" parent="35wdabKp2p-Ma3YY-u_P-1">
+          <mxGeometry x="807" y="263" width="110" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="zkcoOhlWQPr4g7-vMC4v-1" value="OHLC&lt;div&gt;Reader&lt;/div&gt;" style="html=1;whiteSpace=wrap;" vertex="1" parent="35wdabKp2p-Ma3YY-u_P-1">
+          <mxGeometry x="599" y="260" width="110" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="zkcoOhlWQPr4g7-vMC4v-9" value="creates" style="edgeStyle=none;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="35wdabKp2p-Ma3YY-u_P-1" source="zkcoOhlWQPr4g7-vMC4v-2" target="zkcoOhlWQPr4g7-vMC4v-3">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="zkcoOhlWQPr4g7-vMC4v-2" value="Chart" style="html=1;whiteSpace=wrap;" vertex="1" parent="35wdabKp2p-Ma3YY-u_P-1">
+          <mxGeometry x="305" y="468.25" width="110" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="zkcoOhlWQPr4g7-vMC4v-3" value="ChartSlice&lt;div&gt;&lt;br&gt;&lt;/div&gt;&lt;div&gt;snapshot of chart for position p&lt;br&gt;to position p + n.&lt;br&gt;&lt;br&gt;Has an offset for positioning.&lt;br&gt;&lt;br&gt;Can create additional slices.&lt;/div&gt;" style="html=1;whiteSpace=wrap;" vertex="1" parent="35wdabKp2p-Ma3YY-u_P-1">
+          <mxGeometry x="515" y="395.5" width="110" height="195.5" as="geometry" />
+        </mxCell>
+        <mxCell id="zkcoOhlWQPr4g7-vMC4v-4" value="We need to be able to take&lt;br&gt;this slice and find patterns&lt;br&gt;within it." style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;" vertex="1" parent="35wdabKp2p-Ma3YY-u_P-1">
+          <mxGeometry x="631" y="443.5" width="161" height="55" as="geometry" />
+        </mxCell>
+        <mxCell id="zkcoOhlWQPr4g7-vMC4v-5" value="Use" style="endArrow=open;endSize=12;dashed=1;html=1;rounded=0;" edge="1" parent="35wdabKp2p-Ma3YY-u_P-1" source="zkcoOhlWQPr4g7-vMC4v-1" target="zkcoOhlWQPr4g7-vMC4v-0">
+          <mxGeometry width="160" relative="1" as="geometry">
+            <mxPoint x="141" y="568" as="sourcePoint" />
+            <mxPoint x="301" y="568" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="zkcoOhlWQPr4g7-vMC4v-6" value="Use" style="endArrow=open;endSize=12;dashed=1;html=1;rounded=0;" edge="1" parent="35wdabKp2p-Ma3YY-u_P-1" source="zkcoOhlWQPr4g7-vMC4v-1" target="zkcoOhlWQPr4g7-vMC4v-3">
+          <mxGeometry x="-0.123" y="-3" width="160" relative="1" as="geometry">
+            <mxPoint x="731" y="298" as="sourcePoint" />
+            <mxPoint x="817" y="298" as="targetPoint" />
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="zkcoOhlWQPr4g7-vMC4v-8" value="creates" style="edgeStyle=none;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="35wdabKp2p-Ma3YY-u_P-1" source="zkcoOhlWQPr4g7-vMC4v-7" target="zkcoOhlWQPr4g7-vMC4v-2">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="zkcoOhlWQPr4g7-vMC4v-7" value="Backtester" style="html=1;whiteSpace=wrap;" vertex="1" parent="35wdabKp2p-Ma3YY-u_P-1">
+          <mxGeometry x="305" y="245" width="110" height="103" as="geometry" />
         </mxCell>
       </root>
     </mxGraphModel>
