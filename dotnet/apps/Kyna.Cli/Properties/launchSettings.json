@@ -2,7 +2,7 @@
   "profiles": {
     "Kyna.Cli": {
       "commandName": "Project",
-      "commandLineArgs": "--help"
+      "commandLineArgs": "help research"
     }
   }
 }

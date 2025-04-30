@@ -252,7 +252,9 @@ void Configure()
         { CommandKeys.Migrator, new SubCommand(GetSubcommandFilename(section[CommandKeys.Migrator]),
             ["migrate", "migrator", "migrates"])},
         { CommandKeys.Report, new SubCommand(GetSubcommandFilename(section[CommandKeys.Report]),
-            ["report", "reports", "reporting"])}
+            ["report", "reports", "reporting"])},
+        { CommandKeys.Research, new SubCommand(GetSubcommandFilename(section[CommandKeys.Research]),
+            ["research","",""])}
     };
 }
 
@@ -308,6 +310,7 @@ static class CommandKeys
     public const string Importer = "importer";
     public const string Migrator = "migrator";
     public const string Report = "report";
+    public const string Research = "research";
 }
 
 /// <summary>
