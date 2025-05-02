@@ -20,6 +20,7 @@ Commands:
         import      | importer    | imports     | kyna-importer.exe
         migrate     | migrator    | migrates    | kyna-migrator.exe
         report      | reports     | reporting   | kyna-report.exe
+        research    |             |             | kyna-research.exe
 ```
 
 You can get command-specific help by either passing the command to the `help` argument or by passing `--help` to the command argument.

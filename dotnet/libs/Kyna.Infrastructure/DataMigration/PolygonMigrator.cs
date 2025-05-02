@@ -466,13 +466,12 @@ internal sealed class PolygonMigrator : ImportsMigratorBase, IImportsMigrator, I
             {
                 using var rfConn = _sourceDbDef.GetConnection();
                 DateTimeOffset timestamp = DateTimeOffset.UtcNow;
-                await rfConn.ExecuteAsync(_sourceDbDef.Sql.GetSql(SqlKeys.MarkRemoteFileAsMigrated),
-                    new
+                await rfConn.ExecuteAsync(_sourceDbDef.Sql.GetSql(SqlKeys.MarkRemoteFileAsMigrated), new
                     {
                         remoteFile.Id,
                         timestamp,
                         TimestampMs = timestamp.ToUnixTimeMilliseconds()
-                    });
+                    }, cancellationToken: cancellationToken);
                 rfConn.Close();
             }
 
