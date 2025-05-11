@@ -11,4 +11,7 @@
 		<ProjectReference Include="..\Kyna.Analysis\Kyna.Analysis.csproj" />
 	</ItemGroup>
 
+	<ItemGroup>
+		<InternalsVisibleTo Include="Kyna.Research.Tests" />
+	</ItemGroup>
 </Project>

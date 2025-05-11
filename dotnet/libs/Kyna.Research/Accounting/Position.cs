@@ -1,4 +1,4 @@
-﻿namespace Kyna.Backtests.Accounting;
+﻿namespace Kyna.Research.Accounting;
 
 internal struct Position : IEquatable<Position>
 {

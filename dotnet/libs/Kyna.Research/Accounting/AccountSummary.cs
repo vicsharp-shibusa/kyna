@@ -1,6 +1,6 @@
 ﻿using System.Text;
 
-namespace Kyna.Backtests.Accounting;
+namespace Kyna.Research.Accounting;
 
 internal readonly record struct AccountSummary
 {

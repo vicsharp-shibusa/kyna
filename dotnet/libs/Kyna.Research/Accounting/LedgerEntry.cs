@@ -1,6 +1,6 @@
 ﻿using Kyna.Common;
 
-namespace Kyna.Backtests.Accounting;
+namespace Kyna.Research.Accounting;
 
 internal class LedgerEntry : IEquatable<LedgerEntry?>
 {

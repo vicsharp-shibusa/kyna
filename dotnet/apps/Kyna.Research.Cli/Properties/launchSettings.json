@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "Kyna.Research.Cli": {
+      "commandName": "Project",
+      "commandLineArgs": "-p -f ./configs/random.json"
+    }
+  }
+}

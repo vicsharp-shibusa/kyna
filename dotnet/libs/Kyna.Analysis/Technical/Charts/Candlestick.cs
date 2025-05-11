@@ -96,5 +96,6 @@ public record class Candlestick : Ohlc
         && !IsUmbrella
         && !IsInvertedUmbrella;
 
-    private decimal GetTolerance(decimal baseValue, decimal factor = 0.01M) => factor * baseValue;
+    private static decimal GetTolerance(decimal baseValue, decimal factor = 0.01M) => 
+        factor * baseValue;
 }

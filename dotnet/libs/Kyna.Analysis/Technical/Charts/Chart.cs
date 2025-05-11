@@ -187,6 +187,20 @@ public class Chart : IEquatable<Chart?>
         }
     }
 
+    public ChartSpan GetSpan(int start, int finish)
+    {
+        if (start > finish)
+            (start, finish) = (finish, start);
+
+        if (start < 0 || start >= this.Length)
+            throw new ArgumentOutOfRangeException($"{nameof(start)} is outside the range of the chart.");
+
+        if (finish < 0 || finish >= this.Length)
+            throw new ArgumentOutOfRangeException($"{nameof(finish)} is outside the range of the chart.");
+
+        return new ChartSpan(this, start, finish);
+    }
+
     public TrendSentiment LookbackSentiment(int position) => position > -1 && position < _lookbackSentiment.Length
         ? _lookbackSentiment[position]
         : TrendSentiment.Neutral;

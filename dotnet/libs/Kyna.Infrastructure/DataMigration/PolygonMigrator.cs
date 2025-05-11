@@ -1,9 +1,7 @@
-﻿using Amazon.S3.Model;
-using Kyna.Common;
+﻿using Kyna.Common;
 using Kyna.Infrastructure.Database;
 using Kyna.Infrastructure.Database.DataAccessObjects;
 using Kyna.Infrastructure.DataImport;
-using Kyna.Infrastructure.Events;
 using System.ComponentModel;
 using System.Data;
 using System.Diagnostics;
@@ -383,9 +381,9 @@ internal sealed class PolygonMigrator : ImportsMigratorBase, IImportsMigrator, I
         var codesWithSplits = (await tgtConn.QueryAsync<string>(
             _targetDbDef.Sql.GetSql(SqlKeys.SelectCodesWithSplits), new { Source },
             cancellationToken: cancellationToken).ConfigureAwait(false)).ToArray();
-        
+
         tgtConn.Close();
-        
+
         if (_configuration.MaxParallelization > 1 && codesWithSplits.Length > 0)
         {
             await Parallel.ForEachAsync(codesWithSplits,
@@ -467,11 +465,11 @@ internal sealed class PolygonMigrator : ImportsMigratorBase, IImportsMigrator, I
                 using var rfConn = _sourceDbDef.GetConnection();
                 DateTimeOffset timestamp = DateTimeOffset.UtcNow;
                 await rfConn.ExecuteAsync(_sourceDbDef.Sql.GetSql(SqlKeys.MarkRemoteFileAsMigrated), new
-                    {
-                        remoteFile.Id,
-                        timestamp,
-                        TimestampMs = timestamp.ToUnixTimeMilliseconds()
-                    }, cancellationToken: cancellationToken);
+                {
+                    remoteFile.Id,
+                    timestamp,
+                    TimestampMs = timestamp.ToUnixTimeMilliseconds()
+                }, cancellationToken: cancellationToken);
                 rfConn.Close();
             }
 

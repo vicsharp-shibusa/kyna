@@ -1,6 +1,8 @@
-﻿using Kyna.ApplicationServices.Cli;
+﻿using Kyna.Analysis.Technical;
+using Kyna.ApplicationServices.Analysis;
+using Kyna.ApplicationServices.Cli;
 using Kyna.ApplicationServices.Configuration;
-using Kyna.ApplicationServices.DataManagement;
+using Kyna.ApplicationServices.Research;
 using Kyna.Common;
 using Kyna.Infrastructure.Logging;
 using Microsoft.Extensions.Configuration;
@@ -18,9 +20,14 @@ string? appName = Assembly.GetExecutingAssembly().GetName().Name;
 
 Debug.Assert(appName != null);
 
-Stopwatch timer = Stopwatch.StartNew();
-
 Config? config = null;
+
+bool patterns = false;
+
+FinancialsRepository? financialsRepository = null;
+ResearchConfiguration? researchConfiguration = null;
+
+Stopwatch timer = Stopwatch.StartNew();
 
 try
 {
@@ -34,6 +41,21 @@ try
     {
         ShowHelp();
         Environment.Exit(0);
+    }
+
+    if (patterns)
+    {
+        Debug.Assert(financialsRepository != null);
+        Debug.Assert(researchConfiguration != null);
+        var patternService = new PatternService();
+        var src = "polygon.io";
+        var ticker = "SPY";
+        var chart = ChartFactory.Create(src, ticker, researchConfiguration.ChartConfiguration, null, null,
+            (await financialsRepository.GetOhlcForSourceAndCodeAsync(src, ticker)).ToArray());
+        foreach (var result in patternService.FindRandom(chart))
+        {
+            Console.WriteLine(result);
+        }
     }
 
     exitCode = 0;
@@ -64,9 +86,6 @@ catch (Exception exc)
 }
 finally
 {
-    if (config?.ConfigDir != null || config?.ConfigFile != null)
-        KyLogger.LogEvent(EventIdRepository.GetAppFinishedEvent(config!), processId);
-
     timer.Stop();
 
     Communicate($"{Environment.NewLine}{appName} completed in {timer.Elapsed.ConvertToText()}");
@@ -89,10 +108,9 @@ void Communicate(string? message, bool force = false, LogLevel logLevel = LogLev
 void ShowHelp()
 {
     CliArg[] localArgs = [
-        new CliArg(["-i","--input-dir"], ["directory"], false, "Directory of JSON import configuration files to process."),
-        new CliArg(["-f", "--file"], ["configuration file"], false, "JSON import configuration file to process."),
-        new CliArg(["-l", "--list"], [], false, "List process identifiers."),
-        new CliArg(["-d", "--delete"], ["process id"], false, "Delete backtest, results, and stats for specified process id.")    ];
+        new CliArg(["-p","--patterns"], [], false, "Build stats for patterns"),
+        new CliArg(["-f", "--file"], ["configuration file"], false, "JSON import configuration file to process.")
+    ];
 
     CliArg[] args = [.. localArgs.Union(CliHelper.GetDefaultArgDescriptions())];
 
@@ -109,7 +127,7 @@ void ShowHelp()
 void ParseArguments(string[] args)
 {
     config = new Config(Assembly.GetExecutingAssembly().GetName().Name ?? nameof(Program), "v1",
-        "CLI for importing financial data.");
+        "CLI for creating research statistics.");
 
     args = CliHelper.HydrateDefaultAppConfig(args, config);
 
@@ -119,36 +137,9 @@ void ParseArguments(string[] args)
 
         switch (argument)
         {
-            case "-i":
-            case "--input-dir":
-                if (a == args.Length - 1)
-                {
-                    throw new ArgumentException($"Expecting a directory name after {args[a]}");
-                }
-                config.ConfigDir = new DirectoryInfo(args[++a]);
-                if (!config.ConfigDir.Exists)
-                {
-                    throw new ArgumentException("The specified directory does not exist.");
-                }
-                break;
-            case "-d":
-            case "--delete":
-                if (a == args.Length - 1)
-                {
-                    throw new ArgumentException($"Expecting a process id after {args[a]}");
-                }
-                if (Guid.TryParse(args[++a], out Guid pid))
-                {
-                    config.ProcessIdsToDelete.Add(pid);
-                }
-                else
-                {
-                    throw new ArgumentException($"'{args[a]}' is not a valid process id.");
-                }
-                break;
-            case "-l":
-            case "--list":
-                config.ListProcessIds = true;
+            case "-p":
+            case "--patterns":
+                patterns = true;
                 break;
             case "-f":
             case "--file":
@@ -162,6 +153,10 @@ void ParseArguments(string[] args)
                 {
                     throw new ArgumentException("The specified configuration file does not exist.");
                 }
+
+                researchConfiguration = ResearchConfiguration.Create(config.ConfigFile);
+
+                Debug.Assert(researchConfiguration != null);
                 break;
             default:
                 throw new Exception($"Unknown argument: {args[a]}");
@@ -173,10 +168,6 @@ void ValidateArgsAndSetDefaults()
 {
     if (config == null)
         throw new Exception("Logic error; configuration was not created.");
-
-    if (!config.ShowHelp && !config.ListProcessIds && config.ProcessIdsToDelete.Count == 0 &&
-        config.ConfigDir == null && config.ConfigFile == null)
-        throw new ArgumentException("Either a configuration file or directory is required.");
 }
 
 void Configure()
@@ -197,6 +188,8 @@ void Configure()
     var bckDef = dbDefs.FirstOrDefault(d => d.Name == ConfigKeys.DbKeys.Backtests)
         ?? throw new Exception("Backtest db could not be defined.");
 
+    financialsRepository = new FinancialsRepository(finDef);
+
     var logger = Kyna.ApplicationServices.Logging.LoggerFactory.Create<Program>(logDef);
     KyLogger.SetLogger(logger);
 }
@@ -204,8 +197,5 @@ void Configure()
 class Config(string appName, string appVersion, string? description)
     : CliConfigBase(appName, appVersion, description)
 {
-    public DirectoryInfo? ConfigDir { get; set; }
     public FileInfo? ConfigFile { get; set; }
-    public bool ListProcessIds { get; set; }
-    public IList<Guid> ProcessIdsToDelete { get; set; } = new List<Guid>(10);
 }

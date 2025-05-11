@@ -12,7 +12,7 @@ public abstract class PriceTrendBase
         TrendValues = new double[_prices.Length];
     }
 
-    public double[] TrendValues { get; }
+    public double[] TrendValues { get; protected set; }
 
     public virtual string Name => GetType().Name;
 }

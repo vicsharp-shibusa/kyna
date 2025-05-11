@@ -68,7 +68,6 @@ internal static class BacktestRunnerFactory
     public static IBacktestRunner? Create(DbDef finDef, DbDef backtestDef,
         FileInfo configFile)
     {
-        throw new NotImplementedException();
         var configuration = RunnerBase.DeserializeConfigFile(configFile);
         if (configuration.Type == BacktestType.CandlestickPattern)
         {

@@ -2,21 +2,22 @@
 
 public class ChartSpan
 {
-    public ChartSpan(Chart chart, int position, int length)
+    public ChartSpan(Chart chart, int start, int finish)
     {
         ArgumentNullException.ThrowIfNull(chart);
-        if (length < 0)
-            throw new ArgumentOutOfRangeException(nameof(length), "Length cannot be negative.");
-        if (position < 0 || position >= chart.Length)
-            throw new ArgumentOutOfRangeException(nameof(position), "Position must be within the chart's bounds.");
-        if (position + length > chart.Length)
-            throw new ArgumentOutOfRangeException(nameof(length), "Position + length cannot exceed chart length.");
+        if (start > finish)
+            (start, finish) = (finish, start);
 
-        Offset = position;
+        if (start < 0)
+            throw new ArgumentOutOfRangeException(nameof(start), $"{nameof(start)} cannot be negative.");
+        if (finish > chart.Length)
+            throw new ArgumentOutOfRangeException(nameof(finish), $"{nameof(finish)} cannot be greater than length of chart.");
+
+        Offset = start;
         ChartInfo = chart.Info;
-        PriceActions = chart.PriceActions[position..(position + length)];
-        Candlesticks = chart.Candlesticks[position..(position + length)];
-        TrendValues = chart.TrendValues[position..(position + length)];
+        PriceActions = chart.PriceActions[start..finish];
+        Candlesticks = chart.Candlesticks[start..finish];
+        TrendValues = chart.TrendValues[start..finish];
 
         if ((PriceActions.Length != Candlesticks.Length) ||
             Candlesticks.Length != TrendValues.Length)

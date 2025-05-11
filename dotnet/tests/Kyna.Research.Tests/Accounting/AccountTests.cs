@@ -1,7 +1,7 @@
-﻿using Kyna.Backtests.Accounting;
-using Kyna.Common;
+﻿using Kyna.Common;
+using Kyna.Research.Accounting;
 
-namespace Kyna.Backtests.Tests.Accounting;
+namespace Kyna.Research.Tests.Accounting;
 
 public class AccountTests
 {

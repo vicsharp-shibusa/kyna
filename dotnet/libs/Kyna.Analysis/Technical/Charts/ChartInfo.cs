@@ -1,4 +1,6 @@
 ﻿
+using Kyna.Common;
+
 namespace Kyna.Analysis.Technical.Charts;
 
 public readonly struct ChartInfo : IEquatable<ChartInfo>
@@ -8,6 +10,11 @@ public readonly struct ChartInfo : IEquatable<ChartInfo>
     public string? Industry { get; init; }
     public string? Sector { get; init; }
     public ChartInterval Interval { get; init; }
+
+    public override string ToString()
+    {
+        return $"{Code} {Interval.GetEnumDescription()}";
+    }
 
     public override bool Equals(object? obj)
     {

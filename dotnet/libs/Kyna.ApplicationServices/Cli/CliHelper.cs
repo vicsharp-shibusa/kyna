@@ -53,23 +53,17 @@ public static class CliHelper
         var optionalArgs = cliArgs.Except(requiredArgs).ToArray();
 
         foreach (var arg in requiredArgs)
-        {
             args.Add(arg.AsKeyValuePair());
-        }
 
         foreach (var arg in optionalArgs)
-        {
             args.Add(arg.AsKeyValuePair());
-        }
 
         var keyWidth = 1 + args.MaxBy(a => a.Key.Length).Key.Length;
 
         StringBuilder result = new();
 
         foreach (var arg in args)
-        {
             result.AppendLine($"{arg.Key.PadRight(keyWidth)}\t{arg.Value}");
-        }
 
         return result.ToString();
     }
@@ -84,9 +78,7 @@ public static class CliHelper
         foreach (var kvp in connStringSection.GetChildren())
         {
             if (kvp.Value is null)
-            {
                 continue;
-            }
 
             var engItem = engineSection.GetSection(kvp.Key);
 
@@ -95,9 +87,7 @@ public static class CliHelper
                 : engItem.Value ?? DatabaseEngine.PostgreSql.ToString();
 
             if (Enum.TryParse<DatabaseEngine>(engString, out var engine))
-            {
                 dbDefs.Add(new(kvp.Key, engine, kvp.Value));
-            }
         }
 
         return [.. dbDefs];
@@ -110,20 +100,14 @@ public static class CliHelper
         StringBuilder sb = new(message.Trim());
 
         if (answerOptions.Length == 0)
-        {
             return false;
-        }
 
         for (int i = 0; i < answerOptions.Length; i++)
         {
             if (answerOptions[i].Equals(defaultAnswer, StringComparison.OrdinalIgnoreCase))
-            {
                 answerOptions[i] = answerOptions[i].ToUpper();
-            }
             else
-            {
                 answerOptions[i] = answerOptions[i].ToLower();
-            }
         }
 
         sb.Append($" ({string.Join('/', answerOptions)}) ");
@@ -133,9 +117,7 @@ public static class CliHelper
         var answer = Console.ReadLine();
 
         if (string.IsNullOrWhiteSpace(answer))
-        {
             answer = defaultAnswer;
-        }
 
         return answer?.Trim().Equals("y", StringComparison.OrdinalIgnoreCase) ?? false;
     }

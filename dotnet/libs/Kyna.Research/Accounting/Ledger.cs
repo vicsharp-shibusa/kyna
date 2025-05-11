@@ -1,6 +1,6 @@
 ﻿using System.Diagnostics;
 
-namespace Kyna.Backtests.Accounting;
+namespace Kyna.Research.Accounting;
 
 internal class Ledger : IDisposable
 {

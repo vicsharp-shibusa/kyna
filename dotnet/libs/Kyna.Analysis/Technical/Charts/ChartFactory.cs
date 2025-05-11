@@ -179,11 +179,16 @@ public static class ChartFactory
                     trend = new MovingAverageTrend(key.Value, ohlc);
                 }
                 else if (configuration.Trends![0].Trend!
-                    .StartsWith("Extreme", StringComparison.OrdinalIgnoreCase))
+                    .StartsWith("extreme", StringComparison.OrdinalIgnoreCase))
                 {
                     trend = new ExtremeTrend(ohlc);
                 }
+                else if (configuration.Trends[0].Trend!.Equals("kyna", StringComparison.OrdinalIgnoreCase))
+                {
+                    trend = new KynaTrend(ohlc);
+                }
             }
+
             if (len > 1)
             {
                 List<WeightedTrend> wt = new(len);

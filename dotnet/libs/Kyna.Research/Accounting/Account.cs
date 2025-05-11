@@ -1,4 +1,6 @@
-﻿namespace Kyna.Backtests.Accounting;
+﻿using System.Runtime.CompilerServices;
+
+namespace Kyna.Research.Accounting;
 
 internal class Account
 {

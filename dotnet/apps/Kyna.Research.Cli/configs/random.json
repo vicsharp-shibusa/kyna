@@ -1,0 +1,15 @@
+{
+  "Name": "Random",
+  "Source": "polygon.io",
+  "Description": "Choose random positions as entry points.",
+  "Entry Price Point": "Close",
+  "Chart Configuration": {
+    "Interval": "Daily",
+    "Moving Averages": null,
+    "Trend Configuration": [
+      {
+        "Trend": "kyna"
+      }
+    ]
+  }
+}
