@@ -5,13 +5,14 @@ namespace Kyna.ApplicationServices.Research;
 public record ResearchResult
 {
     public ResearchResult(ChartInfo chartInfo, DateOnly date,
-        StatType type, string key, StatMeta meta)
+        StatType type, string key, StatMeta meta, decimal epiloguePriceDeviation)
     {
         ChartInfo = chartInfo;
         Date = date;
         Type = type;
         Key = key;
         Meta = meta;
+        EpiloguePriceDeviation = epiloguePriceDeviation;
     }
 
     public ChartInfo ChartInfo { get; }
@@ -19,6 +20,7 @@ public record ResearchResult
     public StatType Type { get; }
     public string Key { get; }
     public StatMeta Meta { get; }
+    public decimal EpiloguePriceDeviation { get; }
 }
 
 public enum StatType

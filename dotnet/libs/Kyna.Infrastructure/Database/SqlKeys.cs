@@ -98,11 +98,11 @@ public static class SqlKeys
 
     // Stats
     public const string SelectStat = nameof(SelectStat);
-    public const string SelectStatBuild = nameof(SelectStatBuild);
-    public const string SelectStatDetail = nameof(SelectStatDetail);
+    public const string SelectStatsBuild = nameof(SelectStatsBuild);
+    public const string SelectStatsDetail = nameof(SelectStatsDetail);
     public const string UpsertStat = nameof(UpsertStat);
-    public const string UpsertStatBuild = nameof(UpsertStatBuild);
-    public const string UpsertStatDetail = nameof(UpsertStatDetail);
+    public const string UpsertStatsBuild = nameof(UpsertStatsBuild);
+    public const string UpsertStatsDetail = nameof(UpsertStatsDetail);
 
     // Utility
     public const string DeleteLeadingPriceGaps = nameof(DeleteLeadingPriceGaps);

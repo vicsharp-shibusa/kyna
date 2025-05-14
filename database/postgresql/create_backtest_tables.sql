@@ -78,6 +78,7 @@ CREATE TABLE IF NOT EXISTS public.stats_build
   updated_at TIMESTAMP WITH TIME ZONE NOT NULL,
   created_at_unix_ms BIGINT NOT NULL,
   updated_at_unix_ms BIGINT NOT NULL,
+  process_id UUID NULL,
   PRIMARY KEY (id)
 );
 
@@ -93,6 +94,7 @@ CREATE TABLE IF NOT EXISTS public.stats_details
   updated_at TIMESTAMP WITH TIME ZONE NOT NULL,
   created_at_unix_ms BIGINT NOT NULL,
   updated_at_unix_ms BIGINT NOT NULL,
+  process_id UUID NULL,
   PRIMARY KEY (stats_build_id, code, stat_type, stat_key)
 );
 
@@ -112,5 +114,6 @@ CREATE TABLE IF NOT EXISTS public.stats
   updated_at TIMESTAMP WITH TIME ZONE NOT NULL,
   created_at_unix_ms BIGINT NOT NULL,
   updated_at_unix_ms BIGINT NOT NULL,
+  process_id UUID NULL,
   PRIMARY KEY (stats_build_id, category, sub_category, stat_type, stat_key)
 );

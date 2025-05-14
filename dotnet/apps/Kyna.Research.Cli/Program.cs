@@ -47,14 +47,30 @@ try
     {
         Debug.Assert(financialsRepository != null);
         Debug.Assert(researchConfiguration != null);
-        var patternService = new PatternService();
-        var src = "polygon.io";
-        var ticker = "SPY";
-        var chart = ChartFactory.Create(src, ticker, researchConfiguration.ChartConfiguration, null, null,
-            (await financialsRepository.GetOhlcForSourceAndCodeAsync(src, ticker)).ToArray());
-        foreach (var result in patternService.FindRandom(chart))
+        var src = researchConfiguration.Source;
+        Debug.Assert(src != null);
+        foreach (var ticker in new string[] { "SPY", "QQQ", "MSFT", "AAPL", "TSLA" })
         {
-            Console.WriteLine(result);
+            var chart = ChartFactory.Create(src, ticker, researchConfiguration.ChartConfiguration, null, null,
+                (await financialsRepository.GetOhlcForSourceAndCodeAsync(src, ticker)).ToArray());
+
+            var results = PatternService.FindRandom(chart).ToArray();
+            var posResults = results.Count(k => k.EpiloguePriceDeviation > 0);
+            var negResults = results.Count(k => k.EpiloguePriceDeviation < 0);
+            var positiveResults = (double)posResults / results.Length;
+            var negativeResults = (double)negResults / results.Length;
+
+            var (Lower, Upper) = PatternService.CalculateWilsonScoreInterval(positiveResults, results.Length);
+
+            Console.WriteLine(ticker);
+            Console.WriteLine($"Total trades: {results.Length}");
+            Console.WriteLine($"Positive trade count: {posResults}");
+            Console.WriteLine($"Negative trade count: {negResults}");
+            Console.WriteLine($"Positive outcomes: {positiveResults:0.00}");
+            Console.WriteLine($"Negative outcomes: {negativeResults:0.00}");
+            Console.WriteLine($"Lower confidence: {Lower:0.00}");
+            Console.WriteLine($"Upper confidence: {Upper:0.00}");
+            Console.WriteLine("---");
         }
     }
 

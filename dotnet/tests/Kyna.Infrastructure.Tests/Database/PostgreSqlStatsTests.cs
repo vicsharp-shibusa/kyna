@@ -24,9 +24,9 @@ public class PostgreSqlStatsTests : IClassFixture<PostgreSqlTestFixture>
         using var context = _fixture.Backtests.GetConnection();
         Debug.Assert(context != null);
 
-        context.Execute(_fixture.Backtests.Sql.GetSql(SqlKeys.UpsertStatBuild), statsBuild);
+        context.Execute(_fixture.Backtests.Sql.GetSql(SqlKeys.UpsertStatsBuild), statsBuild);
 
-        var sql = _fixture.Backtests.Sql.GetSql(SqlKeys.SelectStatBuild, "id = @Id");
+        var sql = _fixture.Backtests.Sql.GetSql(SqlKeys.SelectStatsBuild, "id = @Id");
         Assert.NotNull(sql);
         var actual = context.QueryFirstOrDefault<StatsBuild>(sql, statsBuild);
         Assert.NotNull(actual);
@@ -41,9 +41,9 @@ public class PostgreSqlStatsTests : IClassFixture<PostgreSqlTestFixture>
         using var context = _fixture.Backtests.GetConnection();
         Debug.Assert(context != null);
 
-        context.Execute(_fixture.Backtests.Sql.GetSql(SqlKeys.UpsertStatDetail), statsDetail);
+        context.Execute(_fixture.Backtests.Sql.GetSql(SqlKeys.UpsertStatsDetail), statsDetail);
 
-        var sql = _fixture.Backtests.Sql.GetSql(SqlKeys.SelectStatDetail,
+        var sql = _fixture.Backtests.Sql.GetSql(SqlKeys.SelectStatsDetail,
             "stats_build_id = @StatsBuildId AND code = @Code AND stat_type = @StatType AND stat_key = @StatKey");
         Assert.NotNull(sql);
         var actual = context.QueryFirstOrDefault<StatsDetail>(sql, statsDetail);
@@ -64,7 +64,7 @@ public class PostgreSqlStatsTests : IClassFixture<PostgreSqlTestFixture>
         var sql = _fixture.Backtests.Sql.GetSql(SqlKeys.SelectStat,
             "stats_build_id = @StatsBuildId AND category = @Category AND sub_category = @SubCategory AND stat_type = @StatType AND stat_key = @StatKey");
         Assert.NotNull(sql);
-        var actual = context.QueryFirstOrDefault<Stats>(sql, stats);
+        var actual = context.QueryFirstOrDefault<Stat>(sql, stats);
         Assert.NotNull(actual);
         Assert.Equal(stats, actual);
     }
@@ -92,9 +92,9 @@ public class PostgreSqlStatsTests : IClassFixture<PostgreSqlTestFixture>
         };
     }
 
-    private static Stats CreateStats()
+    private static Stat CreateStats()
     {
-        return new Stats()
+        return new Stat()
         {
             StatsBuildId = Guid.NewGuid(),
             Category = "Technology",

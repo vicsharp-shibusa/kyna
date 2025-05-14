@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Kyna.Infrastructure.Database.DataAccessObjects;
+﻿namespace Kyna.Infrastructure.Database.DataAccessObjects;
 
 internal record StatsBuild : DaoBase
 {
@@ -31,11 +25,11 @@ internal record StatsDetail : DaoBase
     public string StatMeta { get; init; } = string.Empty;
 }
 
-internal record Stats : DaoBase
+internal record Stat : DaoBase
 {
-    public Stats() : base() { }
+    public Stat() : base() { }
 
-    public Stats(Guid? processId = null) : base(processId) { }
+    public Stat(Guid? processId = null) : base(processId) { }
 
     public Guid StatsBuildId { get; init; }
     public string Category { get; init; } = string.Empty;
