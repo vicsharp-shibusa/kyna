@@ -75,57 +75,6 @@ public class PostgreSqlResearchTests : IClassFixture<PostgreSqlTestFixture>
         Assert.Equal(stat, actual);
     }
 
-    //[Fact]
-    //public void InsertAndFetch_Backtest_InternalTransaction()
-    //{
-    //    var backtest = CreateBacktest();
-
-    //    using var context = _fixture.Backtests.GetConnection();
-    //    Debug.Assert(context != null);
-
-    //    context.Execute(_fixture.Backtests.Sql.GetSql(SqlKeys.UpsertBacktest), backtest);
-
-    //    var sql = _fixture.Backtests.Sql.GetSql(SqlKeys.SelectBacktest, "id = @Id");
-    //    Assert.NotNull(sql);
-    //    var actual = context.QueryFirstOrDefault<Backtest>(sql, backtest);
-    //    Assert.NotNull(actual);
-    //    Assert.Equal(backtest, actual);
-    //}
-
-    //[Fact]
-    //public void InsertAndFetch_BacktestResult_InternalTransaction()
-    //{
-    //    var backtest = CreateBacktest();
-    //    var backtestResult = CreateBacktestResult(backtest);
-
-    //    using var context = _fixture.Backtests.GetConnection();
-    //    Debug.Assert(context != null);
-
-    //    context.Execute(_fixture.Backtests.Sql.GetSql(SqlKeys.UpsertBacktestResult), backtestResult);
-
-    //    var sql = _fixture.Backtests.Sql.GetSql(SqlKeys.SelectBacktestResult, "id = @Id");
-    //    var actual = context.QueryFirstOrDefault<BacktestResult>(sql, backtestResult);
-    //    Assert.NotNull(actual);
-    //    Assert.Equal(backtestResult, actual);
-    //}
-
-    //[Fact]
-    //public void InsertAndFetch_BacktestStats_InternalTransaction()
-    //{
-    //    using var context = _fixture.Backtests.GetConnection();
-    //    Debug.Assert(context != null);
-
-    //    context.Execute(_fixture.Backtests.Sql.GetSql(SqlKeys.DeleteBacktestStats));
-    //    var backtestStats = CreateBacktestStats();
-
-    //    context.Execute(_fixture.Backtests.Sql.GetSql(SqlKeys.UpsertBacktestStats), backtestStats);
-
-    //    var sql = _fixture.Backtests.Sql.GetSql(SqlKeys.SelectBacktestStats, "backtest_id = @BacktestId");
-    //    var actual = context.QueryFirstOrDefault<BacktestStats>(sql, backtestStats);
-    //    Assert.NotNull(actual);
-    //    Assert.Equal(backtestStats, actual);
-    //}
-
     private StatsBuild CreateStatsBuild()
     {
         DateTimeOffset now = DateTimeOffset.UtcNow;
@@ -145,6 +94,7 @@ public class PostgreSqlResearchTests : IClassFixture<PostgreSqlTestFixture>
         return new StatsDetail(_processId)
         {
             Code = "test",
+            EntryDate = DateOnly.FromDateTime(DateTime.Now),
             CreatedAt = now,
             UpdatedAt = now,
             StatKey = "key",

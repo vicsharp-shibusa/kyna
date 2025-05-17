@@ -19,6 +19,7 @@ internal record StatsDetail : DaoBase
 
     public Guid StatsBuildId { get; init; }
     public string Code { get; init; } = string.Empty;
+    public DateOnly EntryDate { get; init; }
     public string StatType { get; init; } = string.Empty;
     public string StatKey { get; init; } = string.Empty;
     public double StatVal { get; init; }

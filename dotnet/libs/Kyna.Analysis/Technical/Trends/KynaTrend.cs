@@ -25,15 +25,15 @@ public class KynaTrend : PriceTrendBase, ITrend
             0.04D
         ];
 
-        List<WeightedTrend> trends = new(6)
-        {
+        List<WeightedTrend> trends =
+        [
             new WeightedTrend(new ExtremeTrend(_prices), weights[0]),
             new WeightedTrend(new PriceToMovingAverageTrend(maKeys[0], _prices), weights[1]),
             new WeightedTrend(new PriceToMovingAverageTrend(maKeys[1], _prices), weights[2]),
             new WeightedTrend(new PriceToMovingAverageTrend(maKeys[2], _prices), weights[3]),
             new WeightedTrend(new MultipleMovingAverageTrend(_prices, maKeys), weights[4]),
             new WeightedTrend(new CandlestickTrend(_prices),weights[5])
-        };
+        ];
 
         var trend = new CombinedWeightedTrend([.. trends]);
         trend.Calculate();

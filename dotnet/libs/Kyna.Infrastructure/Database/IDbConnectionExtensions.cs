@@ -309,7 +309,7 @@ public static class IDbConnectionExtensions
         if (!reader.Read())
             return default;
 
-        return typeof(T).IsPrimitive || typeof(T) == typeof(string) || typeof(T) == typeof(decimal)
+        return typeof(T) == typeof(DateOnly) || typeof(T).IsPrimitive || typeof(T) == typeof(string) || typeof(T) == typeof(decimal)
             || (typeof(T).IsValueType && Nullable.GetUnderlyingType(typeof(T)) != null)
             ? MapScalar<T>(reader, 0)
             : MapObject<T>(reader);
@@ -335,7 +335,7 @@ public static class IDbConnectionExtensions
         if (!(reader is DbDataReader dbReader ? await dbReader.ReadAsync(cancellationToken) : reader.Read()))
             return default;
 
-        return typeof(T).IsPrimitive || typeof(T) == typeof(string) || typeof(T) == typeof(decimal)
+        return typeof(T) == typeof(DateOnly) || typeof(T).IsPrimitive || typeof(T) == typeof(string) || typeof(T) == typeof(decimal)
             || (typeof(T).IsValueType && Nullable.GetUnderlyingType(typeof(T)) != null)
             ? MapScalar<T>(reader, 0)
             : MapObject<T>(reader);
@@ -358,7 +358,7 @@ public static class IDbConnectionExtensions
         if (!reader.Read())
             return default;
 
-        T? result = typeof(T).IsPrimitive || typeof(T) == typeof(string) || typeof(T) == typeof(decimal)
+        T? result = typeof(T) == typeof(DateOnly) || typeof(T).IsPrimitive || typeof(T) == typeof(string) || typeof(T) == typeof(decimal)
             || (typeof(T).IsValueType && Nullable.GetUnderlyingType(typeof(T)) != null)
             ? MapScalar<T>(reader, 0)
             : MapObject<T>(reader);
@@ -393,7 +393,7 @@ public static class IDbConnectionExtensions
         if (!hasRow)
             return default;
 
-        T? result = typeof(T).IsPrimitive || typeof(T) == typeof(string) || typeof(T) == typeof(decimal)
+        T? result = typeof(T) == typeof(DateOnly) || typeof(T).IsPrimitive || typeof(T) == typeof(string) || typeof(T) == typeof(decimal)
             || (typeof(T).IsValueType && Nullable.GetUnderlyingType(typeof(T)) != null)
             ? MapScalar<T>(reader, 0)
             : MapObject<T>(reader);
@@ -565,9 +565,14 @@ public static class IDbConnectionExtensions
     private static T? MapScalar<T>(IDataReader reader, int columnIndex)
     {
         var value = reader.GetValue(columnIndex);
-        return reader.IsDBNull(columnIndex)
-            ? default
-            : (T)Convert.ChangeType(value, Nullable.GetUnderlyingType(typeof(T)) ?? typeof(T));
+        if (reader.IsDBNull(columnIndex))
+            return default;
+
+        var targetType = Nullable.GetUnderlyingType(typeof(T)) ?? typeof(T);
+        if (targetType == typeof(DateOnly) && value is DateTime dateTime)
+            return (T)(object)DateOnly.FromDateTime(dateTime);
+
+        return (T)Convert.ChangeType(value, targetType);
     }
 
     private static T MapObject<T>(IDataReader reader)

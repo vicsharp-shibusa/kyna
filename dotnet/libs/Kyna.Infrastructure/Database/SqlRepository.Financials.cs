@@ -440,6 +440,25 @@ SET
     phone = EXCLUDED.phone,
     updated_at = EXCLUDED.updated_at");
 
+        yield return new KeyValuePair<SqlRepoKey, string>(
+            new SqlRepoKey(SqlKeys.SelectMaxPriceActionDateForEntities, DatabaseEngine.PostgreSql),
+            @"SELECT MAX(last_price_action_date) FROM entities");
+
+        yield return new KeyValuePair<SqlRepoKey, string>(
+            new SqlRepoKey(SqlKeys.SelectCodesForDateAndPriceRange, DatabaseEngine.PostgreSql),
+            @"
+SELECT 
+    e.code
+FROM public.entities e
+INNER JOIN public.eod_adjusted_prices p 
+    ON e.source = p.source 
+    AND e.code = p.code
+WHERE e.last_price_action_date = @ActionDate
+    AND e.type IN ('CS', 'ETF', 'PS', 'PFD', 'ADRC', 'FUND')
+GROUP BY e.code
+HAVING AVG(p.close) BETWEEN @MinPrice AND @MaxPrice
+    AND COUNT(p.close) >= 200;");
+
         // Fetch all entities
         yield return new KeyValuePair<SqlRepoKey, string>(
             new SqlRepoKey(SqlKeys.SelectEntity, DatabaseEngine.PostgreSql),

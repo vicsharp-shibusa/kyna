@@ -86,6 +86,7 @@ CREATE TABLE IF NOT EXISTS public.stats_details
 (
   stats_build_id UUID NOT NULL,
   code TEXT NOT NULL,
+  entry_date DATE NOT NULL,
   stat_type TEXT NOT NULL,
   stat_key TEXT NOT NULL,
   stat_val DOUBLE PRECISION NOT NULL,
@@ -95,7 +96,7 @@ CREATE TABLE IF NOT EXISTS public.stats_details
   created_at_unix_ms BIGINT NOT NULL,
   updated_at_unix_ms BIGINT NOT NULL,
   process_id UUID NULL,
-  PRIMARY KEY (stats_build_id, code, stat_type, stat_key)
+  PRIMARY KEY (stats_build_id, code, entry_date, stat_type, stat_key)
 );
 
 CREATE TABLE IF NOT EXISTS public.stats

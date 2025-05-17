@@ -38,13 +38,13 @@ FROM public.stats_build"
             new SqlRepoKey(SqlKeys.UpsertStatsDetail, DatabaseEngine.PostgreSql),
             @"
 INSERT INTO public.stats_details(
-    stats_build_id, code, stat_type, stat_key, stat_val, stat_meta,
+    stats_build_id, code, entry_date, stat_type, stat_key, stat_val, stat_meta,
     created_at, updated_at, created_at_unix_ms, updated_at_unix_ms, process_id)
 VALUES (
-    @StatsBuildId, @Code, @StatType, @StatKey, @StatVal, @StatMeta,
+    @StatsBuildId, @Code, @EntryDate, @StatType, @StatKey, @StatVal, @StatMeta,
     @CreatedAt, @UpdatedAt, @CreatedAtUnixMs, @UpdatedAtUnixMs, @ProcessId
 )
-ON CONFLICT (stats_build_id, code, stat_type, stat_key) DO UPDATE SET
+ON CONFLICT (stats_build_id, code, entry_date, stat_type, stat_key) DO UPDATE SET
     stat_val = EXCLUDED.stat_val,
     stat_meta = EXCLUDED.stat_meta,
     updated_at = EXCLUDED.updated_at,
@@ -57,7 +57,8 @@ ON CONFLICT (stats_build_id, code, stat_type, stat_key) DO UPDATE SET
             new SqlRepoKey(SqlKeys.SelectStatsDetail, DatabaseEngine.PostgreSql),
             @"
 SELECT
-    stats_build_id AS StatsBuildId, code AS Code, stat_type AS StatType,
+    stats_build_id AS StatsBuildId, code AS Code, entry_date AS EntryDate,
+    stat_type AS StatType,
     stat_key AS StatKey, stat_val AS StatVal, stat_meta AS StatMeta,
     created_at_unix_ms AS CreatedAtUnixMs,
     updated_at_unix_ms AS UpdatedAtUnixMs,

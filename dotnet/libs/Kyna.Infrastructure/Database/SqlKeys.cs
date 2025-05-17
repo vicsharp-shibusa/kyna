@@ -80,6 +80,8 @@ public static class SqlKeys
     public const string SetSplitIndicatorForEntities = nameof(SetSplitIndicatorForEntities);
     public const string UpdateSplitsInEntities = nameof(UpdateSplitsInEntities);
     public const string UpsertEntity = nameof(UpsertEntity);
+    public const string SelectMaxPriceActionDateForEntities = nameof(SelectMaxPriceActionDateForEntities);
+    public const string SelectCodesForDateAndPriceRange = nameof(SelectCodesForDateAndPriceRange);
 
     // Backtests
     public const string DeleteBacktestsForProcessId = nameof(DeleteBacktestsForProcessId);

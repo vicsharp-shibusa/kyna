@@ -1,4 +1,5 @@
 ﻿using Kyna.Analysis.Technical.Charts;
+using System.Diagnostics;
 
 namespace Kyna.Analysis.Technical.Trends;
 
@@ -70,7 +71,7 @@ public class CandlestickTrend : PriceTrendBase, ITrend
         }
     }
 
-    private double GetPatternScore(Candlestick candle)
+    private static double GetPatternScore(Candlestick candle)
     {
         if (candle.IsBullishMarubozu)
             return 1.0;
@@ -131,7 +132,7 @@ public class CandlestickTrend : PriceTrendBase, ITrend
         }
         double avgVolume = totalVolume / _lookbackPeriod;
         double currentVolume = (double)_prices[index].Volume;
-        double volumeRatio = currentVolume / avgVolume;
+        double volumeRatio = avgVolume == 0 ? 0D : currentVolume / avgVolume;
 
         // Clamp volume factor to [0.5, 2.0]
         return Math.Max(0.5, Math.Min(2.0, volumeRatio));

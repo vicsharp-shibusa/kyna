@@ -3,6 +3,7 @@
   "Source": "polygon.io",
   "Description": "Choose random positions as entry points.",
   "Entry Price Point": "Close",
+  "Max Parallelization": 5,
   "Chart Configuration": {
     "Interval": "Daily",
     "Moving Averages": null,

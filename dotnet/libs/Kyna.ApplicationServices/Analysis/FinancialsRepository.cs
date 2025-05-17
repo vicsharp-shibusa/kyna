@@ -15,6 +15,26 @@ public sealed class FinancialsRepository
         _dbDef = finDef;
     }
 
+    public async Task<DateOnly> GetMostRecentPriceActionDateAsync()
+    {
+        var sql = _dbDef.Sql.GetSql(SqlKeys.SelectMaxPriceActionDateForEntities);
+        using var conn = _dbDef.GetConnection();
+        return await conn.QuerySingleOrDefaultAsync<DateOnly>(sql);
+    }
+
+    public async Task<IEnumerable<string>> GetCodesForDateAndPriceRangeAsync(
+        DateOnly date, decimal minAvgPrice = .01M, decimal maxAvgPrice = 100_000M)
+    {
+        var sql = _dbDef.Sql.GetSql(SqlKeys.SelectCodesForDateAndPriceRange);
+        using var conn = _dbDef.GetConnection();
+        return await conn.QueryAsync<string>(sql, new
+        {
+            ActionDate = date,
+            MinPrice = minAvgPrice,
+            MaxPrice = maxAvgPrice
+        });
+    }
+
     public Task<IEnumerable<string>> GetAllAdjustedSymbolsForSourceAsync(string source)
     {
         using var conn = _dbDef.GetConnection();

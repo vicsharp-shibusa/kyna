@@ -9,6 +9,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using System.Diagnostics;
 using System.Reflection;
+using System.Text.Json;
 
 IConfiguration? configuration;
 
@@ -25,6 +26,7 @@ Config? config = null;
 bool patterns = false;
 
 FinancialsRepository? financialsRepository = null;
+ResearchStatsService? researchStatsService = null;
 ResearchConfiguration? researchConfiguration = null;
 
 Stopwatch timer = Stopwatch.StartNew();
@@ -46,32 +48,49 @@ try
     if (patterns)
     {
         Debug.Assert(financialsRepository != null);
+        Debug.Assert(researchStatsService != null);
         Debug.Assert(researchConfiguration != null);
+
         var src = researchConfiguration.Source;
         Debug.Assert(src != null);
-        foreach (var ticker in new string[] { "SPY", "QQQ", "MSFT", "AAPL", "TSLA" })
+
+        var mostRecentDate = await financialsRepository.GetMostRecentPriceActionDateAsync();
+        Debug.Assert(mostRecentDate != DateOnly.MinValue);
+
+        var codes = (await financialsRepository.GetCodesForDateAndPriceRangeAsync(mostRecentDate,
+            5M, 500M)).ToArray();
+
+        var buildId = await researchStatsService.CreateStatsBuildAsync(researchConfiguration, processId);
+
+        //codes = ["APRP"];
+        List<Task> tasks = new(codes.Length);
+        int i = 0;
+        foreach (var ticker in codes)
         {
+            i++;
+            Console.WriteLine($"{ticker}\t{i}\t/\t{codes.Length}");
             var chart = ChartFactory.Create(src, ticker, researchConfiguration.ChartConfiguration, null, null,
                 (await financialsRepository.GetOhlcForSourceAndCodeAsync(src, ticker)).ToArray());
 
             var results = PatternService.FindRandom(chart).ToArray();
-            var posResults = results.Count(k => k.EpiloguePriceDeviation > 0);
-            var negResults = results.Count(k => k.EpiloguePriceDeviation < 0);
-            var positiveResults = (double)posResults / results.Length;
-            var negativeResults = (double)negResults / results.Length;
 
-            var (Lower, Upper) = PatternService.CalculateWilsonScoreInterval(positiveResults, results.Length);
-
-            Console.WriteLine(ticker);
-            Console.WriteLine($"Total trades: {results.Length}");
-            Console.WriteLine($"Positive trade count: {posResults}");
-            Console.WriteLine($"Negative trade count: {negResults}");
-            Console.WriteLine($"Positive outcomes: {positiveResults:0.00}");
-            Console.WriteLine($"Negative outcomes: {negativeResults:0.00}");
-            Console.WriteLine($"Lower confidence: {Lower:0.00}");
-            Console.WriteLine($"Upper confidence: {Upper:0.00}");
-            Console.WriteLine("---");
+            tasks.Add(Parallel.ForEachAsync(results, new ParallelOptions()
+            {
+                MaxDegreeOfParallelism = researchConfiguration.MaxParallelization
+            }, async (r, ct) =>
+            {
+                var deviation = (double)r.EpiloguePriceDeviation;
+                await researchStatsService.SaveResearchStatAsync(processId, buildId,
+                    ticker,
+                    r.Date,
+                    r.Type.GetEnumDescription(),
+                    "Random",
+                    deviation,
+                    r.Meta.ToString(),
+                    ct).ConfigureAwait(false);
+            }));
         }
+        Task.WaitAll(tasks);
     }
 
     exitCode = 0;
@@ -205,6 +224,7 @@ void Configure()
         ?? throw new Exception("Backtest db could not be defined.");
 
     financialsRepository = new FinancialsRepository(finDef);
+    researchStatsService = new ResearchStatsService(bckDef);
 
     var logger = Kyna.ApplicationServices.Logging.LoggerFactory.Create<Program>(logDef);
     KyLogger.SetLogger(logger);

@@ -1,4 +1,6 @@
 ﻿using Kyna.Analysis.Technical.Charts;
+using Kyna.Common;
+using System.Text.Json;
 
 namespace Kyna.ApplicationServices.Research;
 
@@ -31,6 +33,9 @@ public enum StatType
 
 public record StatMeta
 {
+    private static readonly JsonSerializerOptions _serOptions = JsonSerializerOptionsRepository.Custom;
+    private string? _string = null;
+
     public StatMeta(double trendValue, int epilogueLength)
     {
         TrendValue = trendValue;
@@ -39,4 +44,10 @@ public record StatMeta
 
     public double TrendValue { get; init; }
     public int EpilogueLength { get; init; }
+
+    public override string ToString()
+    {
+        _string ??= JsonSerializer.Serialize(this, _serOptions);
+        return _string;
+    }
 }
